@@ -50,16 +50,20 @@ export default function AdminUsers() {
   const toggleBan = async (profile) => {
     try {
       await base44.entities.UserProfile.update(profile.id, {
-        is_banned: !profile.is_banned
+        is_banned: !profile.is_banned,
+        ban_reason: !profile.is_banned ? 'Admin action' : null
       });
 
       // Log action
       const admin = await base44.auth.me();
       await base44.entities.AuditLog.create({
-        action: profile.is_banned ? 'user_warned' : 'user_banned',
-        admin_id: admin.email,
+        actor_user_id: admin.email,
+        actor_role: 'admin',
+        action: profile.is_banned ? 'user_unbanned' : 'user_banned',
+        entity_name: 'UserProfile',
+        entity_id: profile.id,
         target_user_id: profile.user_id,
-        details: { reason: profile.is_banned ? 'unbanned' : 'banned' }
+        payload_summary: profile.is_banned ? 'User unbanned' : 'User banned'
       });
 
       // Refresh
@@ -67,6 +71,36 @@ export default function AdminUsers() {
       setProfiles(updatedProfiles);
     } catch (error) {
       console.error('Error:', error);
+    }
+  };
+
+  const resyncSubscription = async (profile) => {
+    try {
+      // This would typically call a Stripe API to check subscription status
+      // For now, just update based on stripe_subscription_id presence
+      const hasStripeSubscription = !!profile.stripe_subscription_id;
+      
+      await base44.entities.UserProfile.update(profile.id, {
+        subscription_status: hasStripeSubscription ? 'active' : 'none',
+        is_subscribed: hasStripeSubscription
+      });
+
+      const admin = await base44.auth.me();
+      await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
+        action: 'subscription_resynced',
+        entity_name: 'UserProfile',
+        entity_id: profile.id,
+        target_user_id: profile.user_id,
+        payload_summary: 'Subscription status resynced'
+      });
+
+      alert('Subscription resynchronisée');
+      const updatedProfiles = await base44.entities.UserProfile.list();
+      setProfiles(updatedProfiles);
+    } catch (error) {
+      console.error('Error resyncing:', error);
     }
   };
 
@@ -118,8 +152,8 @@ export default function AdminUsers() {
               <TableRow className="border-white/10 hover:bg-transparent">
                 <TableHead className="text-purple-300">Email</TableHead>
                 <TableHead className="text-purple-300">Nom</TableHead>
-                <TableHead className="text-purple-300">Mode</TableHead>
                 <TableHead className="text-purple-300">Abonné</TableHead>
+                <TableHead className="text-purple-300">Trust Score</TableHead>
                 <TableHead className="text-purple-300">Statut</TableHead>
                 <TableHead className="text-purple-300">Actions</TableHead>
               </TableRow>
@@ -132,18 +166,18 @@ export default function AdminUsers() {
                     <TableCell className="font-mono text-sm">{user.email}</TableCell>
                     <TableCell>{profile?.display_name || user.full_name || '-'}</TableCell>
                     <TableCell>
-                      {profile?.mode && (
-                        <Badge variant="outline" className="border-purple-500/30 text-purple-300 capitalize">
-                          {profile.mode}
+                      {profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing' ? (
+                        <Badge className="bg-green-500/20 text-green-400">
+                          {profile.subscription_status}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-gray-500/20 text-gray-400">
+                          {profile?.subscription_status || 'none'}
                         </Badge>
                       )}
                     </TableCell>
                     <TableCell>
-                      {profile?.is_subscribed ? (
-                        <Badge className="bg-green-500/20 text-green-400">Actif</Badge>
-                      ) : (
-                        <Badge className="bg-gray-500/20 text-gray-400">Non</Badge>
-                      )}
+                      <span className="text-sm">{profile?.trust_score || 50}</span>
                     </TableCell>
                     <TableCell>
                       {profile?.is_banned ? (
@@ -161,13 +195,22 @@ export default function AdminUsers() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="bg-slate-900 border-white/10 text-white">
                           {profile && (
-                            <DropdownMenuItem 
-                              onClick={() => toggleBan(profile)}
-                              className="hover:bg-white/10"
-                            >
-                              <Ban className="w-4 h-4 mr-2" />
-                              {profile.is_banned ? 'Débannir' : 'Bannir'}
-                            </DropdownMenuItem>
+                            <>
+                              <DropdownMenuItem 
+                                onClick={() => resyncSubscription(profile)}
+                                className="hover:bg-white/10"
+                              >
+                                <Check className="w-4 h-4 mr-2" />
+                                Resync Subscription
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => toggleBan(profile)}
+                                className="hover:bg-white/10"
+                              >
+                                <Ban className="w-4 h-4 mr-2" />
+                                {profile.is_banned ? 'Débannir' : 'Bannir'}
+                              </DropdownMenuItem>
+                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
