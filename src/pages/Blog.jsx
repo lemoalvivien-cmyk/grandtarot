@@ -73,35 +73,23 @@ export default function Blog() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 text-white">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-        <Link to={createPageUrl('Landing')} className="flex items-center gap-2 text-purple-300 hover:text-white">
-          <ArrowLeft className="w-5 h-5" />
-          <span>{t.back}</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setLang('fr')} className={`px-3 py-1 rounded-full text-sm ${lang === 'fr' ? 'bg-purple-500' : 'bg-white/10'}`}>FR</button>
-          <button onClick={() => setLang('en')} className={`px-3 py-1 rounded-full text-sm ${lang === 'en' ? 'bg-purple-500' : 'bg-white/10'}`}>EN</button>
-        </div>
-      </div>
-
+    <div className="min-h-screen">
       {/* Title */}
       <div className="max-w-6xl mx-auto px-4 py-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">{t.title}</h1>
-        <p className="text-purple-200/60">{t.subtitle}</p>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">{t.title}</h1>
+        <p className="text-slate-400">{t.subtitle}</p>
       </div>
 
       {/* Search & Categories */}
       <div className="max-w-6xl mx-auto px-4 mb-8">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-400" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.search}
-              className="pl-12 bg-white/5 border-white/10 text-white placeholder:text-purple-300/40 h-12 rounded-xl"
+              className="pl-12 bg-slate-900/50 border-amber-500/10 text-white placeholder:text-slate-500 h-12 rounded-xl"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -110,7 +98,9 @@ export default function Blog() {
                 key={key}
                 onClick={() => setCategory(key)}
                 className={`px-4 py-2 rounded-full text-sm transition-all ${
-                  category === key ? 'bg-purple-500' : 'bg-white/5 hover:bg-white/10'
+                  category === key 
+                    ? 'bg-gradient-to-r from-amber-500 to-violet-600 text-white' 
+                    : 'bg-slate-900/50 border border-amber-500/10 text-slate-300 hover:border-amber-500/30'
                 }`}
               >
                 {label}
@@ -125,12 +115,12 @@ export default function Blog() {
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array(6).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-80 rounded-2xl bg-white/10" />
+              <Skeleton key={i} className="h-80 rounded-2xl bg-slate-800/50" />
             ))}
           </div>
         ) : filteredPosts.length === 0 ? (
           <div className="text-center py-24">
-            <p className="text-purple-200/60">{lang === 'fr' ? 'Aucun article trouvé' : 'No articles found'}</p>
+            <p className="text-slate-400">{lang === 'fr' ? 'Aucun article trouvé' : 'No articles found'}</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -140,7 +130,7 @@ export default function Blog() {
                 to={createPageUrl('BlogPost') + `?slug=${post.slug}`}
                 className="group"
               >
-                <article className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all h-full flex flex-col">
+                <article className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl overflow-hidden hover:border-amber-500/30 transition-all h-full flex flex-col">
                   {post.image_url && (
                     <div className="aspect-video overflow-hidden">
                       <img 
@@ -151,7 +141,7 @@ export default function Blog() {
                     </div>
                   )}
                   <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 text-xs text-purple-300/60 mb-3">
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
                       <Calendar className="w-3 h-3" />
                       <span>{post.published_at ? new Date(post.published_at).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US') : ''}</span>
                       {post.category && (
@@ -162,13 +152,13 @@ export default function Blog() {
                         </>
                       )}
                     </div>
-                    <h2 className="text-xl font-semibold mb-2 group-hover:text-purple-400 transition-colors">
+                    <h2 className="text-xl font-semibold mb-2 text-amber-100 group-hover:text-amber-200 transition-colors">
                       {lang === 'fr' ? post.title_fr : post.title_en}
                     </h2>
-                    <p className="text-purple-200/60 text-sm flex-1">
+                    <p className="text-slate-400 text-sm flex-1">
                       {lang === 'fr' ? post.excerpt_fr : post.excerpt_en}
                     </p>
-                    <span className="text-purple-400 text-sm mt-4 inline-block">
+                    <span className="text-amber-400 text-sm mt-4 inline-block group-hover:translate-x-1 transition-transform">
                       {t.readMore} →
                     </span>
                   </div>
