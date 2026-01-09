@@ -17,12 +17,34 @@ export default function CardOfDay() {
 
   const loadCardOfDay = async () => {
     try {
-      // Get a pseudo-random card based on today's date
-      const cards = await base44.entities.TarotCard.list();
-      if (cards.length > 0) {
-        const today = new Date();
-        const dayIndex = (today.getDate() + today.getMonth() * 31) % cards.length;
-        setCard(cards[dayIndex]);
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Try to load admin-defined card for today
+      const adminCards = await base44.entities.AdminDailyCard.filter({ 
+        publish_date: today,
+        is_published: true 
+      });
+      
+      if (adminCards.length > 0) {
+        // Admin card exists for today
+        const adminCard = adminCards[0];
+        const tarotCards = await base44.entities.TarotCard.filter({ id: adminCard.tarot_card_id });
+        
+        if (tarotCards.length > 0) {
+          setCard({ 
+            ...tarotCards[0], 
+            admin_interpretation_fr: adminCard.interpretation_fr,
+            admin_interpretation_en: adminCard.interpretation_en 
+          });
+        }
+      } else {
+        // Fallback to pseudo-random
+        const cards = await base44.entities.TarotCard.list();
+        if (cards.length > 0) {
+          const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+          const cardIndex = dayOfYear % cards.length;
+          setCard(cards[cardIndex]);
+        }
       }
     } catch (error) {
       console.error('Error loading card:', error);
