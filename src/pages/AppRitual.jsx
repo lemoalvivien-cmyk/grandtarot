@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, ArrowRight, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AppRitual() {
   const [loading, setLoading] = useState(true);
+  const [drawing, setDrawing] = useState(false);
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [dailyDraw, setDailyDraw] = useState(null);
+  const [card, setCard] = useState(null);
+  const [lang, setLang] = useState('fr');
+  const [showCard, setShowCard] = useState(false);
 
   useEffect(() => {
     checkAccess();
@@ -18,8 +28,10 @@ export default function AppRitual() {
         return;
       }
 
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+
+      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
       
       const hasActiveSubscription = profiles.length > 0 && 
         (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
@@ -34,12 +46,111 @@ export default function AppRitual() {
         return;
       }
 
+      setProfile(profiles[0]);
+      setLang(profiles[0].language_pref || 'fr');
+      await loadDailyDraw(currentUser.email, profiles[0].mode_active);
       setLoading(false);
     } catch (error) {
       console.error('Error:', error);
       window.location.href = createPageUrl('Landing');
     }
   };
+
+  const loadDailyDraw = async (userId, mode) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if draw exists for today + mode
+      const existingDraws = await base44.entities.DailyDraw.filter({
+        user_id: userId,
+        draw_date: today,
+        mode: mode
+      });
+
+      if (existingDraws.length > 0) {
+        // Load existing draw
+        const draw = existingDraws[0];
+        setDailyDraw(draw);
+        
+        // Load card details
+        const cards = await base44.entities.TarotCard.filter({ id: draw.tarot_card_id });
+        if (cards.length > 0) {
+          setCard(cards[0]);
+          setShowCard(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading draw:', error);
+    }
+  };
+
+  const performDraw = async () => {
+    setDrawing(true);
+    try {
+      // Get random card
+      const allCards = await base44.entities.TarotCard.list();
+      const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+      
+      // Create daily draw
+      const today = new Date().toISOString().split('T')[0];
+      const newDraw = await base44.entities.DailyDraw.create({
+        user_id: user.email,
+        draw_date: today,
+        mode: profile.mode_active,
+        tarot_card_id: randomCard.id,
+        spread_type: 'single'
+      });
+
+      setDailyDraw(newDraw);
+      setCard(randomCard);
+      
+      // Animation delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setShowCard(true);
+    } catch (error) {
+      console.error('Error performing draw:', error);
+    } finally {
+      setDrawing(false);
+    }
+  };
+
+  const content = {
+    fr: {
+      title: "Rituel Quotidien",
+      subtitle: "Votre guidance des astres",
+      draw: "Tirer ma carte",
+      drawing: "Consultation des astres...",
+      viewSynchros: "Voir mes synchros du jour",
+      modes: {
+        love: "Amour",
+        friendship: "Amitié",
+        professional: "Pro"
+      },
+      interpretation: "Interprétation du jour"
+    },
+    en: {
+      title: "Daily Ritual",
+      subtitle: "Your guidance from the stars",
+      draw: "Draw my card",
+      drawing: "Consulting the stars...",
+      viewSynchros: "View my daily synchros",
+      modes: {
+        love: "Love",
+        friendship: "Friendship",
+        professional: "Pro"
+      },
+      interpretation: "Today's interpretation"
+    }
+  };
+
+  const t = content[lang];
+
+  const modeIcons = {
+    love: Heart,
+    friendship: Users,
+    professional: Briefcase
+  };
+  const ModeIcon = modeIcons[profile?.mode_active] || Heart;
 
   if (loading) {
     return (
@@ -50,13 +161,182 @@ export default function AppRitual() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-4 animate-pulse" />
-        <h1 className="text-3xl font-serif font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-          Rituel Quotidien
-        </h1>
-        <p className="text-slate-400 mt-2">Coming soon...</p>
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
+            <ModeIcon className="w-4 h-4 text-amber-400" />
+            <span className="text-amber-200 text-sm">
+              {t.modes[profile?.mode_active] || 'Mode'} • {new Date().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </span>
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            {t.title}
+          </h1>
+          <p className="text-lg text-slate-400">{t.subtitle}</p>
+        </div>
+
+        {/* Main Content */}
+        <div className="space-y-8">
+          {/* Drawing State */}
+          {drawing && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-24"
+            >
+              <div className="relative inline-block">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/30 to-violet-500/30 rounded-full blur-3xl animate-pulse" />
+                <div className="relative w-32 h-32 bg-gradient-to-br from-slate-900 to-slate-800 rounded-full border-4 border-amber-500/20 flex items-center justify-center">
+                  <Sparkles className="w-16 h-16 text-amber-400 animate-pulse" />
+                </div>
+              </div>
+              <p className="text-amber-200 mt-8 text-lg animate-pulse">{t.drawing}</p>
+            </motion.div>
+          )}
+
+          {/* No Draw Yet */}
+          {!dailyDraw && !drawing && (
+            <div className="text-center py-16">
+              <div className="relative inline-block mb-8">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-violet-500/20 rounded-3xl blur-2xl" />
+                <div className="relative w-48 h-72 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 flex items-center justify-center">
+                  <Sparkles className="w-20 h-20 text-amber-400" />
+                </div>
+              </div>
+              
+              <Button 
+                onClick={performDraw}
+                size="lg"
+                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-12 py-6 text-lg rounded-xl shadow-2xl shadow-amber-500/20"
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                {t.draw}
+              </Button>
+            </div>
+          )}
+
+          {/* Show Card */}
+          <AnimatePresence>
+            {showCard && card && (
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="space-y-8"
+              >
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                  {/* Card Image */}
+                  <motion.div 
+                    initial={{ rotateY: 90 }}
+                    animate={{ rotateY: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="relative mx-auto"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-violet-500/30 rounded-3xl blur-2xl" />
+                    <div className="relative w-72 h-[420px] bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 overflow-hidden flex items-center justify-center">
+                      {card.image_url ? (
+                        <img src={card.image_url} alt={lang === 'fr' ? card.name_fr : card.name_en} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-center p-8">
+                          <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+                          <h3 className="text-2xl font-serif text-amber-100">{lang === 'fr' ? card.name_fr : card.name_en}</h3>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Card Details */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="space-y-6"
+                  >
+                    <div>
+                      <h2 className="text-3xl font-serif font-bold mb-2 text-amber-100">
+                        {lang === 'fr' ? card.name_fr : card.name_en}
+                      </h2>
+                      <p className="text-slate-400 capitalize">
+                        {card.arcana_type === 'major' 
+                          ? (lang === 'fr' ? 'Arcane Majeur' : 'Major Arcana') 
+                          : `${lang === 'fr' ? 'Arcane Mineur' : 'Minor Arcana'} • ${card.suit}`}
+                      </p>
+                    </div>
+
+                    {/* Keywords */}
+                    {((lang === 'fr' && card.keywords_fr?.length) || (lang === 'en' && card.keywords_en?.length)) && (
+                      <div className="flex flex-wrap gap-2">
+                        {(lang === 'fr' ? card.keywords_fr : card.keywords_en)?.slice(0, 5).map((kw, i) => (
+                          <span key={i} className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-sm text-amber-200">
+                            {kw}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Interpretation */}
+                    <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6">
+                      <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-3">{t.interpretation}</h4>
+                      <p className="text-slate-300 leading-relaxed">
+                        {lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}
+                      </p>
+                    </div>
+
+                    {/* Mode-specific meaning */}
+                    {profile?.mode_active === 'love' && (card.love_meaning_fr || card.love_meaning_en) && (
+                      <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-6">
+                        <h4 className="text-sm uppercase tracking-wider text-rose-400 mb-3 flex items-center gap-2">
+                          <Heart className="w-4 h-4" />
+                          {t.modes.love}
+                        </h4>
+                        <p className="text-slate-300 leading-relaxed">
+                          {lang === 'fr' ? card.love_meaning_fr : card.love_meaning_en}
+                        </p>
+                      </div>
+                    )}
+
+                    {profile?.mode_active === 'friendship' && (card.friendship_meaning_fr || card.friendship_meaning_en) && (
+                      <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
+                        <h4 className="text-sm uppercase tracking-wider text-blue-400 mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          {t.modes.friendship}
+                        </h4>
+                        <p className="text-slate-300 leading-relaxed">
+                          {lang === 'fr' ? card.friendship_meaning_fr : card.friendship_meaning_en}
+                        </p>
+                      </div>
+                    )}
+
+                    {profile?.mode_active === 'professional' && (card.career_meaning_fr || card.career_meaning_en) && (
+                      <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6">
+                        <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
+                          <Briefcase className="w-4 h-4" />
+                          {t.modes.professional}
+                        </h4>
+                        <p className="text-slate-300 leading-relaxed">
+                          {lang === 'fr' ? card.career_meaning_fr : card.career_meaning_en}
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* CTA */}
+                <div className="text-center pt-8">
+                  <Link to={createPageUrl('AppSynchros')}>
+                    <Button className="bg-gradient-to-r from-violet-500 to-pink-600 hover:from-violet-400 hover:to-pink-500 px-8 py-6 text-lg rounded-xl shadow-xl shadow-violet-500/20">
+                      {t.viewSynchros}
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
