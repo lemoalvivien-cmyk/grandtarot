@@ -42,7 +42,11 @@ export default function Subscribe() {
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
       
-      if (profiles[0].is_subscribed) {
+      // Check subscription status
+      const hasActiveSubscription = profiles[0].subscription_status === 'active' || 
+                                    profiles[0].subscription_status === 'trialing';
+      
+      if (hasActiveSubscription) {
         window.location.href = createPageUrl('App');
         return;
       }
@@ -54,6 +58,10 @@ export default function Subscribe() {
   };
 
   const handleSubscribe = () => {
+    // Store user email for post-payment identification
+    if (user?.email) {
+      sessionStorage.setItem('subscribing_user', user.email);
+    }
     window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
   };
 

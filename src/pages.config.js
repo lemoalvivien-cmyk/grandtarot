@@ -34,6 +34,7 @@ import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminModeration from './pages/AdminModeration';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminAiPrompts from './pages/AdminAiPrompts';
+import AdminSubscriptionManager from './pages/AdminSubscriptionManager';
 import __Layout from './Layout.jsx';
 
 
@@ -74,6 +75,7 @@ export const PAGES = {
     "AdminModeration": AdminModeration,
     "AdminAnalytics": AdminAnalytics,
     "AdminAiPrompts": AdminAiPrompts,
+    "AdminSubscriptionManager": AdminSubscriptionManager,
 }
 
 export const pagesConfig = {

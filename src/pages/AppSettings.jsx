@@ -21,7 +21,10 @@ export default function AppSettings() {
       const user = await base44.auth.me();
       const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
       
-      if (profiles.length === 0 || !profiles[0].is_subscribed) {
+      const hasActiveSubscription = profiles.length > 0 && 
+        (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
+      
+      if (!hasActiveSubscription) {
         window.location.href = createPageUrl('Subscribe');
         return;
       }

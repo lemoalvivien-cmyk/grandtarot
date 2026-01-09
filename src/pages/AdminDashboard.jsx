@@ -98,6 +98,13 @@ export default function AdminDashboard() {
       color: "bg-purple-500/20 text-purple-400"
     },
     { 
+      title: "Abonnements", 
+      icon: Settings, 
+      subtitle: "Gestion & Resync", 
+      page: "AdminSubscriptionManager",
+      color: "bg-green-500/20 text-green-400"
+    },
+    { 
       title: "Paramètres", 
       icon: Settings, 
       subtitle: "Quotas, Prix, Config", 

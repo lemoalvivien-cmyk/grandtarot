@@ -48,7 +48,10 @@ export default function AppOnboarding() {
 
       const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
       
-      if (profiles.length === 0 || !profiles[0].is_subscribed) {
+      const hasActiveSubscription = profiles.length > 0 && 
+        (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
+      
+      if (!hasActiveSubscription) {
         window.location.href = createPageUrl('Subscribe');
         return;
       }
