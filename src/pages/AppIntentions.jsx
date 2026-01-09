@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Inbox, Send as SendIcon } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReceivedIntentionCard from '@/components/intentions/ReceivedIntentionCard';
+import SentIntentionCard from '@/components/intentions/SentIntentionCard';
 
 export default function AppIntentions() {
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [lang, setLang] = useState('fr');
+  const [receivedIntentions, setReceivedIntentions] = useState([]);
+  const [sentIntentions, setSentIntentions] = useState([]);
+  const [profiles, setProfiles] = useState({});
 
   useEffect(() => {
     checkAccess();
@@ -18,28 +27,157 @@ export default function AppIntentions() {
         return;
       }
 
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+
+      const userProfiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
       
-      const hasActiveSubscription = profiles.length > 0 && 
-        (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
-      
-      if (!hasActiveSubscription) {
-        window.location.href = createPageUrl('Subscribe');
-        return;
+      if (currentUser.role !== 'admin') {
+        const hasActiveSubscription = userProfiles.length > 0 && 
+          (userProfiles[0].subscription_status === 'active' || userProfiles[0].subscription_status === 'trialing');
+        
+        if (!hasActiveSubscription) {
+          window.location.href = createPageUrl('Subscribe');
+          return;
+        }
       }
 
-      if (!profiles[0].onboarding_completed || !profiles[0].photo_url) {
+      if (!userProfiles[0].onboarding_completed || !userProfiles[0].photo_url) {
         window.location.href = createPageUrl('AppOnboarding');
         return;
       }
 
-      setLoading(false);
+      setProfile(userProfiles[0]);
+      setLang(userProfiles[0].language_pref || 'fr');
+      await loadIntentions(currentUser.email);
     } catch (error) {
       console.error('Error:', error);
       window.location.href = createPageUrl('Landing');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const loadIntentions = async (userId) => {
+    try {
+      // Load received and sent intentions
+      const [received, sent, allProfiles] = await Promise.all([
+        base44.entities.Intention.filter({ to_user_id: userId }),
+        base44.entities.Intention.filter({ from_user_id: userId }),
+        base44.entities.UserProfile.list()
+      ]);
+
+      // Sort by date (most recent first)
+      received.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      sent.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+
+      setReceivedIntentions(received);
+      setSentIntentions(sent);
+
+      // Create profile map
+      const profileMap = {};
+      allProfiles.forEach(p => {
+        profileMap[p.user_id] = p;
+      });
+      setProfiles(profileMap);
+    } catch (error) {
+      console.error('Error loading intentions:', error);
+    }
+  };
+
+  const handleAccept = async (intention, senderProfile) => {
+    try {
+      // Update intention status
+      await base44.entities.Intention.update(intention.id, {
+        status: 'accepted',
+        responded_at: new Date().toISOString()
+      });
+
+      // Create conversation
+      const conversation = await base44.entities.Conversation.create({
+        user_a_id: intention.from_user_id,
+        user_b_id: intention.to_user_id,
+        mode: intention.mode,
+        origin_intention_id: intention.id,
+        status: 'active',
+        last_message_at: new Date().toISOString()
+      });
+
+      // Update local state
+      setReceivedIntentions(prev => 
+        prev.map(i => i.id === intention.id ? { ...i, status: 'accepted' } : i)
+      );
+
+      // Redirect to chat
+      setTimeout(() => {
+        window.location.href = createPageUrl('Chat') + `?conversation=${conversation.id}`;
+      }, 1000);
+    } catch (error) {
+      console.error('Error accepting intention:', error);
+    }
+  };
+
+  const handleRefuse = async (intention) => {
+    try {
+      // Update intention status
+      await base44.entities.Intention.update(intention.id, {
+        status: 'refused',
+        responded_at: new Date().toISOString()
+      });
+
+      // Check for 3 consecutive refusals from this sender
+      const senderIntentions = await base44.entities.Intention.filter({
+        from_user_id: intention.from_user_id,
+        status: 'refused'
+      });
+
+      // Get last 3 intentions from sender
+      const recentRefusals = senderIntentions
+        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+        .slice(0, 3);
+
+      // If all 3 most recent are refused, apply cooldown
+      if (recentRefusals.length >= 3 && recentRefusals.every(i => i.status === 'refused')) {
+        const cooldownEnd = new Date();
+        cooldownEnd.setHours(cooldownEnd.getHours() + 24);
+        
+        const senderProfile = profiles[intention.from_user_id];
+        if (senderProfile) {
+          await base44.entities.UserProfile.update(senderProfile.id, {
+            cooldown_until: cooldownEnd.toISOString()
+          });
+        }
+      }
+
+      // Update local state
+      setReceivedIntentions(prev => 
+        prev.map(i => i.id === intention.id ? { ...i, status: 'refused' } : i)
+      );
+    } catch (error) {
+      console.error('Error refusing intention:', error);
+    }
+  };
+
+  const content = {
+    fr: {
+      title: "Intentions",
+      subtitle: "Gérez vos connexions",
+      received: "Reçues",
+      sent: "Envoyées",
+      noReceived: "Aucune intention reçue",
+      noSent: "Aucune intention envoyée"
+    },
+    en: {
+      title: "Intentions",
+      subtitle: "Manage your connections",
+      received: "Received",
+      sent: "Sent",
+      noReceived: "No intentions received",
+      noSent: "No intentions sent"
+    }
+  };
+
+  const t = content[lang];
 
   if (loading) {
     return (
@@ -50,13 +188,74 @@ export default function AppIntentions() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <MessageCircle className="w-16 h-16 text-blue-400 mx-auto mb-4 animate-pulse" />
-        <h1 className="text-3xl font-serif font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-          Intentions
-        </h1>
-        <p className="text-slate-400 mt-2">Coming soon...</p>
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
+            <MessageCircle className="w-4 h-4 text-amber-400" />
+            <span className="text-amber-200 text-sm">{t.title}</span>
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            {t.title}
+          </h1>
+          <p className="text-lg text-slate-400">{t.subtitle}</p>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="received" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-900/50 border border-amber-500/10 mb-8">
+            <TabsTrigger value="received" className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-100">
+              <Inbox className="w-4 h-4 mr-2" />
+              {t.received} {receivedIntentions.length > 0 && `(${receivedIntentions.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="sent" className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-100">
+              <SendIcon className="w-4 h-4 mr-2" />
+              {t.sent} {sentIntentions.length > 0 && `(${sentIntentions.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Received */}
+          <TabsContent value="received" className="space-y-4">
+            {receivedIntentions.length === 0 ? (
+              <div className="text-center py-16">
+                <Inbox className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-400">{t.noReceived}</p>
+              </div>
+            ) : (
+              receivedIntentions.map(intention => (
+                <ReceivedIntentionCard
+                  key={intention.id}
+                  intention={intention}
+                  senderProfile={profiles[intention.from_user_id]}
+                  onAccept={handleAccept}
+                  onRefuse={handleRefuse}
+                  lang={lang}
+                />
+              ))
+            )}
+          </TabsContent>
+
+          {/* Sent */}
+          <TabsContent value="sent" className="space-y-4">
+            {sentIntentions.length === 0 ? (
+              <div className="text-center py-16">
+                <SendIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-400">{t.noSent}</p>
+              </div>
+            ) : (
+              sentIntentions.map(intention => (
+                <SentIntentionCard
+                  key={intention.id}
+                  intention={intention}
+                  recipientProfile={profiles[intention.to_user_id]}
+                  lang={lang}
+                />
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

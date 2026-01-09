@@ -22,6 +22,7 @@ export default function AppSynchros() {
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [intentionMessage, setIntentionMessage] = useState('');
+  const [icebreakers, setIcebreakers] = useState([]);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
@@ -104,10 +105,53 @@ export default function AppSynchros() {
     }
   };
 
-  const handleSendIntention = (match, targetProfile) => {
+  const handleSendIntention = async (match, targetProfile) => {
+    // Check cooldown
+    if (profile.cooldown_until) {
+      const cooldownEnd = new Date(profile.cooldown_until);
+      if (cooldownEnd > new Date()) {
+        alert(lang === 'fr' 
+          ? 'Vous êtes en cooldown suite à plusieurs refus. Réessayez demain.' 
+          : 'You are in cooldown after multiple refusals. Try again tomorrow.');
+        return;
+      }
+    }
+
+    // Check daily quota
+    const today = new Date().toISOString().split('T')[0];
+    if (profile.last_intention_reset !== today) {
+      // Reset counter
+      await base44.entities.UserProfile.update(profile.id, {
+        intentions_sent_today: 0,
+        last_intention_reset: today
+      });
+      setProfile(prev => ({ ...prev, intentions_sent_today: 0, last_intention_reset: today }));
+    } else if (profile.intentions_sent_today >= 5) {
+      alert(lang === 'fr' 
+        ? 'Quota atteint : 5 intentions maximum par jour.' 
+        : 'Quota reached: 5 intentions maximum per day.');
+      return;
+    }
+
+    // Load icebreakers
     setSelectedMatch(match);
     setSelectedProfile(targetProfile);
     setIntentionModal(true);
+    
+    try {
+      const { generateIcebreakers } = await import('@/components/helpers/aiService');
+      const sharedInterestIds = match.shared_interests || [];
+      const icebreakers = await generateIcebreakers({
+        targetProfile,
+        mode: profile.mode_active,
+        lang,
+        sharedInterests: sharedInterestIds
+      });
+      setIcebreakers(icebreakers);
+    } catch (error) {
+      console.error('Error loading icebreakers:', error);
+      setIcebreakers([]);
+    }
   };
 
   const sendIntention = async () => {
@@ -132,13 +176,20 @@ export default function AppSynchros() {
         intention_sent: true
       });
 
+      // Increment user's intention counter
+      await base44.entities.UserProfile.update(profile.id, {
+        intentions_sent_today: (profile.intentions_sent_today || 0) + 1
+      });
+
       // Update local state
       setMatches(prev => prev.map(m => 
         m.id === selectedMatch.id ? { ...m, intention_sent: true } : m
       ));
+      setProfile(prev => ({ ...prev, intentions_sent_today: (prev.intentions_sent_today || 0) + 1 }));
 
       setIntentionModal(false);
       setIntentionMessage('');
+      setIcebreakers([]);
       setSelectedMatch(null);
       setSelectedProfile(null);
     } catch (error) {
@@ -318,6 +369,22 @@ export default function AppSynchros() {
                     {lang === 'fr' ? 'Score de compatibilité' : 'Compatibility score'}: {selectedMatch?.compatibility_score}
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* Icebreakers */}
+            {icebreakers.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-400">{lang === 'fr' ? 'Suggestions IA' : 'AI Suggestions'}</p>
+                {icebreakers.map((ice, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setIntentionMessage(ice)}
+                    className="w-full text-left p-3 bg-slate-800/30 hover:bg-slate-800/50 border border-amber-500/10 hover:border-amber-500/30 rounded-lg text-sm text-slate-300 transition-all"
+                  >
+                    {ice}
+                  </button>
+                ))}
               </div>
             )}
 
