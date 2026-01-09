@@ -119,6 +119,13 @@ export default function AdminDashboard() {
       color: "bg-purple-500/20 text-purple-400"
     },
     { 
+      title: "Prompts IA", 
+      icon: Settings, 
+      subtitle: "Interprétations & Modération", 
+      page: "AdminAiPromptsEditor",
+      color: "bg-violet-500/20 text-violet-400"
+    },
+    { 
       title: "Paramètres", 
       icon: Settings, 
       subtitle: "Quotas, Prix, Config", 
