@@ -114,21 +114,35 @@ export default function CardOfDay() {
                 </div>
               )}
 
-              {/* Upright Meaning */}
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
-                <h4 className="text-sm uppercase tracking-wider text-green-400 mb-3">{t.upright}</h4>
-                <p className="text-slate-300 leading-relaxed">
-                  {lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}
-                </p>
-              </div>
+              {/* Admin Interpretation or Standard Meanings */}
+              {card.admin_interpretation_fr || card.admin_interpretation_en ? (
+                <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
+                  <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-3">
+                    {lang === 'fr' ? 'Interprétation du jour' : 'Today\'s interpretation'}
+                  </h4>
+                  <p className="text-slate-300 leading-relaxed">
+                    {lang === 'fr' ? card.admin_interpretation_fr : card.admin_interpretation_en}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Upright Meaning */}
+                  <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
+                    <h4 className="text-sm uppercase tracking-wider text-green-400 mb-3">{t.upright}</h4>
+                    <p className="text-slate-300 leading-relaxed">
+                      {lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}
+                    </p>
+                  </div>
 
-              {/* Reversed Meaning */}
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
-                <h4 className="text-sm uppercase tracking-wider text-red-400 mb-3">{t.reversed}</h4>
-                <p className="text-slate-300 leading-relaxed">
-                  {lang === 'fr' ? card.meaning_reversed_fr : card.meaning_reversed_en}
-                </p>
-              </div>
+                  {/* Reversed Meaning */}
+                  <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
+                    <h4 className="text-sm uppercase tracking-wider text-red-400 mb-3">{t.reversed}</h4>
+                    <p className="text-slate-300 leading-relaxed">
+                      {lang === 'fr' ? card.meaning_reversed_fr : card.meaning_reversed_en}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
