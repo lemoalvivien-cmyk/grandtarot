@@ -37,6 +37,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import AdminStripeConfig from './pages/AdminStripeConfig';
 import AdminTarotImport from './pages/AdminTarotImport';
+import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
 import __Layout from './Layout.jsx';
 
 
@@ -80,6 +81,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "AdminStripeConfig": AdminStripeConfig,
     "AdminTarotImport": AdminTarotImport,
+    "AdminAiPromptsEditor": AdminAiPromptsEditor,
 }
 
 export const pagesConfig = {

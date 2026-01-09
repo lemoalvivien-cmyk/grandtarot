@@ -91,21 +91,32 @@ export default function AppRitual() {
       const allCards = await base44.entities.TarotCard.list();
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
       
-      // Create daily draw
+      // Animation delay while generating interpretation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate AI interpretation
+      const { generateInterpretation } = await import('@/utils/aiService');
+      const interpretation = await generateInterpretation({
+        card: randomCard,
+        mode: profile.mode_active,
+        lang: lang,
+        userProfile: profile
+      });
+      
+      // Create daily draw with interpretation
       const today = new Date().toISOString().split('T')[0];
       const newDraw = await base44.entities.DailyDraw.create({
         user_id: user.email,
         draw_date: today,
         mode: profile.mode_active,
         tarot_card_id: randomCard.id,
-        spread_type: 'single'
+        spread_type: 'single',
+        interpretation_json: interpretation,
+        themes: interpretation.themes
       });
 
       setDailyDraw(newDraw);
       setCard(randomCard);
-      
-      // Animation delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
       setShowCard(true);
     } catch (error) {
       console.error('Error performing draw:', error);
@@ -277,13 +288,74 @@ export default function AppRitual() {
                       </div>
                     )}
 
-                    {/* Interpretation */}
-                    <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6">
-                      <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-3">{t.interpretation}</h4>
-                      <p className="text-slate-300 leading-relaxed">
-                        {lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}
-                      </p>
-                    </div>
+                    {/* AI Interpretation */}
+                    {dailyDraw?.interpretation_json ? (
+                      <div className="space-y-4">
+                        <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6">
+                          <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-3">{t.interpretation}</h4>
+                          <p className="text-slate-300 leading-relaxed mb-4">
+                            {dailyDraw.interpretation_json.summary}
+                          </p>
+                          <p className="text-amber-200 font-medium">
+                            {dailyDraw.interpretation_json.todayFocus}
+                          </p>
+                        </div>
+
+                        {dailyDraw.interpretation_json.do?.length > 0 && (
+                          <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6">
+                            <h4 className="text-sm uppercase tracking-wider text-green-400 mb-3">
+                              {lang === 'fr' ? 'À faire' : 'Do'}
+                            </h4>
+                            <ul className="space-y-2">
+                              {dailyDraw.interpretation_json.do.map((item, i) => (
+                                <li key={i} className="text-slate-300 flex items-start gap-2">
+                                  <span className="text-green-400 mt-1">✓</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {dailyDraw.interpretation_json.avoid?.length > 0 && (
+                          <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6">
+                            <h4 className="text-sm uppercase tracking-wider text-red-400 mb-3">
+                              {lang === 'fr' ? 'À éviter' : 'Avoid'}
+                            </h4>
+                            <ul className="space-y-2">
+                              {dailyDraw.interpretation_json.avoid.map((item, i) => (
+                                <li key={i} className="text-slate-300 flex items-start gap-2">
+                                  <span className="text-red-400 mt-1">⨯</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {dailyDraw.interpretation_json.reflectionQuestion && (
+                          <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-6">
+                            <h4 className="text-sm uppercase tracking-wider text-violet-400 mb-3">
+                              {lang === 'fr' ? 'Question du jour' : 'Reflection question'}
+                            </h4>
+                            <p className="text-slate-300 italic">
+                              {dailyDraw.interpretation_json.reflectionQuestion}
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-slate-500 text-center italic">
+                          {dailyDraw.interpretation_json.safetyNote}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6">
+                        <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-3">{t.interpretation}</h4>
+                        <p className="text-slate-300 leading-relaxed">
+                          {lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Mode-specific meaning */}
                     {profile?.mode_active === 'love' && (card.love_meaning_fr || card.love_meaning_en) && (
