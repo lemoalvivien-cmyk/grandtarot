@@ -13,6 +13,13 @@ import Affinities from './pages/Affinities';
 import Messages from './pages/Messages';
 import Chat from './pages/Chat';
 import Settings from './pages/Settings';
+import AdminUsers from './pages/AdminUsers';
+import AdminReports from './pages/AdminReports';
+import AdminContent from './pages/AdminContent';
+import AdminSettings from './pages/AdminSettings';
+import AdminAuditLog from './pages/AdminAuditLog';
+import AdminCardEditor from './pages/AdminCardEditor';
+import AdminBlogEditor from './pages/AdminBlogEditor';
 
 
 export const PAGES = {
@@ -31,6 +38,13 @@ export const PAGES = {
     "Messages": Messages,
     "Chat": Chat,
     "Settings": Settings,
+    "AdminUsers": AdminUsers,
+    "AdminReports": AdminReports,
+    "AdminContent": AdminContent,
+    "AdminSettings": AdminSettings,
+    "AdminAuditLog": AdminAuditLog,
+    "AdminCardEditor": AdminCardEditor,
+    "AdminBlogEditor": AdminBlogEditor,
 }
 
 export const pagesConfig = {
