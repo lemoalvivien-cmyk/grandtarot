@@ -20,6 +20,15 @@ import AdminSettings from './pages/AdminSettings';
 import AdminAuditLog from './pages/AdminAuditLog';
 import AdminCardEditor from './pages/AdminCardEditor';
 import AdminBlogEditor from './pages/AdminBlogEditor';
+import Pricing from './pages/Pricing';
+import Subscribe from './pages/Subscribe';
+import App from './pages/App';
+import AppOnboarding from './pages/AppOnboarding';
+import AppRitual from './pages/AppRitual';
+import AppSynchros from './pages/AppSynchros';
+import AppIntentions from './pages/AppIntentions';
+import AppSettings from './pages/AppSettings';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -45,9 +54,18 @@ export const PAGES = {
     "AdminAuditLog": AdminAuditLog,
     "AdminCardEditor": AdminCardEditor,
     "AdminBlogEditor": AdminBlogEditor,
+    "Pricing": Pricing,
+    "Subscribe": Subscribe,
+    "App": App,
+    "AppOnboarding": AppOnboarding,
+    "AppRitual": AppRitual,
+    "AppSynchros": AppSynchros,
+    "AppIntentions": AppIntentions,
+    "AppSettings": AppSettings,
 }
 
 export const pagesConfig = {
     mainPage: "Landing",
     Pages: PAGES,
+    Layout: __Layout,
 };
