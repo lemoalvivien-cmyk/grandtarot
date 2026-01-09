@@ -60,25 +60,29 @@ export default function AppIntentions() {
 
   const loadIntentions = async (userId) => {
     try {
-      // Load received and sent intentions
-      const [received, sent, allProfiles] = await Promise.all([
-        base44.entities.Intention.filter({ to_user_id: userId }),
-        base44.entities.Intention.filter({ from_user_id: userId }),
-        base44.entities.UserProfile.list()
+      // Load received and sent intentions (LIMIT 50 most recent)
+      const [received, sent] = await Promise.all([
+        base44.entities.Intention.filter({ to_user_id: userId }, '-created_date', 50),
+        base44.entities.Intention.filter({ from_user_id: userId }, '-created_date', 50)
       ]);
-
-      // Sort by date (most recent first)
-      received.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      sent.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
       setReceivedIntentions(received);
       setSentIntentions(sent);
 
-      // Create profile map
+      // Load only profiles for intentions (batch fetch)
+      const allUserIds = [
+        ...received.map(i => i.from_user_id),
+        ...sent.map(i => i.to_user_id)
+      ];
+      const uniqueUserIds = [...new Set(allUserIds)];
+      
       const profileMap = {};
-      allProfiles.forEach(p => {
-        profileMap[p.user_id] = p;
-      });
+      for (const uid of uniqueUserIds) {
+        const profiles = await base44.entities.UserProfile.filter({ user_id: uid });
+        if (profiles.length > 0) {
+          profileMap[uid] = profiles[0];
+        }
+      }
       setProfiles(profileMap);
     } catch (error) {
       console.error('Error loading intentions:', error);

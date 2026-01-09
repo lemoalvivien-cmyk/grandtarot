@@ -86,16 +86,19 @@ export default function AppSynchros() {
 
       setMatches(dailyMatches);
 
-      // Load profiles for all matched users
+      // Load profiles for matched users (LIMIT to matched IDs only)
       if (dailyMatches.length > 0) {
         const userIds = dailyMatches.map(m => m.matched_user_id);
-        const profiles = await base44.entities.UserProfile.list();
         const profileMap = {};
-        profiles.forEach(p => {
-          if (userIds.includes(p.user_id)) {
-            profileMap[p.user_id] = p;
+        
+        // Fetch only needed profiles in batch (avoid list all)
+        for (const userId of userIds) {
+          const profiles = await base44.entities.UserProfile.filter({ user_id: userId });
+          if (profiles.length > 0) {
+            profileMap[userId] = profiles[0];
           }
-        });
+        }
+        
         setMatchProfiles(profileMap);
       }
     } catch (error) {

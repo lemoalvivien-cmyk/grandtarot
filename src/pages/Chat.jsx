@@ -138,14 +138,17 @@ export default function Chat() {
 
   const loadMessages = async (conversationId, silent = false) => {
     try {
+      // LIMIT to last 100 messages (pagination for older messages can be added later)
       const msgs = await base44.entities.Message.filter({ 
         conversation_id: conversationId,
         is_deleted: false 
-      });
-      msgs.sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+      }, '-created_date', 100);
+      
+      // Reverse to show chronological order (oldest first)
+      msgs.reverse();
       setMessages(msgs);
 
-      // Mark unread messages as read
+      // Mark unread messages as read (batch update would be better but not available)
       if (!silent) {
         const unreadMessages = msgs.filter(m => !m.is_read && m.from_user_id !== user.email);
         for (const msg of unreadMessages) {

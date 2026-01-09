@@ -87,7 +87,22 @@ export default function AppRitual() {
   const performDraw = async () => {
     setDrawing(true);
     try {
-      // Get random card
+      // PERF: Check if draw already exists to prevent duplicate
+      const today = new Date().toISOString().split('T')[0];
+      const existingDraws = await base44.entities.DailyDraw.filter({
+        user_id: user.email,
+        draw_date: today,
+        mode: profile.mode_active
+      });
+      
+      if (existingDraws.length > 0) {
+        // Already drawn today, reload
+        await loadDailyDraw(user.email, profile.mode_active);
+        setDrawing(false);
+        return;
+      }
+      
+      // Get random card (list is cached on first load)
       const allCards = await base44.entities.TarotCard.list();
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
       
