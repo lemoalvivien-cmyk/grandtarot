@@ -72,21 +72,21 @@ export default function CardOfDay() {
 
         {loading ? (
           <div className="max-w-md mx-auto">
-            <Skeleton className="h-96 w-full rounded-3xl bg-white/10" />
+            <Skeleton className="h-96 w-full rounded-3xl bg-slate-800/50" />
           </div>
         ) : card ? (
           <div className="grid md:grid-cols-2 gap-12 items-start">
             {/* Card Image */}
             <div className="relative group mx-auto md:mx-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-amber-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all" />
-              <div className="relative w-72 h-[420px] bg-gradient-to-br from-purple-900 to-slate-900 rounded-3xl border border-purple-500/30 overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-violet-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all" />
+              <div className="relative w-72 h-[420px] bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 overflow-hidden flex items-center justify-center">
                 {card.image_url ? (
                   <img src={card.image_url} alt={lang === 'fr' ? card.name_fr : card.name_en} className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center p-8">
-                    <Sparkles className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-                    <h3 className="text-2xl font-serif">{lang === 'fr' ? card.name_fr : card.name_en}</h3>
-                    <p className="text-purple-300/60 mt-2 capitalize">{card.arcana === 'major' ? 'Arcane Majeur' : card.suit}</p>
+                    <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+                    <h3 className="text-2xl font-serif text-amber-100">{lang === 'fr' ? card.name_fr : card.name_en}</h3>
+                    <p className="text-slate-400 mt-2 capitalize">{card.arcana === 'major' ? 'Arcane Majeur' : card.suit}</p>
                   </div>
                 )}
               </div>
@@ -95,8 +95,8 @@ export default function CardOfDay() {
             {/* Card Details */}
             <div className="space-y-6">
               <div>
-                <h2 className="text-3xl font-serif font-bold mb-2">{lang === 'fr' ? card.name_fr : card.name_en}</h2>
-                <p className="text-purple-300/60 capitalize">
+                <h2 className="text-3xl font-serif font-bold mb-2 text-amber-100">{lang === 'fr' ? card.name_fr : card.name_en}</h2>
+                <p className="text-slate-400 capitalize">
                   {card.arcana === 'major' ? (lang === 'fr' ? 'Arcane Majeur' : 'Major Arcana') : (lang === 'fr' ? 'Arcane Mineur' : 'Minor Arcana')}
                   {card.suit !== 'none' && ` • ${card.suit}`}
                 </p>
@@ -105,27 +105,27 @@ export default function CardOfDay() {
               {/* Keywords */}
               {((lang === 'fr' && card.keywords_fr) || (lang === 'en' && card.keywords_en)) && (
                 <div>
-                  <h4 className="text-sm uppercase tracking-wider text-purple-400 mb-2">{t.keywords}</h4>
+                  <h4 className="text-sm uppercase tracking-wider text-amber-400 mb-2">{t.keywords}</h4>
                   <div className="flex flex-wrap gap-2">
                     {(lang === 'fr' ? card.keywords_fr : card.keywords_en)?.map((kw, i) => (
-                      <span key={i} className="px-3 py-1 bg-purple-500/20 rounded-full text-sm">{kw}</span>
+                      <span key={i} className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-sm text-amber-200">{kw}</span>
                     ))}
                   </div>
                 </div>
               )}
 
               {/* Upright Meaning */}
-              <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
                 <h4 className="text-sm uppercase tracking-wider text-green-400 mb-3">{t.upright}</h4>
-                <p className="text-purple-200/80 leading-relaxed">
+                <p className="text-slate-300 leading-relaxed">
                   {lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}
                 </p>
               </div>
 
               {/* Reversed Meaning */}
-              <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/10">
                 <h4 className="text-sm uppercase tracking-wider text-red-400 mb-3">{t.reversed}</h4>
-                <p className="text-purple-200/80 leading-relaxed">
+                <p className="text-slate-300 leading-relaxed">
                   {lang === 'fr' ? card.meaning_reversed_fr : card.meaning_reversed_en}
                 </p>
               </div>
@@ -139,14 +139,17 @@ export default function CardOfDay() {
 
         {/* CTA */}
         <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-purple-900/50 to-amber-900/50 rounded-3xl p-8 border border-purple-500/20">
-            <h3 className="text-2xl font-semibold mb-2">{t.cta}</h3>
-            <p className="text-purple-200/60 mb-6">{t.ctaDesc}</p>
-            <Link to={createPageUrl('Signup')}>
-              <Button className="bg-gradient-to-r from-purple-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 px-8 py-6 rounded-full">
-                {lang === 'fr' ? 'Créer mon compte' : 'Create my account'}
-              </Button>
-            </Link>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-violet-500/20 rounded-3xl blur-2xl" />
+            <div className="relative bg-slate-900/50 backdrop-blur-sm rounded-3xl p-8 border border-amber-500/20">
+              <h3 className="text-2xl font-serif font-semibold mb-2 text-amber-100">{t.cta}</h3>
+              <p className="text-slate-400 mb-6">{t.ctaDesc}</p>
+              <Link to={createPageUrl('Subscribe')}>
+                <Button className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-8 py-6 rounded-full shadow-xl shadow-amber-500/20">
+                  {lang === 'fr' ? 'Créer mon compte' : 'Create my account'}
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
