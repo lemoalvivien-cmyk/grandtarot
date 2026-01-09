@@ -105,6 +105,13 @@ export default function AdminDashboard() {
       color: "bg-green-500/20 text-green-400"
     },
     { 
+      title: "Config Stripe", 
+      icon: Settings, 
+      subtitle: "Payment Link & URLs", 
+      page: "AdminStripeConfig",
+      color: "bg-blue-500/20 text-blue-400"
+    },
+    { 
       title: "Paramètres", 
       icon: Settings, 
       subtitle: "Quotas, Prix, Config", 

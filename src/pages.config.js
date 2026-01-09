@@ -1,81 +1,83 @@
-import Landing from './pages/Landing';
-import CardOfDay from './pages/CardOfDay';
-import Encyclopedia from './pages/Encyclopedia';
-import CardDetail from './pages/CardDetail';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import Paywall from './pages/Paywall';
-import Dashboard from './pages/Dashboard';
-import Onboarding from './pages/Onboarding';
-import AdminDashboard from './pages/AdminDashboard';
-import DailyReading from './pages/DailyReading';
-import Affinities from './pages/Affinities';
-import Messages from './pages/Messages';
-import Chat from './pages/Chat';
-import Settings from './pages/Settings';
-import AdminUsers from './pages/AdminUsers';
-import AdminReports from './pages/AdminReports';
-import AdminContent from './pages/AdminContent';
-import AdminSettings from './pages/AdminSettings';
+import AdminAiPrompts from './pages/AdminAiPrompts';
+import AdminAnalytics from './pages/AdminAnalytics';
 import AdminAuditLog from './pages/AdminAuditLog';
-import AdminCardEditor from './pages/AdminCardEditor';
 import AdminBlogEditor from './pages/AdminBlogEditor';
-import Pricing from './pages/Pricing';
-import Subscribe from './pages/Subscribe';
+import AdminCardEditor from './pages/AdminCardEditor';
+import AdminContent from './pages/AdminContent';
+import AdminDailyCardManager from './pages/AdminDailyCardManager';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminModeration from './pages/AdminModeration';
+import AdminReports from './pages/AdminReports';
+import AdminSettings from './pages/AdminSettings';
+import AdminSubscriptionManager from './pages/AdminSubscriptionManager';
+import AdminUsers from './pages/AdminUsers';
+import Affinities from './pages/Affinities';
 import App from './pages/App';
+import AppIntentions from './pages/AppIntentions';
 import AppOnboarding from './pages/AppOnboarding';
 import AppRitual from './pages/AppRitual';
-import AppSynchros from './pages/AppSynchros';
-import AppIntentions from './pages/AppIntentions';
 import AppSettings from './pages/AppSettings';
-import SubscribeSuccess from './pages/SubscribeSuccess';
+import AppSynchros from './pages/AppSynchros';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
+import CardDetail from './pages/CardDetail';
+import CardOfDay from './pages/CardOfDay';
+import Chat from './pages/Chat';
+import DailyReading from './pages/DailyReading';
+import Dashboard from './pages/Dashboard';
+import Encyclopedia from './pages/Encyclopedia';
+import Landing from './pages/Landing';
+import Messages from './pages/Messages';
+import Onboarding from './pages/Onboarding';
+import Paywall from './pages/Paywall';
+import Pricing from './pages/Pricing';
+import Settings from './pages/Settings';
+import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
-import AdminDailyCardManager from './pages/AdminDailyCardManager';
-import AdminModeration from './pages/AdminModeration';
-import AdminAnalytics from './pages/AdminAnalytics';
-import AdminAiPrompts from './pages/AdminAiPrompts';
-import AdminSubscriptionManager from './pages/AdminSubscriptionManager';
+import SubscribeSuccess from './pages/SubscribeSuccess';
+import AdminStripeConfig from './pages/AdminStripeConfig';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Landing": Landing,
-    "CardOfDay": CardOfDay,
-    "Encyclopedia": Encyclopedia,
-    "CardDetail": CardDetail,
-    "Blog": Blog,
-    "BlogPost": BlogPost,
-    "Paywall": Paywall,
-    "Dashboard": Dashboard,
-    "Onboarding": Onboarding,
-    "AdminDashboard": AdminDashboard,
-    "DailyReading": DailyReading,
-    "Affinities": Affinities,
-    "Messages": Messages,
-    "Chat": Chat,
-    "Settings": Settings,
-    "AdminUsers": AdminUsers,
-    "AdminReports": AdminReports,
-    "AdminContent": AdminContent,
-    "AdminSettings": AdminSettings,
+    "AdminAiPrompts": AdminAiPrompts,
+    "AdminAnalytics": AdminAnalytics,
     "AdminAuditLog": AdminAuditLog,
-    "AdminCardEditor": AdminCardEditor,
     "AdminBlogEditor": AdminBlogEditor,
-    "Pricing": Pricing,
-    "Subscribe": Subscribe,
+    "AdminCardEditor": AdminCardEditor,
+    "AdminContent": AdminContent,
+    "AdminDailyCardManager": AdminDailyCardManager,
+    "AdminDashboard": AdminDashboard,
+    "AdminModeration": AdminModeration,
+    "AdminReports": AdminReports,
+    "AdminSettings": AdminSettings,
+    "AdminSubscriptionManager": AdminSubscriptionManager,
+    "AdminUsers": AdminUsers,
+    "Affinities": Affinities,
     "App": App,
+    "AppIntentions": AppIntentions,
     "AppOnboarding": AppOnboarding,
     "AppRitual": AppRitual,
-    "AppSynchros": AppSynchros,
-    "AppIntentions": AppIntentions,
     "AppSettings": AppSettings,
-    "SubscribeSuccess": SubscribeSuccess,
+    "AppSynchros": AppSynchros,
+    "Blog": Blog,
+    "BlogPost": BlogPost,
+    "CardDetail": CardDetail,
+    "CardOfDay": CardOfDay,
+    "Chat": Chat,
+    "DailyReading": DailyReading,
+    "Dashboard": Dashboard,
+    "Encyclopedia": Encyclopedia,
+    "Landing": Landing,
+    "Messages": Messages,
+    "Onboarding": Onboarding,
+    "Paywall": Paywall,
+    "Pricing": Pricing,
+    "Settings": Settings,
+    "Subscribe": Subscribe,
     "SubscribeCancel": SubscribeCancel,
-    "AdminDailyCardManager": AdminDailyCardManager,
-    "AdminModeration": AdminModeration,
-    "AdminAnalytics": AdminAnalytics,
-    "AdminAiPrompts": AdminAiPrompts,
-    "AdminSubscriptionManager": AdminSubscriptionManager,
+    "SubscribeSuccess": SubscribeSuccess,
+    "AdminStripeConfig": AdminStripeConfig,
 }
 
 export const pagesConfig = {

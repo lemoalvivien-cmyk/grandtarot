@@ -57,12 +57,31 @@ export default function Subscribe() {
     }
   };
 
-  const handleSubscribe = () => {
-    // Store user email for post-payment identification
-    if (user?.email) {
-      sessionStorage.setItem('subscribing_user', user.email);
+  const handleSubscribe = async () => {
+    try {
+      // Try Base44 native payments first
+      if (window.base44?.payments) {
+        // Will redirect to Stripe Checkout managed by Base44
+        await window.base44.payments.subscribe({
+          priceId: 'price_monthly_premium', // To be configured in Base44 dashboard
+          successUrl: window.location.origin + createPageUrl('SubscribeSuccess'),
+          cancelUrl: window.location.origin + createPageUrl('SubscribeCancel')
+        });
+      } else {
+        // Fallback to Payment Link
+        if (user?.email) {
+          sessionStorage.setItem('subscribing_user', user.email);
+        }
+        window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      // Fallback to Payment Link on error
+      if (user?.email) {
+        sessionStorage.setItem('subscribing_user', user.email);
+      }
+      window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
     }
-    window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
   };
 
   const content = {
@@ -171,10 +190,15 @@ export default function Subscribe() {
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
-            {/* Security */}
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
-              <Shield className="w-4 h-4" />
-              <span>{lang === 'fr' ? 'Paiement sécurisé par Stripe' : 'Secure payment by Stripe'}</span>
+            {/* Security & Info */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                <Shield className="w-4 h-4" />
+                <span>{lang === 'fr' ? 'Paiement sécurisé par Stripe' : 'Secure payment by Stripe'}</span>
+              </div>
+              <p className="text-xs text-slate-500 text-center">
+                {lang === 'fr' ? 'Résiliation à tout moment depuis vos paramètres' : 'Cancel anytime from your settings'}
+              </p>
             </div>
           </div>
         </div>
