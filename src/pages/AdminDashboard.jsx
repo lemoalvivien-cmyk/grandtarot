@@ -112,6 +112,13 @@ export default function AdminDashboard() {
       color: "bg-blue-500/20 text-blue-400"
     },
     { 
+      title: "Import Tarot", 
+      icon: Settings, 
+      subtitle: "CSV 78 cartes", 
+      page: "AdminTarotImport",
+      color: "bg-purple-500/20 text-purple-400"
+    },
+    { 
       title: "Paramètres", 
       icon: Settings, 
       subtitle: "Quotas, Prix, Config", 

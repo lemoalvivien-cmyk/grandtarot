@@ -118,7 +118,7 @@ export default function CardDetail() {
             <div>
               <h1 className="text-4xl font-serif font-bold mb-2">{lang === 'fr' ? card.name_fr : card.name_en}</h1>
               <p className="text-purple-300/60 capitalize">
-                {card.arcana === 'major' ? (lang === 'fr' ? 'Arcane Majeur' : 'Major Arcana') : `${lang === 'fr' ? 'Arcane Mineur' : 'Minor Arcana'} • ${card.suit}`}
+                {card.arcana_type === 'major' ? (lang === 'fr' ? 'Arcane Majeur' : 'Major Arcana') : `${lang === 'fr' ? 'Arcane Mineur' : 'Minor Arcana'} • ${card.suit}`}
               </p>
             </div>
 

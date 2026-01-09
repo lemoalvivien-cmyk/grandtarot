@@ -63,10 +63,16 @@ export default function Encyclopedia() {
 
   const filteredCards = cards.filter(card => {
     const name = lang === 'fr' ? card.name_fr : card.name_en;
-    const matchSearch = name?.toLowerCase().includes(search.toLowerCase());
+    const keywords = lang === 'fr' ? card.keywords_fr : card.keywords_en;
+    const searchLower = search.toLowerCase();
+    
+    const matchSearch = name?.toLowerCase().includes(searchLower) || 
+                        keywords?.some(kw => kw.toLowerCase().includes(searchLower));
+    
     const matchFilter = filter === 'all' || 
-      (filter === 'major' && card.arcana === 'major') ||
-      (card.arcana === 'minor' && card.suit === filter);
+      (filter === 'major' && card.arcana_type === 'major') ||
+      (card.arcana_type === 'minor' && card.suit === filter);
+    
     return matchSearch && matchFilter;
   });
 
@@ -145,7 +151,7 @@ export default function Encyclopedia() {
                   <div className="p-3 text-center">
                     <h3 className="font-medium text-sm truncate">{lang === 'fr' ? card.name_fr : card.name_en}</h3>
                     <p className="text-xs text-purple-300/60 capitalize">
-                      {card.arcana === 'major' 
+                      {card.arcana_type === 'major' 
                         ? (lang === 'fr' ? 'Majeur' : 'Major') 
                         : card.suit}
                     </p>
