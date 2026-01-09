@@ -116,10 +116,31 @@ export default function CardDetail() {
           {/* Details */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-4xl font-serif font-bold mb-2">{lang === 'fr' ? card.name_fr : card.name_en}</h1>
-              <p className="text-purple-300/60 capitalize">
+              <h1 className="text-4xl font-serif font-bold mb-2 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+                {lang === 'fr' ? card.name_fr : card.name_en}
+              </h1>
+              <p className="text-purple-300/60 capitalize mb-4">
                 {card.arcana_type === 'major' ? (lang === 'fr' ? 'Arcane Majeur' : 'Major Arcana') : `${lang === 'fr' ? 'Arcane Mineur' : 'Minor Arcana'} • ${card.suit}`}
               </p>
+              
+              {/* SEO Rich Description */}
+              <div className="text-slate-300 leading-relaxed">
+                <p>
+                  {lang === 'fr' ? (
+                    <>
+                      Découvrez la signification profonde de <strong>{card.name_fr}</strong> dans le tarot de Marseille. 
+                      Cette carte {card.arcana_type === 'major' ? 'majeure' : 'mineure'} révèle des messages puissants 
+                      pour votre vie amoureuse, votre carrière et vos relations. Interprétation complète à l'endroit et renversée.
+                    </>
+                  ) : (
+                    <>
+                      Discover the deep meaning of <strong>{card.name_en}</strong> in the Tarot. 
+                      This {card.arcana_type === 'major' ? 'major' : 'minor'} arcana reveals powerful messages 
+                      for your love life, career, and relationships. Complete upright and reversed interpretation.
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
 
             {/* Keywords */}
@@ -136,38 +157,60 @@ export default function CardDetail() {
 
             {/* Meanings */}
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <h4 className="text-sm uppercase tracking-wider text-green-400 mb-3">{t.upright}</h4>
-              <p className="text-purple-200/80">{lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}</p>
+              <h2 className="text-lg font-semibold text-green-400 mb-3">
+                {lang === 'fr' ? `${card.name_fr} à l'endroit` : `${card.name_en} Upright`}
+              </h2>
+              <p className="text-purple-200/80 leading-relaxed">{lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en}</p>
             </div>
 
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <h4 className="text-sm uppercase tracking-wider text-red-400 mb-3">{t.reversed}</h4>
-              <p className="text-purple-200/80">{lang === 'fr' ? card.meaning_reversed_fr : card.meaning_reversed_en}</p>
+              <h2 className="text-lg font-semibold text-red-400 mb-3">
+                {lang === 'fr' ? `${card.name_fr} renversée` : `${card.name_en} Reversed`}
+              </h2>
+              <p className="text-purple-200/80 leading-relaxed">{lang === 'fr' ? card.meaning_reversed_fr : card.meaning_reversed_en}</p>
             </div>
 
             {/* Mode-specific meanings */}
-            <Tabs defaultValue="love" className="mt-8">
-              <TabsList className="bg-white/5 border border-white/10">
-                <TabsTrigger value="love" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
-                  <Heart className="w-4 h-4 mr-2" />{t.love}
-                </TabsTrigger>
-                <TabsTrigger value="career" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
-                  <Briefcase className="w-4 h-4 mr-2" />{t.career}
-                </TabsTrigger>
-                <TabsTrigger value="friendship" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
-                  <Users className="w-4 h-4 mr-2" />{t.friendship}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="love" className="mt-4 p-4 bg-white/5 rounded-xl">
-                <p className="text-purple-200/80">{lang === 'fr' ? card.love_meaning_fr : card.love_meaning_en}</p>
-              </TabsContent>
-              <TabsContent value="career" className="mt-4 p-4 bg-white/5 rounded-xl">
-                <p className="text-purple-200/80">{lang === 'fr' ? card.career_meaning_fr : card.career_meaning_en}</p>
-              </TabsContent>
-              <TabsContent value="friendship" className="mt-4 p-4 bg-white/5 rounded-xl">
-                <p className="text-purple-200/80">{lang === 'fr' ? card.friendship_meaning_fr : card.friendship_meaning_en}</p>
-              </TabsContent>
-            </Tabs>
+            <div className="mt-8">
+              <h2 className="text-2xl font-serif font-semibold mb-6 text-amber-100">
+                {lang === 'fr' ? 'Interprétations selon votre situation' : 'Interpretations by Context'}
+              </h2>
+              
+              <Tabs defaultValue="love" className="space-y-4">
+                <TabsList className="bg-white/5 border border-white/10 w-full">
+                  <TabsTrigger value="love" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white flex-1">
+                    <Heart className="w-4 h-4 mr-2" />{t.love}
+                  </TabsTrigger>
+                  <TabsTrigger value="career" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white flex-1">
+                    <Briefcase className="w-4 h-4 mr-2" />{t.career}
+                  </TabsTrigger>
+                  <TabsTrigger value="friendship" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white flex-1">
+                    <Users className="w-4 h-4 mr-2" />{t.friendship}
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="love" className="mt-4 p-6 bg-white/5 rounded-xl border border-white/10">
+                  <h3 className="text-xl font-semibold text-rose-300 mb-4">
+                    {lang === 'fr' ? `${card.name_fr} en Amour` : `${card.name_en} in Love`}
+                  </h3>
+                  <p className="text-purple-200/80 leading-relaxed">{lang === 'fr' ? card.love_meaning_fr : card.love_meaning_en}</p>
+                </TabsContent>
+                
+                <TabsContent value="career" className="mt-4 p-6 bg-white/5 rounded-xl border border-white/10">
+                  <h3 className="text-xl font-semibold text-amber-300 mb-4">
+                    {lang === 'fr' ? `${card.name_fr} en Carrière` : `${card.name_en} in Career`}
+                  </h3>
+                  <p className="text-purple-200/80 leading-relaxed">{lang === 'fr' ? card.career_meaning_fr : card.career_meaning_en}</p>
+                </TabsContent>
+                
+                <TabsContent value="friendship" className="mt-4 p-6 bg-white/5 rounded-xl border border-white/10">
+                  <h3 className="text-xl font-semibold text-cyan-300 mb-4">
+                    {lang === 'fr' ? `${card.name_fr} en Amitié` : `${card.name_en} in Friendship`}
+                  </h3>
+                  <p className="text-purple-200/80 leading-relaxed">{lang === 'fr' ? card.friendship_meaning_fr : card.friendship_meaning_en}</p>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </div>
       </div>
