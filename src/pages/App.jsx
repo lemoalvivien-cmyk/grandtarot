@@ -41,9 +41,15 @@ export default function App() {
       setProfile(userProfile);
       setLang(userProfile.language_pref || 'fr');
 
-      if (!userProfile.is_subscribed && currentUser.role !== 'admin') {
-        window.location.href = createPageUrl('Subscribe');
-        return;
+      // Check subscription status (admins bypass)
+      if (currentUser.role !== 'admin') {
+        const hasActiveSubscription = userProfile.subscription_status === 'active' || 
+                                      userProfile.subscription_status === 'trialing';
+        
+        if (!hasActiveSubscription) {
+          window.location.href = createPageUrl('Subscribe');
+          return;
+        }
       }
 
       if (!userProfile.onboarding_completed || !userProfile.photo_url) {
