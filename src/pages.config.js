@@ -28,6 +28,12 @@ import AppRitual from './pages/AppRitual';
 import AppSynchros from './pages/AppSynchros';
 import AppIntentions from './pages/AppIntentions';
 import AppSettings from './pages/AppSettings';
+import SubscribeSuccess from './pages/SubscribeSuccess';
+import SubscribeCancel from './pages/SubscribeCancel';
+import AdminDailyCardManager from './pages/AdminDailyCardManager';
+import AdminModeration from './pages/AdminModeration';
+import AdminAnalytics from './pages/AdminAnalytics';
+import AdminAiPrompts from './pages/AdminAiPrompts';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +68,12 @@ export const PAGES = {
     "AppSynchros": AppSynchros,
     "AppIntentions": AppIntentions,
     "AppSettings": AppSettings,
+    "SubscribeSuccess": SubscribeSuccess,
+    "SubscribeCancel": SubscribeCancel,
+    "AdminDailyCardManager": AdminDailyCardManager,
+    "AdminModeration": AdminModeration,
+    "AdminAnalytics": AdminAnalytics,
+    "AdminAiPrompts": AdminAiPrompts,
 }
 
 export const pagesConfig = {

@@ -57,38 +57,17 @@ export default function CardOfDay() {
   const t = content[lang];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 text-white">
-      {/* Header */}
-      <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-        <Link to={createPageUrl('Landing')} className="flex items-center gap-2 text-purple-300 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-          <span>{t.back}</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setLang('fr')}
-            className={`px-3 py-1 rounded-full text-sm ${lang === 'fr' ? 'bg-purple-500' : 'bg-white/10'}`}
-          >
-            FR
-          </button>
-          <button
-            onClick={() => setLang('en')}
-            className={`px-3 py-1 rounded-full text-sm ${lang === 'en' ? 'bg-purple-500' : 'bg-white/10'}`}
-          >
-            EN
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen">{/* Header removed - now in Layout */}
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 rounded-full border border-amber-500/30 mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-amber-300 text-sm">{new Date().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            <span className="text-amber-200 text-sm">{new Date().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">{t.title}</h1>
-          <p className="text-purple-200/60">{t.subtitle}</p>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">{t.title}</h1>
+          <p className="text-slate-400">{t.subtitle}</p>
         </div>
 
         {loading ? (

@@ -71,35 +71,23 @@ export default function Encyclopedia() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 text-white">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-        <Link to={createPageUrl('Landing')} className="flex items-center gap-2 text-purple-300 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-          <span>{t.back}</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setLang('fr')} className={`px-3 py-1 rounded-full text-sm ${lang === 'fr' ? 'bg-purple-500' : 'bg-white/10'}`}>FR</button>
-          <button onClick={() => setLang('en')} className={`px-3 py-1 rounded-full text-sm ${lang === 'en' ? 'bg-purple-500' : 'bg-white/10'}`}>EN</button>
-        </div>
-      </div>
-
+    <div className="min-h-screen">
       {/* Title */}
       <div className="max-w-6xl mx-auto px-4 py-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">{t.title}</h1>
-        <p className="text-purple-200/60">{t.subtitle}</p>
+        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">{t.title}</h1>
+        <p className="text-slate-400">{t.subtitle}</p>
       </div>
 
       {/* Search & Filters */}
       <div className="max-w-6xl mx-auto px-4 mb-8">
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-400" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.search}
-              className="pl-12 bg-white/5 border-white/10 text-white placeholder:text-purple-300/40 h-12 rounded-xl"
+              className="pl-12 bg-slate-900/50 border-amber-500/10 text-white placeholder:text-slate-500 h-12 rounded-xl focus:border-amber-500/30"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -109,8 +97,8 @@ export default function Encyclopedia() {
                 onClick={() => setFilter(key)}
                 className={`px-4 py-2 rounded-full text-sm transition-all ${
                   filter === key 
-                    ? 'bg-purple-500 text-white' 
-                    : 'bg-white/5 text-purple-300 hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-amber-500 to-violet-600 text-white' 
+                    : 'bg-slate-900/50 border border-amber-500/10 text-slate-300 hover:border-amber-500/30'
                 }`}
               >
                 {label}

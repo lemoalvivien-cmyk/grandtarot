@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Sparkles, Heart, Users, Briefcase, Star, Shield, Globe } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Landing() {
@@ -51,80 +51,60 @@ export default function Landing() {
   const t = content[lang];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 text-white">
-      {/* Language Switch */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
-        <button
-          onClick={() => setLang('fr')}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-            lang === 'fr' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20'
-          }`}
-        >
-          FR
-        </button>
-        <button
-          onClick={() => setLang('en')}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-            lang === 'en' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20'
-          }`}
-        >
-          EN
-        </button>
-      </div>
-
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1601370690183-1c7796ecec61?w=1920')] bg-cover bg-center opacity-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-950/50 to-slate-950" />
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1601370690183-1c7796ecec61?w=1920')] bg-cover bg-center opacity-5" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/80 to-slate-950" />
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
         
         <div className="relative max-w-6xl mx-auto px-4 pt-32 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30 mb-8">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-purple-300 text-sm font-medium">GRANDTAROT V1</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-8">
+            <Crown className="w-4 h-4 text-amber-400" />
+            <span className="text-amber-200 text-sm font-medium">GRANDTAROT V1</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-purple-200 via-white to-amber-200 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent leading-tight">
             {t.hero}
           </h1>
           
-          <p className="text-xl text-purple-200/80 max-w-2xl mx-auto mb-10">
+          <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-10">
             {t.subtitle}
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <Link to={createPageUrl('Signup')}>
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 text-white px-8 py-6 text-lg rounded-full shadow-2xl shadow-purple-500/30">
-                {t.cta}
-              </Button>
-            </Link>
-            <span className="text-purple-300 font-medium">{t.price}</span>
-          </div>
-
-          {/* Public Navigation */}
-          <div className="flex flex-wrap justify-center gap-4 mt-12">
-            <Link to={createPageUrl('CardOfDay')} className="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all">
-              {t.cardOfDay}
-            </Link>
-            <Link to={createPageUrl('Encyclopedia')} className="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all">
-              {t.encyclopedia}
-            </Link>
-            <Link to={createPageUrl('Blog')} className="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all">
-              {t.blog}
-            </Link>
+            <Button 
+              onClick={() => window.location.href = createPageUrl('Subscribe')}
+              size="lg" 
+              className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white px-8 py-6 text-lg rounded-full shadow-2xl shadow-amber-500/30 border-0"
+            >
+              {t.cta}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+            <span className="text-amber-300 font-medium flex items-center gap-2">
+              <Crown className="w-4 h-4" />
+              {t.price}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Modes Section */}
       <div className="max-w-6xl mx-auto px-4 py-24">
+        <h2 className="text-3xl md:text-4xl font-serif font-bold text-center mb-16 text-amber-100">
+          {lang === 'fr' ? 'Trois modes, une destinée' : 'Three modes, one destiny'}
+        </h2>
         <div className="grid md:grid-cols-3 gap-8">
           {t.modes.map((mode, i) => (
             <div key={i} className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-amber-500/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all opacity-50" />
-              <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:border-purple-500/50 transition-all">
-                <mode.icon className="w-12 h-12 text-purple-400 mb-4" />
-                <h3 className="text-2xl font-semibold mb-2">{mode.title}</h3>
-                <p className="text-purple-200/60">{mode.desc}</p>
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all" />
+              <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-3xl p-8 hover:border-amber-500/30 transition-all">
+                <mode.icon className="w-12 h-12 text-amber-400 mb-4" />
+                <h3 className="text-2xl font-serif font-semibold mb-2 text-amber-100">{mode.title}</h3>
+                <p className="text-slate-400">{mode.desc}</p>
               </div>
             </div>
           ))}
@@ -132,33 +112,19 @@ export default function Landing() {
       </div>
 
       {/* Features */}
-      <div className="max-w-6xl mx-auto px-4 py-24 border-t border-white/10">
+      <div className="max-w-6xl mx-auto px-4 py-24 border-t border-amber-500/10">
         <div className="grid md:grid-cols-3 gap-12">
           {t.features.map((feat, i) => (
-            <div key={i} className="text-center">
-              <div className="inline-flex p-4 bg-purple-500/20 rounded-2xl mb-4">
-                <feat.icon className="w-8 h-8 text-purple-400" />
+            <div key={i} className="text-center group">
+              <div className="inline-flex p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-4 group-hover:border-amber-500/40 transition-all">
+                <feat.icon className="w-8 h-8 text-amber-400" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{feat.title}</h3>
-              <p className="text-purple-200/60">{feat.desc}</p>
+              <h3 className="text-xl font-semibold mb-2 text-amber-100">{feat.title}</h3>
+              <p className="text-slate-400">{feat.desc}</p>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-12">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            <span className="font-semibold">GRANDTAROT</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-purple-200/60">
-            <Link to={createPageUrl('Login')} className="hover:text-white transition-colors">Login</Link>
-            <Link to={createPageUrl('Signup')} className="hover:text-white transition-colors">Signup</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
