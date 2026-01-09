@@ -1,0 +1,199 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
+import { 
+  Shield, Users, AlertTriangle, Settings, FileText, 
+  BarChart3, MessageSquare, Ban, Eye, ChevronRight 
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeSubscriptions: 0,
+    pendingReports: 0,
+    totalMessages: 0
+  });
+
+  useEffect(() => {
+    checkAdmin();
+  }, []);
+
+  const checkAdmin = async () => {
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        window.location.href = createPageUrl('Login');
+        return;
+      }
+
+      const currentUser = await base44.auth.me();
+      
+      if (currentUser.role !== 'admin') {
+        // Not admin, redirect
+        window.location.href = createPageUrl('Dashboard');
+        return;
+      }
+
+      setUser(currentUser);
+      await loadStats();
+    } catch (error) {
+      console.error('Error:', error);
+      window.location.href = createPageUrl('Login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const [profiles, reports] = await Promise.all([
+        base44.entities.UserProfile.list(),
+        base44.entities.Report.filter({ status: 'pending' })
+      ]);
+
+      setStats({
+        totalUsers: profiles.length,
+        activeSubscriptions: profiles.filter(p => p.is_subscribed).length,
+        pendingReports: reports.length,
+        totalMessages: 0 // Would need to count messages
+      });
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  const adminSections = [
+    { 
+      title: "Utilisateurs", 
+      icon: Users, 
+      count: stats.totalUsers, 
+      page: "AdminUsers",
+      color: "bg-blue-500/20 text-blue-400"
+    },
+    { 
+      title: "Signalements", 
+      icon: AlertTriangle, 
+      count: stats.pendingReports, 
+      page: "AdminReports",
+      color: "bg-red-500/20 text-red-400",
+      urgent: stats.pendingReports > 0
+    },
+    { 
+      title: "Contenu", 
+      icon: FileText, 
+      subtitle: "Cartes, Blog, Prompts", 
+      page: "AdminContent",
+      color: "bg-purple-500/20 text-purple-400"
+    },
+    { 
+      title: "Paramètres", 
+      icon: Settings, 
+      subtitle: "Quotas, Prix, Config", 
+      page: "AdminSettings",
+      color: "bg-amber-500/20 text-amber-400"
+    },
+    { 
+      title: "Audit Log", 
+      icon: Eye, 
+      subtitle: "Historique actions", 
+      page: "AdminAuditLog",
+      color: "bg-green-500/20 text-green-400"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      {/* Header */}
+      <div className="border-b border-white/10 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="w-6 h-6 text-purple-400" />
+            <span className="font-semibold text-lg">Admin GRANDTAROT</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-purple-300">{user?.email}</span>
+            <Link to={createPageUrl('Dashboard')} className="text-sm text-purple-400 hover:text-white">
+              Retour à l'app →
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-4">
+              <p className="text-purple-300/60 text-sm">Utilisateurs</p>
+              <p className="text-2xl font-bold">{stats.totalUsers}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-4">
+              <p className="text-purple-300/60 text-sm">Abonnés actifs</p>
+              <p className="text-2xl font-bold text-green-400">{stats.activeSubscriptions}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-4">
+              <p className="text-purple-300/60 text-sm">Signalements</p>
+              <p className={`text-2xl font-bold ${stats.pendingReports > 0 ? 'text-red-400' : ''}`}>
+                {stats.pendingReports}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-4">
+              <p className="text-purple-300/60 text-sm">Taux conversion</p>
+              <p className="text-2xl font-bold">
+                {stats.totalUsers > 0 ? Math.round((stats.activeSubscriptions / stats.totalUsers) * 100) : 0}%
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Admin Sections */}
+        <h2 className="text-xl font-semibold mb-4">Administration</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {adminSections.map((section) => (
+            <Link key={section.page} to={createPageUrl(section.page)}>
+              <Card className={`bg-white/5 border-white/10 hover:border-purple-500/50 transition-all cursor-pointer ${section.urgent ? 'border-red-500/50' : ''}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${section.color}`}>
+                        <section.icon className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{section.title}</h3>
+                        {section.count !== undefined && (
+                          <p className="text-purple-300/60 text-sm">{section.count} éléments</p>
+                        )}
+                        {section.subtitle && (
+                          <p className="text-purple-300/60 text-sm">{section.subtitle}</p>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-purple-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
