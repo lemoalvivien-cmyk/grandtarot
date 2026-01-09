@@ -70,7 +70,7 @@ export default function AdminAiPromptsEditor() {
       }
       
       // Clear AI service cache
-      const { clearPromptCache } = await import('@/utils/aiService');
+      const { clearPromptCache } = await import('@/components/helpers/aiService');
       clearPromptCache();
       
       toast.success('Prompt sauvegardé');

@@ -95,7 +95,7 @@ export default function AppRitual() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Generate AI interpretation
-      const { generateInterpretation } = await import('@/utils/aiService');
+      const { generateInterpretation } = await import('@/components/helpers/aiService');
       const interpretation = await generateInterpretation({
         card: randomCard,
         mode: profile.mode_active,
