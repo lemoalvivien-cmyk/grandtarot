@@ -26,15 +26,25 @@ export default function Subscribe() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
-      if (profiles.length > 0) {
-        setProfile(profiles[0]);
-        setLang(profiles[0].language_pref || 'fr');
-        
-        if (profiles[0].is_subscribed) {
-          window.location.href = createPageUrl('App');
-          return;
-        }
+      let profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
+      
+      if (profiles.length === 0) {
+        // Create profile for new user
+        const newProfile = await base44.entities.UserProfile.create({
+          user_id: currentUser.email,
+          display_name: currentUser.full_name || '',
+          is_subscribed: false,
+          language_pref: 'fr'
+        });
+        profiles = [newProfile];
+      }
+      
+      setProfile(profiles[0]);
+      setLang(profiles[0].language_pref || 'fr');
+      
+      if (profiles[0].is_subscribed) {
+        window.location.href = createPageUrl('App');
+        return;
       }
     } catch (error) {
       console.error('Error:', error);

@@ -33,6 +33,17 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
+  const changeLang = async (newLang) => {
+    setLang(newLang);
+    if (profile) {
+      try {
+        await base44.entities.UserProfile.update(profile.id, { language_pref: newLang });
+      } catch (error) {
+        console.error('Error updating language:', error);
+      }
+    }
+  };
+
   const isPublicPage = ['Landing', 'CardOfDay', 'Encyclopedia', 'CardDetail', 'Blog', 'BlogPost', 'Pricing'].includes(currentPageName);
   const isAuthPage = ['Login', 'Signup'].includes(currentPageName);
   const isAdminPage = currentPageName?.startsWith('Admin');
@@ -134,7 +145,7 @@ export default function Layout({ children, currentPageName }) {
             {/* Language */}
             <div className="hidden sm:flex items-center gap-1 bg-slate-800/50 rounded-full p-1">
               <button
-                onClick={() => setLang('fr')}
+                onClick={() => changeLang('fr')}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   lang === 'fr' ? 'bg-amber-500/20 text-amber-200' : 'text-slate-400 hover:text-slate-200'
                 }`}
@@ -142,7 +153,7 @@ export default function Layout({ children, currentPageName }) {
                 FR
               </button>
               <button
-                onClick={() => setLang('en')}
+                onClick={() => changeLang('en')}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   lang === 'en' ? 'bg-amber-500/20 text-amber-200' : 'text-slate-400 hover:text-slate-200'
                 }`}

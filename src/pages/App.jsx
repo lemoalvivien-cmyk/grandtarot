@@ -46,7 +46,7 @@ export default function App() {
         return;
       }
 
-      if (!userProfile.onboarding_completed) {
+      if (!userProfile.onboarding_completed || !userProfile.photo_url) {
         window.location.href = createPageUrl('AppOnboarding');
         return;
       }
