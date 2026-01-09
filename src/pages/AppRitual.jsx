@@ -118,8 +118,7 @@ export default function AppRitual() {
         userProfile: profile
       });
       
-      // Create daily draw with interpretation
-      const today = new Date().toISOString().split('T')[0];
+      // Create daily draw with interpretation (today already declared above)
       const newDraw = await base44.entities.DailyDraw.create({
         user_id: user.email,
         draw_date: today,
