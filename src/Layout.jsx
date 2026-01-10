@@ -349,6 +349,9 @@ export default function Layout({ children, currentPageName }) {
                     <Link to={createPageUrl('Cookies')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
                       {lang === 'fr' ? 'Cookies' : 'Cookies'}
                     </Link>
+                    <Link to={createPageUrl('Legal')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Mentions légales' : 'Legal'}
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -367,6 +370,10 @@ export default function Layout({ children, currentPageName }) {
                 <span className="text-xs text-slate-600">•</span>
                 <Link to={createPageUrl('Cookies')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
                   {lang === 'fr' ? 'Cookies' : 'Cookies'}
+                </Link>
+                <span className="text-xs text-slate-600">•</span>
+                <Link to={createPageUrl('Legal')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'Mentions légales' : 'Legal'}
                 </Link>
               </div>
             )}
