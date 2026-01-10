@@ -2,6 +2,7 @@ import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminAuditLog from './pages/AdminAuditLog';
+import AdminBackendSetup from './pages/AdminBackendSetup';
 import AdminBackfillMessages from './pages/AdminBackfillMessages';
 import AdminBlogEditor from './pages/AdminBlogEditor';
 import AdminCardEditor from './pages/AdminCardEditor';
@@ -48,7 +49,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminBackendSetup from './pages/AdminBackendSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -57,6 +57,7 @@ export const PAGES = {
     "AdminAiPromptsEditor": AdminAiPromptsEditor,
     "AdminAnalytics": AdminAnalytics,
     "AdminAuditLog": AdminAuditLog,
+    "AdminBackendSetup": AdminBackendSetup,
     "AdminBackfillMessages": AdminBackfillMessages,
     "AdminBlogEditor": AdminBlogEditor,
     "AdminCardEditor": AdminCardEditor,
@@ -103,7 +104,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminBackendSetup": AdminBackendSetup,
 }
 
 export const pagesConfig = {

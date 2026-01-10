@@ -30,7 +30,7 @@ export default function AdminBackfillMessages() {
       addLog('info', '📊 Traitement par batch de 200 messages...');
 
       while (hasMore) {
-        // Load batch
+        // Load batch with pagination
         const batch = await base44.entities.Message.filter({}, '-created_date', BATCH_SIZE);
         
         if (batch.length === 0) {
@@ -38,8 +38,10 @@ export default function AdminBackfillMessages() {
           break;
         }
 
-        addLog('info', `📦 Traitement batch: ${batch.length} messages (skip: ${skip})`);
+        setProgress(prev => ({ ...prev, total: prev.total + batch.length }));
+        addLog('info', `📦 Batch ${Math.floor(skip / BATCH_SIZE) + 1}: ${batch.length} messages`);
 
+        let batchProcessed = 0;
         for (const message of batch) {
         try {
           // Check if already has participants
@@ -101,11 +103,19 @@ export default function AdminBackfillMessages() {
             errors: prev.errors + 1 
           }));
         }
+        
+        batchProcessed++;
       }
 
+        // If batch was full, there might be more
+        if (batch.length < BATCH_SIZE) {
+          hasMore = false;
+          addLog('info', '✅ Dernier batch traité, fin du backfill');
+        }
+        
         skip += BATCH_SIZE;
         
-        // Small delay to avoid rate limits
+        // Delay to avoid rate limits
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
