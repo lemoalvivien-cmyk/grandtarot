@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Heart, Users, Briefcase, Menu, X, Globe, Crown } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, Menu, X, Globe, Crown, User, Shield, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CookieBanner from '@/components/legal/CookieBanner';
 
 export default function Layout({ children, currentPageName }) {
@@ -184,13 +185,46 @@ export default function Layout({ children, currentPageName }) {
                     </Button>
                   </Link>
                 )}
-                {user.role === 'admin' && !isAdminPage && (
-                  <Link to={createPageUrl('AdminDashboard')}>
-                    <Button size="sm" variant="outline" className="hidden sm:flex border-violet-500/30 text-violet-300 hover:bg-violet-500/10">
-                      {t.admin}
-                    </Button>
-                  </Link>
-                )}
+
+                {/* User Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center hover:bg-amber-500/30 transition-all">
+                      {profile?.photo_url ? (
+                        <img src={profile.photo_url} alt={user.full_name} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4 text-amber-400" />
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-slate-900 border-amber-500/20">
+                    <div className="px-3 py-2 border-b border-amber-500/10">
+                      <p className="text-sm font-medium text-amber-100">{user.full_name}</p>
+                      <p className="text-xs text-slate-400">{user.email}</p>
+                    </div>
+
+                    {(user.role === 'admin' || user.role === 'moderator') && (
+                      <DropdownMenuItem asChild>
+                        <Link to={createPageUrl('AdminDashboard')} className="flex items-center gap-2 cursor-pointer">
+                          <Shield className="w-4 h-4 text-violet-400" />
+                          <span>{t.admin}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuItem asChild>
+                      <Link to={createPageUrl('AppSettings')} className="flex items-center gap-2 cursor-pointer">
+                        <User className="w-4 h-4" />
+                        <span>{t.settings}</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => base44.auth.logout()} className="flex items-center gap-2 cursor-pointer text-red-400">
+                      <LogOut className="w-4 h-4" />
+                      <span>{lang === 'fr' ? 'Déconnexion' : 'Logout'}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <Link to={createPageUrl('Landing')}>
