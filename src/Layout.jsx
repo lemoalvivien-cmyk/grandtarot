@@ -7,8 +7,18 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CookieBanner from '@/components/CookieBanner';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
+import InstallBanner from '@/components/pwa/InstallBanner';
 
 export default function Layout({ children, currentPageName }) {
+  // Register service worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => console.log('[SW] Registered:', reg))
+        .catch((err) => console.warn('[SW] Registration failed:', err));
+    }
+  }, []);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -294,6 +304,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Cookie Banner (ALL pages - compliance) */}
       <CookieBanner lang={lang} />
+
+      {/* PWA Install Banner (NOT on admin) */}
+      {!isAdminPage && <InstallBanner />}
 
       {/* Footer (all pages — legal links visible everywhere) */}
       {showFooter && (
