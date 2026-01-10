@@ -21,8 +21,9 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   
-  // Idempotence - clientMsgId stable on retry
+  // Idempotence - clientMsgId + body stable on retry
   const [pendingClientMsgId, setPendingClientMsgId] = useState(null);
+  const [pendingBody, setPendingBody] = useState('');
   
   // Pagination
   const [loadingMore, setLoadingMore] = useState(false);
@@ -32,6 +33,14 @@ export default function Chat() {
   // Rate limiting
   const [lastSendTime, setLastSendTime] = useState(0);
   const [sendAttempts, setSendAttempts] = useState(0);
+  
+  // Auto-reset pendingClientMsgId if message text changed
+  useEffect(() => {
+    if (pendingClientMsgId && messageText.trim() !== pendingBody) {
+      setPendingClientMsgId(null);
+      setPendingBody('');
+    }
+  }, [messageText, pendingClientMsgId, pendingBody]);
   
   // Modals
   const [blockModal, setBlockModal] = useState(false);
@@ -239,16 +248,26 @@ export default function Chat() {
     setSending(true);
     setError('');
     
+    const currentBody = messageText.trim();
+    
     // Generate stable clientMsgId ONCE (for retry idempotence)
-    const msgId = pendingClientMsgId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    if (!pendingClientMsgId) {
+    let msgId;
+    if (!pendingClientMsgId || currentBody !== pendingBody) {
+      // New message OR text changed => new ID
+      msgId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       setPendingClientMsgId(msgId);
+      setPendingBody(currentBody);
+    } else {
+      // Retry same message => reuse ID
+      msgId = pendingClientMsgId;
     }
     
     try {
       const result = await sendMessageSecure({
         conversationId: conversation.id,
-        messageBody: messageText.trim(),
+        messageBody: currentBody,
         clientMsgId: msgId,
         lang
       });
@@ -256,13 +275,14 @@ export default function Chat() {
       if (!result.success) {
         setError(result.error);
         setSending(false);
-        // Keep pendingClientMsgId for retry
+        // Keep pendingClientMsgId + pendingBody for retry
         return;
       }
 
       // Success: reset everything
       setMessageText('');
       setPendingClientMsgId(null);
+      setPendingBody('');
       setLastSendTime(now);
       setSendAttempts(prev => prev + 1);
       
@@ -271,7 +291,7 @@ export default function Chat() {
     } catch (error) {
       console.error('Error sending message:', error);
       setError(lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Error sending message');
-      // Keep pendingClientMsgId for retry
+      // Keep pendingClientMsgId + pendingBody for retry
     } finally {
       setSending(false);
     }

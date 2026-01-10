@@ -124,6 +124,8 @@ export const openConversationSecure = async (otherUserEmail) => {
 /**
  * SECURE: Send message via backend function
  * ONLY sends conversationId + body + clientMsgId (NO participant fields)
+ * 
+ * CRITICAL: clientMsgId is REQUIRED - no fallback generation here
  */
 export const sendMessageSecure = async ({ 
   conversationId, 
@@ -131,12 +133,17 @@ export const sendMessageSecure = async ({
   clientMsgId,
   lang 
 }) => {
+  // STRICT: clientMsgId must be provided by caller
+  if (!clientMsgId) {
+    throw new Error('clientMsgId required for idempotence');
+  }
+  
   try {
     // Call backend function - ONLY conversationId + body + clientMsgId
     const response = await base44.functions.chat_send_message({
       conversationId,
       body: messageBody,
-      clientMsgId: clientMsgId || `${Date.now()}-${Math.random()}`
+      clientMsgId
     });
     
     if (!response.message) {
