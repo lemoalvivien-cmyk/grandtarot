@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import LegalPageLayout from '@/components/legal/LegalPageLayout';
+import LegalPageLayout from '@/components/legal/LegalPageLayout.jsx';
 
 export default function Privacy() {
   const [supportEmail, setSupportEmail] = useState('[support@grandtarot.com]');
