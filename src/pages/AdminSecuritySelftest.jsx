@@ -299,6 +299,48 @@ export default function AdminSecuritySelftest() {
         }
       }
 
+      // TEST 17: NO-AUTH fetch (without credentials) => 401
+      try {
+        const response = await fetch('/api/v1/functions/chat_send_message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'omit',
+          body: JSON.stringify({ conversationId: 'test', body: 'test' })
+        });
+        
+        const statusCode = response.status;
+        const body = await response.json().catch(() => response.statusText);
+        
+        addResult('NO-AUTH fetch => 401', statusCode === 401, `Status: ${statusCode}, Body: ${JSON.stringify(body)}`);
+      } catch (error) {
+        addResult('NO-AUTH fetch => 401', false, 'Network error', error.message);
+      }
+
+      // TEST 18: NON-PARTICIPANT on fixture conversation => 403
+      try {
+        const fixtureSettings = await base44.entities.AppSettings.filter({
+          setting_key: 'security_fixture_conversation_id'
+        }, null, 1);
+        
+        if (fixtureSettings.length > 0 && fixtureSettings[0].value_string) {
+          try {
+            await base44.functions.chat_send_message({
+              conversationId: fixtureSettings[0].value_string,
+              body: 'non-participant test',
+              clientMsgId: `selftest-${Date.now()}`
+            });
+            addResult('NON-PARTICIPANT fixture => 403', false, 'SECURITY BREACH: Sent message in fixture conv', 'Should be 403');
+          } catch (error) {
+            const statusCode = error.statusCode || error.message?.match(/(\d{3})/)?.[1];
+            addResult('NON-PARTICIPANT fixture => 403', statusCode === '403' || statusCode === 403, `Status: ${statusCode}, Error: ${error.message}`);
+          }
+        } else {
+          addResult('NON-PARTICIPANT fixture => 403', null, 'SKIP: No fixture (create in /admin/security-fixtures)');
+        }
+      } catch (error) {
+        addResult('NON-PARTICIPANT fixture => 403', false, 'Error loading fixture', error.message);
+      }
+
     } catch (error) {
       addResult('Test Suite', false, 'Fatal error', error.message);
     }
