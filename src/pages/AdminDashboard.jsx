@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { 
   Shield, Users, AlertTriangle, Settings, FileText, 
-  BarChart3, MessageSquare, Ban, Eye, ChevronRight, CreditCard, CheckCircle
+  BarChart3, MessageSquare, Ban, Eye, ChevronRight, CreditCard, CheckCircle, Clock, Mail
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -159,6 +159,27 @@ export default function AdminDashboard() {
       subtitle: "Historique actions", 
       page: "AdminAuditLog",
       color: "bg-green-500/20 text-green-400"
+    },
+    { 
+      title: "Registre Art. 30", 
+      icon: FileText, 
+      subtitle: "RGPD - Traitements", 
+      page: "AdminRgpdRegister",
+      color: "bg-amber-500/20 text-amber-400"
+    },
+    { 
+      title: "Politique Rétention", 
+      icon: Clock, 
+      subtitle: "RGPD - Conservation", 
+      page: "AdminRgpdRetention",
+      color: "bg-amber-500/20 text-amber-400"
+    },
+    { 
+      title: "Procédure DSAR", 
+      icon: Mail, 
+      subtitle: "RGPD - Droits personnes", 
+      page: "AdminRgpdDsar",
+      color: "bg-amber-500/20 text-amber-400"
     }
   ];
 
