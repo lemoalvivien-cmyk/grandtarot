@@ -43,7 +43,7 @@ export default function AdminBillingRequests() {
 
       // Activate plan for user
       const accounts = await base44.entities.AccountPrivate.filter({
-        user_email: selectedRequest.user_email
+        user_email: selectedRequest.requester_user_email
       }, null, 1);
 
       if (accounts.length > 0) {
@@ -136,7 +136,7 @@ export default function AdminBillingRequests() {
                       <div className="flex items-center gap-3 mb-2">
                         {getStatusIcon(req.status)}
                         <div>
-                          <p className="font-semibold">{req.user_email}</p>
+                          <p className="font-semibold">{req.requester_user_email}</p>
                           <p className="text-sm text-slate-400">{req.request_type}</p>
                         </div>
                       </div>
@@ -166,7 +166,7 @@ export default function AdminBillingRequests() {
               <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl">
                 <DialogHeader>
                   <DialogTitle className="text-amber-100">
-                    Billing Request — {selectedRequest.user_email}
+                    Billing Request — {selectedRequest.requester_user_email}
                   </DialogTitle>
                 </DialogHeader>
 

@@ -71,7 +71,7 @@ export default function Billing() {
     setSubmittingProof(true);
     try {
       await base44.entities.BillingRequest.create({
-        user_email: user.email,
+        requester_user_email: user.email,
         request_type: 'payment_proof',
         description: proofDescription,
         status: 'pending'

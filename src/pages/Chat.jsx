@@ -197,11 +197,11 @@ export default function Chat() {
   };
   
   const loadMoreMessages = async () => {
-    if (!hasMore || loadingMore) return;
+    if (!hasMore || loadingMore || !conversation?.id) return;
     
     setLoadingMore(true);
     try {
-      // PAGINATION: Load 50 more messages before oldest
+      // PAGINATION: Load 50 more messages before oldest (LIMIT EXPLICIT)
       const olderMessages = await base44.entities.Message.filter({ 
         conversation_id: conversation.id,
         is_deleted: false,
@@ -226,6 +226,12 @@ export default function Chat() {
     e.preventDefault();
     
     if (!messageText.trim() || messageText.length > 2000) return;
+    
+    // Guard: conversation must exist
+    if (!conversation?.id) {
+      setError(lang === 'fr' ? 'Conversation invalide' : 'Invalid conversation');
+      return;
+    }
     
     // RATE LIMITING: Max 1 message per second
     const now = Date.now();
