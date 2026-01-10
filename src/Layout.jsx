@@ -349,8 +349,11 @@ export default function Layout({ children, currentPageName }) {
                     <Link to={createPageUrl('Cookies')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
                       {lang === 'fr' ? 'Cookies' : 'Cookies'}
                     </Link>
-                    <Link to={createPageUrl('Legal')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                      {lang === 'fr' ? 'Mentions légales' : 'Legal'}
+                    <Link to={createPageUrl('LegalNotice')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Mentions légales' : 'Legal Notice'}
+                    </Link>
+                    <Link to={createPageUrl('DataRights')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Vos droits RGPD' : 'Your GDPR Rights'}
                     </Link>
                   </div>
                 </div>
@@ -372,8 +375,12 @@ export default function Layout({ children, currentPageName }) {
                   {lang === 'fr' ? 'Cookies' : 'Cookies'}
                 </Link>
                 <span className="text-xs text-slate-600">•</span>
-                <Link to={createPageUrl('Legal')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
+                <Link to={createPageUrl('LegalNotice')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
                   {lang === 'fr' ? 'Mentions légales' : 'Legal'}
+                </Link>
+                <span className="text-xs text-slate-600">•</span>
+                <Link to={createPageUrl('DataRights')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'RGPD' : 'GDPR'}
                 </Link>
               </div>
             )}
