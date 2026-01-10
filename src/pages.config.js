@@ -5,12 +5,15 @@ import AdminAuditLog from './pages/AdminAuditLog';
 import AdminBackendHealth from './pages/AdminBackendHealth';
 import AdminBackendSetup from './pages/AdminBackendSetup';
 import AdminBackfillMessages from './pages/AdminBackfillMessages';
+import AdminBillingRequests from './pages/AdminBillingRequests';
 import AdminBlogEditor from './pages/AdminBlogEditor';
 import AdminCardEditor from './pages/AdminCardEditor';
 import AdminCodeAudit from './pages/AdminCodeAudit';
 import AdminContent from './pages/AdminContent';
 import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
+import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import AdminModeration from './pages/AdminModeration';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
@@ -31,6 +34,7 @@ import AppOnboarding from './pages/AppOnboarding';
 import AppRitual from './pages/AppRitual';
 import AppSettings from './pages/AppSettings';
 import AppSynchros from './pages/AppSynchros';
+import Billing from './pages/Billing';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import CardDetail from './pages/CardDetail';
@@ -54,10 +58,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
-import Billing from './pages/Billing';
-import AdminBillingRequests from './pages/AdminBillingRequests';
-import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
 import __Layout from './Layout.jsx';
 
 
@@ -69,12 +69,15 @@ export const PAGES = {
     "AdminBackendHealth": AdminBackendHealth,
     "AdminBackendSetup": AdminBackendSetup,
     "AdminBackfillMessages": AdminBackfillMessages,
+    "AdminBillingRequests": AdminBillingRequests,
     "AdminBlogEditor": AdminBlogEditor,
     "AdminCardEditor": AdminCardEditor,
     "AdminCodeAudit": AdminCodeAudit,
     "AdminContent": AdminContent,
     "AdminDailyCardManager": AdminDailyCardManager,
     "AdminDashboard": AdminDashboard,
+    "AdminEvidenceRuns": AdminEvidenceRuns,
+    "AdminLaunchChecklist": AdminLaunchChecklist,
     "AdminModeration": AdminModeration,
     "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
@@ -95,6 +98,7 @@ export const PAGES = {
     "AppRitual": AppRitual,
     "AppSettings": AppSettings,
     "AppSynchros": AppSynchros,
+    "Billing": Billing,
     "Blog": Blog,
     "BlogPost": BlogPost,
     "CardDetail": CardDetail,
@@ -118,10 +122,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminLaunchChecklist": AdminLaunchChecklist,
-    "Billing": Billing,
-    "AdminBillingRequests": AdminBillingRequests,
-    "AdminEvidenceRuns": AdminEvidenceRuns,
 }
 
 export const pagesConfig = {

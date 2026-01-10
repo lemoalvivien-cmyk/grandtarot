@@ -22,14 +22,17 @@ export default function AdminBackendHealth() {
 
     // TEST 1: NO-AUTH
     rawOutput += `TEST 1: NO-AUTH (credentials:omit)\n`;
+    const noAuthPayload = { conversationId: 'test', body: 'test', clientMsgId: 'test' };
     const noAuthRes = await callFunctionRaw('chat_send_message', 
-      { conversationId: 'test', body: 'test', clientMsgId: 'test' },
+      noAuthPayload,
       { omitCredentials: true }
     );
     results.push({ name: 'NO-AUTH (should be 401)', result: noAuthRes });
     rawOutput += `  URL: ${noAuthRes.url}\n`;
+    rawOutput += `  Payload: ${JSON.stringify(noAuthPayload)}\n`;
     rawOutput += `  Status: ${noAuthRes.status} ${noAuthRes.statusText}\n`;
-    rawOutput += `  Body: ${noAuthRes.json ? JSON.stringify(noAuthRes.json, null, 2) : noAuthRes.text}\n`;
+    rawOutput += `  Body (raw): ${noAuthRes.text}\n`;
+    rawOutput += `  Body (JSON): ${noAuthRes.json ? JSON.stringify(noAuthRes.json, null, 2) : 'null'}\n`;
     rawOutput += `  Timestamp: ${noAuthRes.timestamp}\n`;
     rawOutput += `  Expected: 401 | Actual: ${noAuthRes.status}\n\n`;
 
@@ -39,20 +42,23 @@ export default function AdminBackendHealth() {
       const fixtures = await base44.entities.AppSettings.filter({
         setting_key: 'security_fixture_conversation_id'
       }, null, 1);
-      
+
       if (fixtures.length > 0 && fixtures[0].value_string) {
         const fixtureConvId = fixtures[0].value_string;
-        const nonParticipantRes = await callFunctionRaw('chat_send_message', {
+        const nonPartPayload = {
           conversationId: fixtureConvId,
           body: 'spoof attempt',
           clientMsgId: `fixture-${Date.now()}`
-        });
-        
+        };
+        const nonParticipantRes = await callFunctionRaw('chat_send_message', nonPartPayload);
+
         results.push({ name: 'NON-PARTICIPANT (should be 403)', result: nonParticipantRes });
         rawOutput += `  Fixture ID: ${fixtureConvId}\n`;
         rawOutput += `  URL: ${nonParticipantRes.url}\n`;
+        rawOutput += `  Payload: ${JSON.stringify(nonPartPayload)}\n`;
         rawOutput += `  Status: ${nonParticipantRes.status} ${nonParticipantRes.statusText}\n`;
-        rawOutput += `  Body: ${nonParticipantRes.json ? JSON.stringify(nonParticipantRes.json, null, 2) : nonParticipantRes.text}\n`;
+        rawOutput += `  Body (raw): ${nonParticipantRes.text}\n`;
+        rawOutput += `  Body (JSON): ${nonParticipantRes.json ? JSON.stringify(nonParticipantRes.json, null, 2) : 'null'}\n`;
         rawOutput += `  Timestamp: ${nonParticipantRes.timestamp}\n`;
         rawOutput += `  Expected: 403 | Actual: ${nonParticipantRes.status}\n\n`;
       } else {
@@ -210,11 +216,10 @@ export default function AdminBackendHealth() {
     rawOutput += `TEST 6: BLOCK THEN OPEN_CONVERSATION\n`;
     try {
       const user = await base44.auth.me();
+      const blockTestPayload = { otherUserEmail: 'fixture-blocked@test.com' };
 
-      // Try to open conversation with fixture user (should be blocked after TEST 2)
-      const blockTestRes = await callFunctionRaw('chat_open_conversation', {
-        otherUserEmail: 'fixture-blocked@test.com'
-      });
+      // Try to open conversation with blocked user => should be 403
+      const blockTestRes = await callFunctionRaw('chat_open_conversation', blockTestPayload);
 
       const isBlocked = blockTestRes.status === 403;
       results.push({
@@ -226,9 +231,13 @@ export default function AdminBackendHealth() {
         }
       });
 
+      rawOutput += `  Current user: ${user.email}\n`;
       rawOutput += `  Attempt to open with blocked user\n`;
+      rawOutput += `  URL: ${blockTestRes.url}\n`;
+      rawOutput += `  Payload: ${JSON.stringify(blockTestPayload)}\n`;
       rawOutput += `  Status: ${blockTestRes.status} ${blockTestRes.statusText}\n`;
-      rawOutput += `  Body: ${blockTestRes.json ? JSON.stringify(blockTestRes.json, null, 2) : blockTestRes.text}\n`;
+      rawOutput += `  Body (raw): ${blockTestRes.text}\n`;
+      rawOutput += `  Body (JSON): ${blockTestRes.json ? JSON.stringify(blockTestRes.json, null, 2) : 'null'}\n`;
       rawOutput += `  Expected: 403 | Actual: ${blockTestRes.status}\n`;
       rawOutput += `  Timestamp: ${blockTestRes.timestamp}\n\n`;
     } catch (error) {

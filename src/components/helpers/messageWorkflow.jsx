@@ -212,33 +212,39 @@ export const sendMessageSecure = async ({
 };
 
 /**
- * Block a user (SECURE: uses public_id not email)
+ * Block a user (SECURE: uses ProfilePublic.public_id — canonical ID for all blocks)
+ * CRITICAL: Block entity expects blocker_profile_id / blocked_profile_id (NOT email)
+ * This aligns with chat_open_conversation which checks blocks via public_id
  */
 export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'not_interested') => {
   try {
-    // Fetch ProfilePublic.public_id for both users
-    const blockerProfiles = await base44.entities.ProfilePublic.filter({ 
-      // ProfilePublic stores user's public profile - query by email via linked UserProfile
-      // NOTE: Must fetch via intermediate UserProfile or direct public_id
-    }, null, 1);
-    
-    // Actually: we need to get public_id from UserProfile first
+    // STEP 1: Get current user's ProfilePublic.public_id
+    // ProfilePublic is linked 1:1 with UserProfile via user_id bridge
     const blockerUserProfiles = await base44.entities.UserProfile.filter({ 
       user_id: blockerUserEmail 
     }, null, 1);
     
+    if (!blockerUserProfiles.length) {
+      return { success: false, error: 'Blocker profile not found' };
+    }
+    
+    const blockerPublicId = blockerUserProfiles[0].public_id;
+    
+    // STEP 2: Get target user's ProfilePublic.public_id
     const blockedUserProfiles = await base44.entities.UserProfile.filter({ 
       user_id: blockedUserEmail 
     }, null, 1);
     
-    if (!blockerUserProfiles.length || !blockedUserProfiles.length) {
-      return { success: false, error: 'User profile not found' };
+    if (!blockedUserProfiles.length) {
+      return { success: false, error: 'Blocked user profile not found' };
     }
     
-    const blockerPublicId = blockerUserProfiles[0].public_id;
     const blockedPublicId = blockedUserProfiles[0].public_id;
     
-    // Create block with public_id (NOT email)
+    // STEP 3: Create Block with public_id fields (NOT email)
+    // This ensures Block entity aligns with:
+    // - AccessRules: blocker_profile_id == {user.public_id}
+    // - chat_open_conversation checks blocks via ProfilePublic.public_id
     await base44.entities.Block.create({
       blocker_profile_id: blockerPublicId,
       blocked_profile_id: blockedPublicId,
@@ -247,7 +253,7 @@ export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'no
       is_admin_enforced: false
     });
     
-    // Archive conversations (SCOPED queries, no .list())
+    // STEP 4: Archive related conversations
     const convsA = await base44.entities.Conversation.filter({ 
       user_a_id: blockerUserEmail, 
       user_b_id: blockedUserEmail 
