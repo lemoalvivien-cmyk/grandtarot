@@ -161,47 +161,76 @@ export default function AdminBackendHealth() {
     }
 
     // TEST 5: RATE LIMIT (spam)
-    rawOutput += `TEST 5: RATE LIMIT\n`;
+     rawOutput += `TEST 5: RATE LIMIT\n`;
+     try {
+       const user = await base44.auth.me();
+       const convs = await base44.entities.Conversation.filter(
+         { user_a_id: user.email },
+         null,
+         1
+       );
+
+       if (convs.length > 0) {
+         // Send 2 messages in rapid succession
+         const msg1 = await callFunctionRaw('chat_send_message', {
+           conversationId: convs[0].id,
+           body: 'Spam 1',
+           clientMsgId: `spam-${Date.now()}-1`
+         });
+
+         const msg2 = await callFunctionRaw('chat_send_message', {
+           conversationId: convs[0].id,
+           body: 'Spam 2',
+           clientMsgId: `spam-${Date.now()}-2`
+         });
+
+         const isRateLimited = msg2.status === 429;
+         results.push({ 
+           name: 'RATE LIMIT (should be 429)', 
+           result: { 
+             status: msg2.status,
+             success: isRateLimited,
+             json: msg2.json
+           } 
+         });
+
+         rawOutput += `  1st message: ${msg1.status}\n`;
+         rawOutput += `  2nd message (immediate): ${msg2.status}\n`;
+         rawOutput += `  2nd body: ${msg2.json ? JSON.stringify(msg2.json, null, 2) : msg2.text}\n`;
+         rawOutput += `  Expected: 429 | Actual: ${msg2.status}\n`;
+         rawOutput += `  Timestamp: ${msg2.timestamp}\n\n`;
+       } else {
+         rawOutput += `  SKIP: No authorized conversation\n\n`;
+       }
+     } catch (error) {
+       rawOutput += `  ERROR: ${error.message}\n\n`;
+     }
+
+    // TEST 6: BLOCK THEN OPEN_CONVERSATION (403 for blocked user)
+    rawOutput += `TEST 6: BLOCK THEN OPEN_CONVERSATION\n`;
     try {
       const user = await base44.auth.me();
-      const convs = await base44.entities.Conversation.filter(
-        { user_a_id: user.email },
-        null,
-        1
-      );
-      
-      if (convs.length > 0) {
-        // Send 2 messages in rapid succession
-        const msg1 = await callFunctionRaw('chat_send_message', {
-          conversationId: convs[0].id,
-          body: 'Spam 1',
-          clientMsgId: `spam-${Date.now()}-1`
-        });
-        
-        const msg2 = await callFunctionRaw('chat_send_message', {
-          conversationId: convs[0].id,
-          body: 'Spam 2',
-          clientMsgId: `spam-${Date.now()}-2`
-        });
-        
-        const isRateLimited = msg2.status === 429;
-        results.push({ 
-          name: 'RATE LIMIT (should be 429)', 
-          result: { 
-            status: msg2.status,
-            success: isRateLimited,
-            json: msg2.json
-          } 
-        });
-        
-        rawOutput += `  1st message: ${msg1.status}\n`;
-        rawOutput += `  2nd message (immediate): ${msg2.status}\n`;
-        rawOutput += `  2nd body: ${msg2.json ? JSON.stringify(msg2.json, null, 2) : msg2.text}\n`;
-        rawOutput += `  Expected: 429 | Actual: ${msg2.status}\n`;
-        rawOutput += `  Timestamp: ${msg2.timestamp}\n\n`;
-      } else {
-        rawOutput += `  SKIP: No authorized conversation\n\n`;
-      }
+
+      // Try to open conversation with fixture user (should be blocked after TEST 2)
+      const blockTestRes = await callFunctionRaw('chat_open_conversation', {
+        otherUserEmail: 'fixture-blocked@test.com'
+      });
+
+      const isBlocked = blockTestRes.status === 403;
+      results.push({
+        name: 'BLOCK PREVENTS OPEN (should be 403)',
+        result: {
+          status: blockTestRes.status,
+          success: isBlocked,
+          json: blockTestRes.json
+        }
+      });
+
+      rawOutput += `  Attempt to open with blocked user\n`;
+      rawOutput += `  Status: ${blockTestRes.status} ${blockTestRes.statusText}\n`;
+      rawOutput += `  Body: ${blockTestRes.json ? JSON.stringify(blockTestRes.json, null, 2) : blockTestRes.text}\n`;
+      rawOutput += `  Expected: 403 | Actual: ${blockTestRes.status}\n`;
+      rawOutput += `  Timestamp: ${blockTestRes.timestamp}\n\n`;
     } catch (error) {
       rawOutput += `  ERROR: ${error.message}\n\n`;
     }

@@ -212,14 +212,36 @@ export const sendMessageSecure = async ({
 };
 
 /**
- * Block a user (with scoped queries)
+ * Block a user (SECURE: uses public_id not email)
  */
-export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_interested') => {
+export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'not_interested') => {
   try {
-    // Create block
+    // Fetch ProfilePublic.public_id for both users
+    const blockerProfiles = await base44.entities.ProfilePublic.filter({ 
+      // ProfilePublic stores user's public profile - query by email via linked UserProfile
+      // NOTE: Must fetch via intermediate UserProfile or direct public_id
+    }, null, 1);
+    
+    // Actually: we need to get public_id from UserProfile first
+    const blockerUserProfiles = await base44.entities.UserProfile.filter({ 
+      user_id: blockerUserEmail 
+    }, null, 1);
+    
+    const blockedUserProfiles = await base44.entities.UserProfile.filter({ 
+      user_id: blockedUserEmail 
+    }, null, 1);
+    
+    if (!blockerUserProfiles.length || !blockedUserProfiles.length) {
+      return { success: false, error: 'User profile not found' };
+    }
+    
+    const blockerPublicId = blockerUserProfiles[0].public_id;
+    const blockedPublicId = blockedUserProfiles[0].public_id;
+    
+    // Create block with public_id (NOT email)
     await base44.entities.Block.create({
-      blocker_user_id: blockerUserId,
-      blocked_user_id: blockedUserId,
+      blocker_profile_id: blockerPublicId,
+      blocked_profile_id: blockedPublicId,
       reason,
       is_mutual: false,
       is_admin_enforced: false
@@ -227,13 +249,13 @@ export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_inte
     
     // Archive conversations (SCOPED queries, no .list())
     const convsA = await base44.entities.Conversation.filter({ 
-      user_a_id: blockerUserId, 
-      user_b_id: blockedUserId 
+      user_a_id: blockerUserEmail, 
+      user_b_id: blockedUserEmail 
     }, null, 5);
     
     const convsB = await base44.entities.Conversation.filter({ 
-      user_a_id: blockedUserId, 
-      user_b_id: blockerUserId 
+      user_a_id: blockedUserEmail, 
+      user_b_id: blockerUserEmail 
     }, null, 5);
     
     const userConversations = [...convsA, ...convsB];
@@ -241,7 +263,7 @@ export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_inte
     for (const conv of userConversations) {
       await base44.entities.Conversation.update(conv.id, {
         status: 'blocked',
-        blocked_by: blockerUserId,
+        blocked_by: blockerUserEmail,
         blocked_at: new Date().toISOString()
       });
     }

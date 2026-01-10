@@ -41,7 +41,7 @@ export default function Billing() {
         setPaymentLink(settings[0].value_string);
       }
 
-      // Get language preference
+      // Get language preference (limit=1 explicit)
       const profiles = await base44.entities.UserProfile.filter({
         user_id: currentUser.email
       }, null, 1);
