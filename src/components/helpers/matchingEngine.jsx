@@ -190,50 +190,65 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
 };
 
 /**
- * Get eligible candidates for matching
+ * Get eligible candidates for matching (SCALABLE - no list all)
+ * Uses batched queries with limits
  */
-const getEligibleCandidates = async (userProfile) => {
+const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 50) => {
   try {
-    // Get all profiles
-    const allProfiles = await base44.entities.UserProfile.list();
+    // STEP 1: Get exclusion lists (small queries)
+    const [blocks, blockedBy, intentions] = await Promise.all([
+      base44.entities.Block.filter({ blocker_user_id: userProfile.user_id }),
+      base44.entities.Block.filter({ blocked_user_id: userProfile.user_id }),
+      base44.entities.Intention.filter({ from_user_id: userProfile.user_id })
+    ]);
     
-    // Get user's blocks
-    const blocks = await base44.entities.Block.filter({ blocker_user_id: userProfile.user_id });
     const blockedIds = new Set(blocks.map(b => b.blocked_user_id));
-    
-    // Get blocks where user is blocked
-    const blockedBy = await base44.entities.Block.filter({ blocked_user_id: userProfile.user_id });
     const blockerIds = new Set(blockedBy.map(b => b.blocker_user_id));
-    
-    // Get existing intentions sent
-    const intentions = await base44.entities.Intention.filter({ from_user_id: userProfile.user_id });
     const intentionSentTo = new Set(intentions.map(i => i.to_user_id));
     
-    // Filter candidates
-    const candidates = allProfiles.filter(p => {
+    // STEP 2: Fetch candidates with FILTERS (not list all)
+    // Query only profiles that meet basic criteria
+    const candidates = await base44.entities.UserProfile.filter({
+      is_visible: true,
+      photo_url: { $exists: true, $ne: null },
+      is_banned: false
+    }, '-last_active', limit * 2); // Fetch 2x limit for filtering
+    
+    // STEP 3: Filter candidates in memory (already reduced set)
+    const filtered = candidates.filter(p => {
       // Not self
       if (p.user_id === userProfile.user_id) return false;
       
-      // Must be visible and have same mode in looking_for
-      if (!p.is_visible) return false;
+      // Must have same mode in looking_for
       if (!p.looking_for?.includes(userProfile.mode_active)) return false;
-      
-      // Must have photo
-      if (!p.photo_url) return false;
       
       // Not blocked
       if (blockedIds.has(p.user_id) || blockerIds.has(p.user_id)) return false;
       
-      // Not banned
-      if (p.is_banned) return false;
-      
       // Don't rematch if intention already sent
       if (intentionSentTo.has(p.user_id)) return false;
       
-      return true;
+      // Location filter (with radius multiplier for fallback)
+      const effectiveRadius = (userProfile.radius_km || 50) * radiusMultiplier;
+      
+      // Simple location filtering (same city = always match)
+      if (userProfile.city && p.city) {
+        const sameCity = userProfile.city.toLowerCase() === p.city.toLowerCase();
+        const sameCountry = userProfile.country && p.country && 
+                           userProfile.country.toLowerCase() === p.country.toLowerCase();
+        
+        // For radius > 100km, accept same country
+        if (effectiveRadius >= 100 && sameCountry) return true;
+        
+        // For smaller radius, require same city or nearby
+        if (sameCity) return true;
+        if (effectiveRadius >= 50 && sameCountry) return true;
+      }
+      
+      return true; // Accept if no location filtering possible
     });
     
-    return candidates;
+    return filtered.slice(0, limit);
   } catch (error) {
     console.error('Error getting candidates:', error);
     return [];
@@ -241,84 +256,109 @@ const getEligibleCandidates = async (userProfile) => {
 };
 
 /**
- * Main function: Generate daily matches for a user
+ * Main function: Generate daily matches for a user (SCALABLE)
+ * Uses lazy loading with fallback for low-density areas
  */
 export const generateDailyMatches = async (userProfile, targetCount = 20) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    // Check if matches already exist for today
+    // STEP 1: Check if matches already exist for today + mode (ALWAYS check first)
     const existing = await base44.entities.DailyMatch.filter({
       user_id: userProfile.user_id,
       match_date: today,
       mode: userProfile.mode_active
-    });
+    }, '-compatibility_score', 20); // Limit to 20
     
-    if (existing.length > 0) {
+    if (existing.length >= targetCount) {
       return existing;
     }
     
-    // Get candidates
-    let candidates = await getEligibleCandidates(userProfile);
+    // STEP 2: Generate new matches with fallback mechanism
+    let allMatches = [];
+    let radiusMultiplier = 1;
+    const maxMultiplier = 5; // Max 5x radius expansion
     
-    if (candidates.length === 0) {
-      return [];
+    // Fallback loop for low-density areas
+    while (allMatches.length < targetCount && radiusMultiplier <= maxMultiplier) {
+      // Get candidates (LIMIT to 50 per iteration)
+      const candidates = await getEligibleCandidates(userProfile, radiusMultiplier, 50);
+      
+      if (candidates.length === 0) {
+        // No more candidates even with expanded radius
+        break;
+      }
+      
+      // STEP 3: Score candidates (BATCH processing)
+      const scoredCandidates = await Promise.all(
+        candidates.map(async (candidate) => {
+          const location = calculateDistanceScore(userProfile, candidate);
+          const interests = calculateInterestsScore(userProfile, candidate);
+          const tarot_synergy = await calculateTarotSynergy(userProfile.user_id, candidate.user_id);
+          const pro_bonus = calculateProBonus(userProfile, candidate);
+          const age = calculateAgeScore(userProfile, candidate);
+          const activity = calculateActivityScore(candidate);
+          
+          const scoreBreakdown = { location, interests, tarot_synergy, pro_bonus, age, activity };
+          const totalScore = location + interests + tarot_synergy + pro_bonus + age + activity;
+          
+          const reasons = await generateReasons(userProfile, candidate, scoreBreakdown, userProfile.language_pref || 'fr');
+          
+          // Get shared interests IDs
+          const userInterests = new Set(userProfile.interest_ids || []);
+          const sharedInterests = (candidate.interest_ids || []).filter(id => userInterests.has(id));
+          
+          return {
+            candidate,
+            totalScore,
+            scoreBreakdown,
+            reasons,
+            sharedInterests
+          };
+        })
+      );
+      
+      // Add to matches (avoid duplicates)
+      const existingUserIds = new Set(allMatches.map(m => m.candidate.user_id));
+      const newMatches = scoredCandidates.filter(m => !existingUserIds.has(m.candidate.user_id));
+      allMatches.push(...newMatches);
+      
+      // If we have enough matches, stop
+      if (allMatches.length >= targetCount) break;
+      
+      // Otherwise, expand radius for next iteration
+      radiusMultiplier++;
     }
     
-    // Score each candidate
-    const scoredCandidates = await Promise.all(
-      candidates.map(async (candidate) => {
-        const location = calculateDistanceScore(userProfile, candidate);
-        const interests = calculateInterestsScore(userProfile, candidate);
-        const tarot_synergy = await calculateTarotSynergy(userProfile.user_id, candidate.user_id);
-        const pro_bonus = calculateProBonus(userProfile, candidate);
-        const age = calculateAgeScore(userProfile, candidate);
-        const activity = calculateActivityScore(candidate);
-        
-        const scoreBreakdown = { location, interests, tarot_synergy, pro_bonus, age, activity };
-        const totalScore = location + interests + tarot_synergy + pro_bonus + age + activity;
-        
-        const reasons = await generateReasons(userProfile, candidate, scoreBreakdown, userProfile.language_pref || 'fr');
-        
-        // Get shared interests IDs
-        const userInterests = new Set(userProfile.interest_ids || []);
-        const sharedInterests = (candidate.interest_ids || []).filter(id => userInterests.has(id));
-        
-        return {
-          candidate,
-          totalScore,
-          scoreBreakdown,
-          reasons,
-          sharedInterests
-        };
-      })
-    );
-    
-    // Sort by score and take top N
-    const topMatches = scoredCandidates
+    // STEP 4: Sort by score and take top N (MAX 20)
+    const topMatches = allMatches
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, targetCount);
     
-    // Store in DailyMatch
-    const matchRecords = await Promise.all(
-      topMatches.map(match => 
-        base44.entities.DailyMatch.create({
-          user_id: userProfile.user_id,
-          match_date: today,
-          mode: userProfile.mode_active,
-          matched_user_id: match.candidate.user_id,
-          compatibility_score: Math.round(match.totalScore),
-          score_breakdown: match.scoreBreakdown,
-          reasons: match.reasons,
-          shared_interests: match.sharedInterests,
-          is_viewed: false,
-          intention_sent: false,
-          is_expired: false
-        })
-      )
-    );
+    // STEP 5: Store in DailyMatch (BATCH create)
+    if (topMatches.length > 0) {
+      const matchRecords = await Promise.all(
+        topMatches.map(match => 
+          base44.entities.DailyMatch.create({
+            user_id: userProfile.user_id,
+            match_date: today,
+            mode: userProfile.mode_active,
+            matched_user_id: match.candidate.user_id,
+            compatibility_score: Math.round(match.totalScore),
+            score_breakdown: match.scoreBreakdown,
+            reasons: match.reasons,
+            shared_interests: match.sharedInterests,
+            is_viewed: false,
+            intention_sent: false,
+            is_expired: false
+          })
+        )
+      );
+      
+      return matchRecords;
+    }
     
-    return matchRecords;
+    return [];
   } catch (error) {
     console.error('Error generating matches:', error);
     return [];

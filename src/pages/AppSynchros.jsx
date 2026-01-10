@@ -48,14 +48,14 @@ export default function AppSynchros() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // Try to load existing matches for today
+      // SCALABLE: Load ONLY DailyMatch records (max 20), never list all profiles
       let dailyMatches = await base44.entities.DailyMatch.filter({
         user_id: userProfile.user_id,
         match_date: today,
         mode: userProfile.mode_active
-      });
+      }, '-compatibility_score', 20); // Sorted by score desc, limit 20
 
-      // If no matches exist, generate them
+      // If no matches exist, generate them (lazy loading)
       if (dailyMatches.length === 0) {
         setGenerating(true);
         dailyMatches = await generateDailyMatches(userProfile, 20);
@@ -64,18 +64,19 @@ export default function AppSynchros() {
 
       setMatches(dailyMatches);
 
-      // Load profiles for matched users (LIMIT to matched IDs only)
+      // SCALABLE: Load ONLY the 20 matched profiles (targeted queries)
       if (dailyMatches.length > 0) {
-        const userIds = dailyMatches.map(m => m.matched_user_id);
         const profileMap = {};
         
-        // Fetch only needed profiles in batch (avoid list all)
-        for (const userId of userIds) {
-          const profiles = await base44.entities.UserProfile.filter({ user_id: userId });
-          if (profiles.length > 0) {
-            profileMap[userId] = profiles[0];
-          }
-        }
+        // Batch fetch only needed profiles (max 20 queries)
+        await Promise.all(
+          dailyMatches.map(async (match) => {
+            const profiles = await base44.entities.UserProfile.filter({ user_id: match.matched_user_id });
+            if (profiles.length > 0) {
+              profileMap[match.matched_user_id] = profiles[0];
+            }
+          })
+        );
         
         setMatchProfiles(profileMap);
       }
@@ -183,19 +184,18 @@ export default function AppSynchros() {
   const regenerateMatches = async () => {
     setGenerating(true);
     try {
-      // Delete existing matches for today
+      // SCALABLE: Delete only today's matches (limited query)
       const today = new Date().toISOString().split('T')[0];
       const existing = await base44.entities.DailyMatch.filter({
         user_id: profile.user_id,
         match_date: today,
         mode: profile.mode_active
-      });
+      }, null, 20); // Limit 20
       
-      for (const match of existing) {
-        await base44.entities.DailyMatch.delete(match.id);
-      }
+      // Batch delete
+      await Promise.all(existing.map(match => base44.entities.DailyMatch.delete(match.id)));
 
-      // Generate new matches
+      // Generate new matches (will store max 20)
       await loadMatches(profile);
     } catch (error) {
       console.error('Error regenerating matches:', error);
