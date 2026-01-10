@@ -214,3 +214,115 @@ export default function AdminBackendHealth() {
     navigator.clipboard.writeText(fullLog);
     alert('Log copié dans le presse-papiers');
   };
+
+  return (
+    <AdminGuard>
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <Activity className="w-8 h-8 text-green-500" />
+              <h1 className="text-3xl font-bold">Backend Functions Health Check</h1>
+            </div>
+            <p className="text-slate-400">
+              Vérification que les Backend Functions sont déployées et répondent correctement
+            </p>
+          </div>
+
+          <div className="mb-8 flex gap-4">
+            <Button
+              onClick={runTests}
+              disabled={testing}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {testing ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Tests en cours...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Lancer tests (10 tests, ~15 sec)
+                </>
+              )}
+            </Button>
+            
+            {fullLog && (
+              <Button
+                onClick={copyLog}
+                variant="outline"
+                className="border-slate-700"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copier log brut
+              </Button>
+            )}
+          </div>
+
+          {results.length > 0 && (
+            <div className="space-y-4">
+              {results.map((result, i) => (
+                <div key={i} className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {result.status === 'PASS' || result.status === 'SKIP' ? (
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-500" />
+                      )}
+                      <div>
+                        <h3 className="font-mono text-sm font-semibold text-amber-100">{result.name}</h3>
+                        <p className="text-xs text-slate-500">{result.timestamp}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono text-slate-300">
+                        {result.statusCode}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        result.status === 'PASS' ? 'bg-green-500/20 text-green-300' :
+                        result.status === 'SKIP' ? 'bg-blue-500/20 text-blue-300' :
+                        'bg-red-500/20 text-red-300'
+                      }`}>
+                        {result.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-xs text-slate-500 font-semibold">RESPONSE BODY:</div>
+                    <pre className="bg-slate-900/50 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto max-h-64">
+                      {typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body}
+                    </pre>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {results.length > 0 && (
+            <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <h3 className="font-semibold text-lg mb-2">Résumé</h3>
+              <p className="text-slate-400 mb-4">
+                {results.filter(r => r.status === 'PASS').length}/{results.filter(r => r.status !== 'SKIP').length} tests passés
+                {results.filter(r => r.status === 'SKIP').length > 0 && ` (${results.filter(r => r.status === 'SKIP').length} skipped)`}
+              </p>
+              {results.filter(r => r.status !== 'SKIP').every(r => r.status === 'PASS') && (
+                <div className="flex items-center gap-2 text-green-400">
+                  <CheckCircle className="w-5 h-5" />
+                  <span>✅ Backend Functions déployées et fonctionnelles</span>
+                </div>
+              )}
+              {results.filter(r => r.status === 'FAIL').length > 0 && (
+                <div className="flex items-center gap-2 text-red-400">
+                  <XCircle className="w-5 h-5" />
+                  <span>❌ {results.filter(r => r.status === 'FAIL').length} test(s) échoué(s)</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </AdminGuard>
+  );
+}
