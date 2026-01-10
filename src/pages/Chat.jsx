@@ -151,16 +151,8 @@ export default function Chat() {
         setOldestMessageDate(msgs[0].created_date);
       }
 
-      // Mark unread messages as read
-      if (!silent) {
-        const unreadMessages = msgs.filter(m => !m.is_read && m.from_user_id !== user.email);
-        for (const msg of unreadMessages) {
-          await base44.entities.Message.update(msg.id, {
-            is_read: true,
-            read_at: new Date().toISOString()
-          });
-        }
-      }
+      // NOTE: Mark as read disabled (Message.update = admin-only)
+      // Would require backend function to mark as read
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -185,15 +177,7 @@ export default function Chat() {
       if (newMessages.length > 0) {
         newMessages.reverse();
         setMessages(prev => [...prev, ...newMessages]);
-        
-        // Mark new messages as read
-        const unreadMessages = newMessages.filter(m => !m.is_read && m.from_user_id !== user.email);
-        for (const msg of unreadMessages) {
-          await base44.entities.Message.update(msg.id, {
-            is_read: true,
-            read_at: new Date().toISOString()
-          });
-        }
+        // NOTE: Mark as read disabled (Message.update = admin-only)
       }
     } catch (error) {
       console.error('Error loading new messages:', error);
@@ -296,9 +280,24 @@ export default function Chat() {
 
     setReporting(true);
     try {
+      // Get current user's ProfilePublic.public_id (NEVER use email)
+      const publicProfiles = await base44.entities.ProfilePublic.filter({ 
+        public_id: profile.public_id 
+      }, null, 1);
+      
+      const targetPublicProfiles = await base44.entities.ProfilePublic.filter({ 
+        public_id: otherProfile.public_id 
+      }, null, 1);
+      
+      if (publicProfiles.length === 0 || targetPublicProfiles.length === 0) {
+        alert('Erreur: Profils publics introuvables');
+        setReporting(false);
+        return;
+      }
+      
       await base44.entities.Report.create({
-        reporter_user_id: user.email,
-        target_user_id: otherProfile.user_id,
+        reporter_profile_id: publicProfiles[0].public_id,
+        target_profile_id: targetPublicProfiles[0].public_id,
         target_conversation_id: conversation.id,
         reason: reportReason,
         description: reportDescription.trim(),

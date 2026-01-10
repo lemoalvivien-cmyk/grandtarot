@@ -61,12 +61,12 @@ export default function AppRitual() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // Check if draw exists for today + mode
+      // Check if draw exists for today + mode (LIMIT 1 - one draw per day)
       const existingDraws = await base44.entities.DailyDraw.filter({
         user_id: userId,
         draw_date: today,
         mode: mode
-      });
+      }, null, 1);
 
       if (existingDraws.length > 0) {
         // Load existing draw
@@ -94,7 +94,7 @@ export default function AppRitual() {
         user_id: user.email,
         draw_date: today,
         mode: profile.mode_active
-      });
+      }, null, 1);
       
       if (existingDraws.length > 0) {
         // Already drawn today, reload

@@ -54,7 +54,7 @@ export default function AppSynchros() {
       
       // SCALABLE: Load ONLY DailyMatch records (max 20), never list all profiles
       let dailyMatches = await base44.entities.DailyMatch.filter({
-        user_id: userProfile.user_id,
+        profile_id: userProfile.public_id,
         match_date: today,
         mode: userProfile.mode_active
       }, '-compatibility_score', 20); // Sorted by score desc, limit 20
@@ -196,7 +196,7 @@ export default function AppSynchros() {
       // SCALABLE: Delete only today's matches (limited query)
       const today = new Date().toISOString().split('T')[0];
       const existing = await base44.entities.DailyMatch.filter({
-        user_id: profile.user_id,
+        profile_id: profile.public_id,
         match_date: today,
         mode: profile.mode_active
       }, null, 20); // Limit 20
