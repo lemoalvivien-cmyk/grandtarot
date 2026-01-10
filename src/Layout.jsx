@@ -383,5 +383,6 @@ export default function Layout({ children, currentPageName }) {
         </footer>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

@@ -73,7 +73,6 @@ export default function AdminGoLive() {
       const over48h = allPending.filter(r => new Date(r.created_date) < now48h).length;
       setPendingOver48h(over48h);
 
-      const logs = await base44.entities.AuditLog.list('-created_date', 20);
       setRecentLogs(logs);
     } catch (error) {
       console.error('Error loading go-live data:', error);
@@ -201,47 +200,22 @@ Payment issues? Contact support with your order details.`;
 
   const copySummary = () => {
     const summary = `
-=== HEALTH SUMMARY ===
-Billing Requests Pending >48h: ${pendingOver48h}
-Recent Actions: ${recentLogs.length}
-Last Action: ${recentLogs[0]?.action || 'N/A'} at ${recentLogs[0]?.created_date || 'N/A'}
+  === HEALTH SUMMARY ===
+  Billing Requests Pending >48h: ${pendingOver48h}
+  Recent Actions: ${recentLogs.length}
+  Last Action: ${recentLogs[0]?.action || 'N/A'} at ${recentLogs[0]?.created_date || 'N/A'}
 
-Support Email: ${supportEmail || 'not set'}
-SLA: ${slaHours}h
+  Support Email: ${supportEmail || 'not set'}
+  SLA: ${slaHours}h
 
-=== RECENT AUDIT LOG ===
-${recentLogs.slice(0, 10).map(log => 
+  === RECENT AUDIT LOG ===
+  ${recentLogs.slice(0, 10).map(log => 
   `${log.created_date} | ${log.action} | ${log.payload_summary}`
-).join('\n')}
+  ).join('\n')}
     `.trim();
     navigator.clipboard.writeText(summary);
     setTemplateCopied(true);
     setTimeout(() => setTemplateCopied(false), 2000);
-  };
-
-  const generateSummary = () => {
-    const summary = `GO-LIVE STATUS — ${new Date().toISOString()}
-
-CONFIGURATION:
-- Paywall Enabled: ${data.paywallEnabled ? 'YES' : 'NO'}
-- Stripe Payment Link: ${data.stripeLink ? '✓ SET' : '✗ MISSING'}
-
-METRICS:
-- Pending Billing Requests: ${data.pendingRequests}
-- Active Subscribers: ${data.activeUsers}
-
-RECENT AUDIT LOGS (${data.recentLogs.length}):
-${data.recentLogs.map(log => `  [${new Date(log.created_date).toISOString()}] ${log.action} by ${log.actor_user_id}`).join('\n')}
-
----
-Generated for launch verification.`;
-    return summary;
-  };
-
-  const copySummary = () => {
-    navigator.clipboard.writeText(generateSummary());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   if (loading) {
