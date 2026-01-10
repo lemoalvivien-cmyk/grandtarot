@@ -21,6 +21,15 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   
+  // Pagination
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [oldestMessageDate, setOldestMessageDate] = useState(null);
+  
+  // Rate limiting
+  const [lastSendTime, setLastSendTime] = useState(0);
+  const [sendAttempts, setSendAttempts] = useState(0);
+  
   // Modals
   const [blockModal, setBlockModal] = useState(false);
   const [reportModal, setReportModal] = useState(false);
@@ -30,19 +39,21 @@ export default function Chat() {
   const [reportDescription, setReportDescription] = useState('');
 
   const messagesEndRef = useRef(null);
+  const messagesTopRef = useRef(null);
 
   useEffect(() => {
     checkAccess();
   }, []);
 
   useEffect(() => {
-    if (conversation) {
+    if (conversation && messages.length > 0) {
+      // OPTIMIZED: Poll every 12 seconds for new messages only
       const interval = setInterval(() => {
-        loadMessages(conversation.id, true);
-      }, 3000);
+        loadNewMessages(conversation.id);
+      }, 12000);
       return () => clearInterval(interval);
     }
-  }, [conversation]);
+  }, [conversation, messages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -122,17 +133,25 @@ export default function Chat() {
 
   const loadMessages = async (conversationId, silent = false) => {
     try {
-      // LIMIT to last 100 messages (pagination for older messages can be added later)
+      // SCALABLE: Load only last 50 messages initially
       const msgs = await base44.entities.Message.filter({ 
         conversation_id: conversationId,
         is_deleted: false 
-      }, '-created_date', 100);
+      }, '-created_date', 50);
+      
+      // Check if there are more messages
+      setHasMore(msgs.length === 50);
       
       // Reverse to show chronological order (oldest first)
       msgs.reverse();
       setMessages(msgs);
+      
+      // Track oldest message for pagination
+      if (msgs.length > 0) {
+        setOldestMessageDate(msgs[0].created_date);
+      }
 
-      // Mark unread messages as read (batch update would be better but not available)
+      // Mark unread messages as read
       if (!silent) {
         const unreadMessages = msgs.filter(m => !m.is_read && m.from_user_id !== user.email);
         for (const msg of unreadMessages) {
@@ -146,11 +165,89 @@ export default function Chat() {
       console.error('Error loading messages:', error);
     }
   };
+  
+  const loadNewMessages = async (conversationId) => {
+    try {
+      if (messages.length === 0) return;
+      
+      // OPTIMIZED: Load only NEW messages since last message
+      const lastMessage = messages[messages.length - 1];
+      const allMessages = await base44.entities.Message.filter({ 
+        conversation_id: conversationId,
+        is_deleted: false 
+      }, '-created_date', 50);
+      
+      // Find messages newer than what we have
+      const newMessages = allMessages.filter(m => 
+        new Date(m.created_date) > new Date(lastMessage.created_date)
+      );
+      
+      if (newMessages.length > 0) {
+        newMessages.reverse();
+        setMessages(prev => [...prev, ...newMessages]);
+        
+        // Mark new messages as read
+        const unreadMessages = newMessages.filter(m => !m.is_read && m.from_user_id !== user.email);
+        for (const msg of unreadMessages) {
+          await base44.entities.Message.update(msg.id, {
+            is_read: true,
+            read_at: new Date().toISOString()
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading new messages:', error);
+    }
+  };
+  
+  const loadMoreMessages = async () => {
+    if (!hasMore || loadingMore) return;
+    
+    setLoadingMore(true);
+    try {
+      // PAGINATION: Load 50 more messages before oldest
+      const olderMessages = await base44.entities.Message.filter({ 
+        conversation_id: conversation.id,
+        is_deleted: false,
+        created_date: { $lt: oldestMessageDate }
+      }, '-created_date', 50);
+      
+      setHasMore(olderMessages.length === 50);
+      
+      if (olderMessages.length > 0) {
+        olderMessages.reverse();
+        setMessages(prev => [...olderMessages, ...prev]);
+        setOldestMessageDate(olderMessages[0].created_date);
+      }
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
     if (!messageText.trim() || messageText.length > 2000) return;
+    
+    // RATE LIMITING: Max 1 message per second
+    const now = Date.now();
+    if (now - lastSendTime < 1000) {
+      setError(lang === 'fr' 
+        ? 'Veuillez patienter 1 seconde entre chaque message' 
+        : 'Please wait 1 second between messages');
+      return;
+    }
+    
+    // SPAM PROTECTION: Max 10 messages per minute
+    if (sendAttempts >= 10) {
+      setError(lang === 'fr' 
+        ? 'Trop de messages envoyés. Attendez 1 minute.' 
+        : 'Too many messages sent. Wait 1 minute.');
+      setTimeout(() => setSendAttempts(0), 60000);
+      return;
+    }
     
     setSending(true);
     setError('');
@@ -170,7 +267,11 @@ export default function Chat() {
       }
 
       setMessageText('');
-      await loadMessages(conversation.id);
+      setLastSendTime(now);
+      setSendAttempts(prev => prev + 1);
+      
+      // Add message optimistically
+      await loadNewMessages(conversation.id);
     } catch (error) {
       console.error('Error sending message:', error);
       setError(lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Error sending message');
@@ -226,6 +327,7 @@ export default function Chat() {
       typing: "Votre message...",
       send: "Envoyer",
       maxChars: "Maximum 2000 caractères",
+      loadMore: "Charger plus",
       block: "Bloquer",
       report: "Signaler",
       blockTitle: "Bloquer cet utilisateur ?",
@@ -248,6 +350,7 @@ export default function Chat() {
       typing: "Your message...",
       send: "Send",
       maxChars: "Maximum 2000 characters",
+      loadMore: "Load more",
       block: "Block",
       report: "Report",
       blockTitle: "Block this user?",
@@ -349,6 +452,26 @@ export default function Chat() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6 bg-gradient-to-b from-slate-950 to-slate-900">
         <div className="max-w-4xl mx-auto">
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="text-center mb-4">
+              <Button
+                onClick={loadMoreMessages}
+                disabled={loadingMore}
+                variant="outline"
+                size="sm"
+                className="border-amber-500/20 text-amber-300 hover:bg-amber-500/10"
+              >
+                {loadingMore ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                {t.loadMore}
+              </Button>
+            </div>
+          )}
+          
+          <div ref={messagesTopRef} />
+          
           {messages.map((msg) => (
             <MessageBubble
               key={msg.id}
