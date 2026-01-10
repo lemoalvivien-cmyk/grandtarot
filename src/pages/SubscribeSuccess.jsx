@@ -70,9 +70,9 @@ export default function SubscribeSuccess() {
 
       // Success - redirect
       setProcessing(false);
+      const updatedProfiles = await base44.entities.UserProfile.filter({ user_id: user.email });
       setTimeout(() => {
-        const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
-        window.location.href = profiles[0].onboarding_completed 
+        window.location.href = updatedProfiles[0].onboarding_completed 
           ? createPageUrl('App') 
           : createPageUrl('AppOnboarding');
       }, 2000);
