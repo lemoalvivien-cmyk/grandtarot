@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CreditCard, CheckCircle, XCircle, MessageSquare, Loader2 } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, MessageSquare, Loader2, AlertCircle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +15,7 @@ export default function AdminBillingRequests() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectModal, setRejectModal] = useState(false);
+  const [templateCopied, setTemplateCopied] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -132,6 +133,40 @@ export default function AdminBillingRequests() {
     !searchEmail || req.requester_user_email.toLowerCase().includes(searchEmail.toLowerCase())
   );
 
+  const isUrgent = (createdDate) => {
+    const createdTime = new Date(createdDate).getTime();
+    const nowTime = new Date().getTime();
+    const diffHours = (nowTime - createdTime) / (1000 * 60 * 60);
+    return diffHours > 48;
+  };
+
+  const copyTemplateReply = (lang = 'fr') => {
+    const templates = {
+      fr: `Bonjour,
+
+Merci d'avoir soumis votre preuve de paiement. Nous avons vérifiée votre transaction et confirmé le paiement reçu.
+
+Votre abonnement est maintenant ACTIF. Vous avez accès à toutes les fonctionnalités de GRANDTAROT.
+
+Bienvenue! 🎉
+
+Support GRANDTAROT`,
+      en: `Hello,
+
+Thank you for submitting your payment proof. We have verified your transaction and confirmed payment received.
+
+Your subscription is now ACTIVE. You have access to all GRANDTAROT features.
+
+Welcome! 🎉
+
+GRANDTAROT Support`
+    };
+    
+    navigator.clipboard.writeText(templates[lang]);
+    setTemplateCopied(true);
+    setTimeout(() => setTemplateCopied(false), 2000);
+  };
+
   if (loading) {
     return (
       <AdminGuard>
@@ -196,6 +231,12 @@ export default function AdminBillingRequests() {
                         }`}>
                           {req.status}
                         </span>
+                        {req.status === 'pending' && isUrgent(req.created_date) && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/30 text-red-300 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {'>'} 48h
+                          </span>
+                        )}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -221,6 +262,15 @@ export default function AdminBillingRequests() {
                       </p>
                       {req.status === 'pending' && (
                         <div className="flex gap-2 flex-wrap justify-end">
+                          <Button
+                            onClick={() => copyTemplateReply('fr')}
+                            variant="outline"
+                            className="border-slate-600 h-8 text-xs"
+                            title="Copy reply template FR"
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            {templateCopied ? 'Copied' : 'Reply'}
+                          </Button>
                           <Button
                             onClick={() => handleApprove(req)}
                             disabled={processing}
