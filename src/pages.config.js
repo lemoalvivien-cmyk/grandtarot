@@ -66,6 +66,8 @@ import AdminRgpdRetention from './pages/AdminRgpdRetention';
 import AdminRgpdDsar from './pages/AdminRgpdDsar';
 import LegalNotice from './pages/LegalNotice';
 import DataRights from './pages/DataRights';
+import AccountPrivacy from './pages/AccountPrivacy';
+import AdminDsarRequests from './pages/AdminDsarRequests';
 import __Layout from './Layout.jsx';
 
 
@@ -138,6 +140,8 @@ export const PAGES = {
     "AdminRgpdDsar": AdminRgpdDsar,
     "LegalNotice": LegalNotice,
     "DataRights": DataRights,
+    "AccountPrivacy": AccountPrivacy,
+    "AdminDsarRequests": AdminDsarRequests,
 }
 
 export const pagesConfig = {
