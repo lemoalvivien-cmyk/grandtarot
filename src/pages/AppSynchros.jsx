@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import ProfileCard from '@/components/synchros/ProfileCard';
 import { generateDailyMatches } from '@/components/helpers/matchingEngine';
+import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppSynchros() {
   const [loading, setLoading] = useState(true);
@@ -31,38 +32,15 @@ export default function AppSynchros() {
 
   const checkAccess = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
       const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
-      
-      if (currentUser.role !== 'admin') {
-        const hasActiveSubscription = profiles.length > 0 && 
-          (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
-        
-        if (!hasActiveSubscription) {
-          window.location.href = createPageUrl('Subscribe');
-          return;
-        }
-      }
-
-      if (!profiles[0].onboarding_completed || !profiles[0].photo_url) {
-        window.location.href = createPageUrl('AppOnboarding');
-        return;
-      }
-
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
       await loadMatches(profiles[0]);
     } catch (error) {
       console.error('Error:', error);
-      window.location.href = createPageUrl('Landing');
     }
   };
 
@@ -268,13 +246,16 @@ export default function AppSynchros() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </SubscriptionGuard>
     );
   }
 
   return (
+    <SubscriptionGuard>
     <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Header */}
@@ -426,5 +407,6 @@ export default function AppSynchros() {
         </DialogContent>
       </Dialog>
     </div>
+    </SubscriptionGuard>
   );
 }

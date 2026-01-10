@@ -59,28 +59,29 @@ export default function Subscribe() {
 
   const handleSubscribe = async () => {
     try {
+      // Store user email for webhook matching
+      if (user?.email) {
+        sessionStorage.setItem('subscribing_user', user.email);
+      }
+
       // Try Base44 native payments first
       if (window.base44?.payments) {
         // Will redirect to Stripe Checkout managed by Base44
+        // Base44 handles webhooks automatically
         await window.base44.payments.subscribe({
           priceId: 'price_monthly_premium', // To be configured in Base44 dashboard
           successUrl: window.location.origin + createPageUrl('SubscribeSuccess'),
           cancelUrl: window.location.origin + createPageUrl('SubscribeCancel')
         });
       } else {
-        // Fallback to Payment Link
-        if (user?.email) {
-          sessionStorage.setItem('subscribing_user', user.email);
-        }
+        // Fallback to Payment Link (requires manual webhook setup)
         window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
       }
     } catch (error) {
       console.error('Payment error:', error);
-      // Fallback to Payment Link on error
-      if (user?.email) {
-        sessionStorage.setItem('subscribing_user', user.email);
-      }
-      window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
+      alert(lang === 'fr' 
+        ? 'Erreur lors de l\'accès au paiement. Veuillez réessayer.' 
+        : 'Payment access error. Please try again.');
     }
   };
 

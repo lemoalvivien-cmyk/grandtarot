@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function SubscribeSuccess() {
-  const [loading, setLoading] = useState(true);
-  const [activating, setActivating] = useState(false);
+  const [processing, setProcessing] = useState(true);
   const [error, setError] = useState(null);
+  const [lang, setLang] = useState('fr');
 
   useEffect(() => {
     activateSubscription();
@@ -25,74 +25,111 @@ export default function SubscribeSuccess() {
       const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
       
       if (profiles.length === 0) {
-        setError('Profile not found');
-        setLoading(false);
-        return;
-      }
+        // Create profile if doesn't exist
+        await base44.entities.UserProfile.create({
+          user_id: user.email,
+          display_name: user.full_name || '',
+          subscription_status: 'active',
+          subscription_start: new Date().toISOString(),
+          is_subscribed: true
+        });
+      } else {
+        // Update existing profile
+        const profile = profiles[0];
+        setLang(profile.language_pref || 'fr');
+        
+        // Check if already active (webhook already processed)
+        if (profile.subscription_status === 'active' || profile.subscription_status === 'trialing') {
+          setProcessing(false);
+          setTimeout(() => {
+            window.location.href = profile.onboarding_completed 
+              ? createPageUrl('App') 
+              : createPageUrl('AppOnboarding');
+          }, 2000);
+          return;
+        }
 
-      const profile = profiles[0];
-
-      // Activate subscription
-      if (profile.subscription_status !== 'active') {
-        setActivating(true);
+        // Activate subscription
         await base44.entities.UserProfile.update(profile.id, {
           subscription_status: 'active',
-          is_subscribed: true,
           subscription_start: new Date().toISOString(),
-          subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // +30 days
+          is_subscribed: true
+        });
+
+        // Audit log
+        await base44.entities.AuditLog.create({
+          actor_user_id: user.email,
+          actor_role: 'user',
+          action: 'subscription_started',
+          entity_name: 'UserProfile',
+          entity_id: profile.id,
+          payload_summary: 'User subscribed successfully',
+          severity: 'info'
         });
       }
 
-      setLoading(false);
-
-      // Auto-redirect after 3 seconds
+      // Success - redirect
+      setProcessing(false);
       setTimeout(() => {
-        if (profile.onboarding_completed) {
-          window.location.href = createPageUrl('App');
-        } else {
-          window.location.href = createPageUrl('AppOnboarding');
-        }
-      }, 3000);
-
+        const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
+        window.location.href = profiles[0].onboarding_completed 
+          ? createPageUrl('App') 
+          : createPageUrl('AppOnboarding');
+      }, 2000);
     } catch (error) {
-      console.error('Error:', error);
-      setError('Activation error');
-      setLoading(false);
+      console.error('Error activating subscription:', error);
+      setError(error.message);
+      setProcessing(false);
     }
   };
 
-  const handleContinue = () => {
-    window.location.href = createPageUrl('AppOnboarding');
+  const content = {
+    fr: {
+      processing: 'Activation de votre abonnement...',
+      success: 'Abonnement activé avec succès !',
+      redirect: 'Redirection vers l\'app...',
+      error: 'Erreur lors de l\'activation',
+      retry: 'Réessayer',
+      contact: 'Contacter le support'
+    },
+    en: {
+      processing: 'Activating your subscription...',
+      success: 'Subscription activated successfully!',
+      redirect: 'Redirecting to app...',
+      error: 'Activation error',
+      retry: 'Retry',
+      contact: 'Contact support'
+    }
   };
 
-  if (loading || activating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-slate-400">
-            {activating ? 'Activation en cours...' : 'Chargement...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const t = content[lang];
 
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md text-center">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">⚠️</span>
+        <div className="max-w-md mx-auto">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">❌</span>
+            </div>
+            <h2 className="text-2xl font-bold text-red-200 mb-2">{t.error}</h2>
+            <p className="text-red-300 text-sm mb-6">{error}</p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="flex-1 border-red-500/30"
+              >
+                {t.retry}
+              </Button>
+              <Button 
+                onClick={() => window.location.href = createPageUrl('Landing')}
+                className="flex-1 bg-red-500/20 hover:bg-red-500/30"
+              >
+                {t.contact}
+              </Button>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-amber-100 mb-2">Erreur</h1>
-          <p className="text-slate-400 mb-6">{error}</p>
-          <Button 
-            onClick={() => window.location.href = createPageUrl('Subscribe')}
-            className="bg-gradient-to-r from-amber-500 to-violet-600"
-          >
-            Retour
-          </Button>
         </div>
       </div>
     );
@@ -100,58 +137,31 @@ export default function SubscribeSuccess() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-lg text-center">
-        {/* Success Icon */}
-        <div className="relative mb-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500/30 to-amber-500/30 rounded-full blur-3xl" />
-          <div className="relative w-24 h-24 bg-gradient-to-br from-green-500 to-amber-500 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle className="w-12 h-12 text-white" />
+      <div className="max-w-md mx-auto">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
+          <div className="relative bg-slate-900/50 backdrop-blur-sm border border-green-500/20 rounded-3xl p-12 text-center">
+            {processing ? (
+              <>
+                <Loader2 className="w-16 h-16 text-green-400 mx-auto mb-6 animate-spin" />
+                <h2 className="text-2xl font-bold text-green-200 mb-2">{t.processing}</h2>
+                <p className="text-slate-400 text-sm">{lang === 'fr' ? 'Veuillez patienter...' : 'Please wait...'}</p>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-12 h-12 text-green-400" />
+                </div>
+                <h2 className="text-3xl font-bold text-green-200 mb-2">{t.success}</h2>
+                <p className="text-slate-300 mb-6">{t.redirect}</p>
+                <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                  <div className="animate-spin w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full" />
+                  <span>{lang === 'fr' ? 'Redirection...' : 'Redirecting...'}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
-
-        {/* Content */}
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-          Bienvenue chez GRANDTAROT
-        </h1>
-        
-        <p className="text-xl text-slate-300 mb-2">
-          Votre abonnement est activé !
-        </p>
-        
-        <p className="text-slate-400 mb-8">
-          Accédez maintenant à votre tirage quotidien et découvrez vos affinités
-        </p>
-
-        {/* Features */}
-        <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6 mb-8">
-          <div className="space-y-3 text-left">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
-              <span className="text-slate-300">Tirage quotidien personnalisé par IA</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
-              <span className="text-slate-300">20 affinités compatibles par jour</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
-              <span className="text-slate-300">Chat sécurisé après connexion mutuelle</span>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <Button 
-          onClick={handleContinue}
-          className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg rounded-xl shadow-xl shadow-amber-500/20"
-        >
-          Commencer l'aventure
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-
-        <p className="text-xs text-slate-500 mt-4">
-          Redirection automatique dans 3 secondes...
-        </p>
       </div>
     </div>
   );

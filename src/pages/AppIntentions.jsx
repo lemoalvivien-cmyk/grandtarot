@@ -5,6 +5,7 @@ import { MessageCircle, Inbox, Send as SendIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReceivedIntentionCard from '@/components/intentions/ReceivedIntentionCard';
 import SentIntentionCard from '@/components/intentions/SentIntentionCard';
+import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppIntentions() {
   const [loading, setLoading] = useState(true);
@@ -21,38 +22,15 @@ export default function AppIntentions() {
 
   const checkAccess = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
       const userProfiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
-      
-      if (currentUser.role !== 'admin') {
-        const hasActiveSubscription = userProfiles.length > 0 && 
-          (userProfiles[0].subscription_status === 'active' || userProfiles[0].subscription_status === 'trialing');
-        
-        if (!hasActiveSubscription) {
-          window.location.href = createPageUrl('Subscribe');
-          return;
-        }
-      }
-
-      if (!userProfiles[0].onboarding_completed || !userProfiles[0].photo_url) {
-        window.location.href = createPageUrl('AppOnboarding');
-        return;
-      }
-
       setProfile(userProfiles[0]);
       setLang(userProfiles[0].language_pref || 'fr');
       await loadIntentions(currentUser.email);
     } catch (error) {
       console.error('Error:', error);
-      window.location.href = createPageUrl('Landing');
     } finally {
       setLoading(false);
     }
@@ -185,13 +163,16 @@ export default function AppIntentions() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </SubscriptionGuard>
     );
   }
 
   return (
+    <SubscriptionGuard>
     <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
@@ -262,5 +243,6 @@ export default function AppIntentions() {
         </Tabs>
       </div>
     </div>
+    </SubscriptionGuard>
   );
 }

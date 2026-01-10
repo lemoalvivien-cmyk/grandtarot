@@ -467,5 +467,6 @@ export default function Chat() {
         </DialogContent>
       </Dialog>
     </div>
+    </SubscriptionGuard>
   );
 }

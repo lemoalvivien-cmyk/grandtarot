@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import PhotoUpload from '@/components/onboarding/PhotoUpload';
 import InterestSelector from '@/components/onboarding/InterestSelector';
+import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppOnboarding() {
   const [loading, setLoading] = useState(true);
@@ -208,13 +209,16 @@ export default function AppOnboarding() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <SubscriptionGuard allowOnboarding={true}>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </SubscriptionGuard>
     );
   }
 
   return (
+    <SubscriptionGuard allowOnboarding={true}>
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         {/* Progress */}
