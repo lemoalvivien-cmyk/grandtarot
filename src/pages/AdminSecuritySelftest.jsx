@@ -255,6 +255,35 @@ export default function AdminSecuritySelftest() {
         }
       }
 
+      // TEST 14: Backend Function - chat_send_message on non-participant conversation (MUST FAIL 403)
+      try {
+        const result = await base44.functions.chat_send_message({
+          conversationId: 'fake-non-participant-conv',
+          body: 'test spoof'
+        });
+        addResult('chat_send_message(non-participant)', false, 'SECURITY BREACH: Sent message in non-participant conv', 'Should be 403');
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('Non autorisé') || error.message?.includes('not found')) {
+          addResult('chat_send_message(non-participant)', true, `BLOCKED: ${error.message}`);
+        } else {
+          addResult('chat_send_message(non-participant)', false, `Unexpected error (should be 403)`, error.message);
+        }
+      }
+
+      // TEST 15: Backend Function - chat_open_conversation without authorization (MUST FAIL 403)
+      try {
+        const result = await base44.functions.chat_open_conversation({
+          otherUserEmail: 'random-stranger@test.com'
+        });
+        addResult('chat_open_conversation(no-auth)', false, 'SECURITY BREACH: Opened conv with stranger', 'Should be 403');
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('Aucune autorisation')) {
+          addResult('chat_open_conversation(no-auth)', true, `BLOCKED: ${error.message}`);
+        } else {
+          addResult('chat_open_conversation(no-auth)', false, `Unexpected error (should be 403)`, error.message);
+        }
+      }
+
     } catch (error) {
       addResult('Test Suite', false, 'Fatal error', error.message);
     }

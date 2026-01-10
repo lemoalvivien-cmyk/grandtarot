@@ -32,6 +32,7 @@ import BlogPost from './pages/BlogPost';
 import CardDetail from './pages/CardDetail';
 import CardOfDay from './pages/CardOfDay';
 import Chat from './pages/Chat';
+import ChatDisabled from './pages/ChatDisabled';
 import Cookies from './pages/Cookies';
 import CreateReport from './pages/CreateReport';
 import DailyReading from './pages/DailyReading';
@@ -49,7 +50,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import ChatDisabled from './pages/ChatDisabled';
 import __Layout from './Layout.jsx';
 
 
@@ -88,6 +88,7 @@ export const PAGES = {
     "CardDetail": CardDetail,
     "CardOfDay": CardOfDay,
     "Chat": Chat,
+    "ChatDisabled": ChatDisabled,
     "Cookies": Cookies,
     "CreateReport": CreateReport,
     "DailyReading": DailyReading,
@@ -105,7 +106,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "ChatDisabled": ChatDisabled,
 }
 
 export const pagesConfig = {

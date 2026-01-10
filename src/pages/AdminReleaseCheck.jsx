@@ -49,19 +49,25 @@ export default function AdminReleaseCheck() {
       { 
         id: 'MSG-001', 
         title: 'Message.create = admin-only', 
-        description: 'Users MUST use SendMessageSecure workflow. Direct Message.create blocked.',
-        status: 'APPLIED'
-      },
-      { 
-        id: 'MSG-002', 
-        title: 'participant_a_id/b_id denormalization', 
-        description: 'All messages now carry participant IDs from Conversation (anti-spoof)',
+        description: 'Users call Backend Function chat_send_message. Direct Message.create blocked.',
         status: 'APPLIED'
       },
       { 
         id: 'CONV-001', 
-        title: 'Conversation participants-only accessRules', 
-        description: 'Only participants + admin can read/write conversations',
+        title: 'Conversation.create/update = admin-only', 
+        description: 'Users call Backend Function chat_open_conversation. Direct create/update blocked.',
+        status: 'APPLIED'
+      },
+      { 
+        id: 'BACKEND-001', 
+        title: 'Backend Functions: chat_open_conversation', 
+        description: 'Server-side validation: Intention accepted required, creates conv via serviceRole',
+        status: 'APPLIED'
+      },
+      { 
+        id: 'BACKEND-002', 
+        title: 'Backend Functions: chat_send_message', 
+        description: 'Server-side: participant check, denormalization, rate-limit, creates Message via serviceRole',
         status: 'APPLIED'
       },
       { 
@@ -78,8 +84,8 @@ export default function AdminReleaseCheck() {
       },
       { 
         id: 'WORKFLOW-001', 
-        title: 'SendMessageSecure anti-spoof workflow', 
-        description: 'Server-enforced: from_user_id + participants validation + denormalization',
+        title: 'Client calls Backend Functions ONLY', 
+        description: 'Zero direct entity create/update on Message/Conversation from client',
         status: 'APPLIED'
       }
     ];
@@ -98,7 +104,11 @@ export default function AdminReleaseCheck() {
       public_entities: 4,
       admin_only_entities: 4,
       owner_entities: 11,
-      critical_patches: 6
+      critical_patches: 7,
+      backend_functions: 2,
+      chat_status: 'ENABLED (Backend Functions)',
+      message_create: 'ADMIN-ONLY (via chat_send_message function)',
+      conversation_create: 'ADMIN-ONLY (via chat_open_conversation function)'
     };
 
     setReport(checkReport);
