@@ -68,6 +68,8 @@ import LegalNotice from './pages/LegalNotice';
 import DataRights from './pages/DataRights';
 import AccountPrivacy from './pages/AccountPrivacy';
 import AdminDsarRequests from './pages/AdminDsarRequests';
+import Offline from './pages/Offline';
+import AdminMobileReadiness from './pages/AdminMobileReadiness';
 import __Layout from './Layout.jsx';
 
 
@@ -142,6 +144,8 @@ export const PAGES = {
     "DataRights": DataRights,
     "AccountPrivacy": AccountPrivacy,
     "AdminDsarRequests": AdminDsarRequests,
+    "Offline": Offline,
+    "AdminMobileReadiness": AdminMobileReadiness,
 }
 
 export const pagesConfig = {
