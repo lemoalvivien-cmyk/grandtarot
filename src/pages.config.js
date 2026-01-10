@@ -64,6 +64,8 @@ import Terms from './pages/Terms';
 import AdminRgpdRegister from './pages/AdminRgpdRegister';
 import AdminRgpdRetention from './pages/AdminRgpdRetention';
 import AdminRgpdDsar from './pages/AdminRgpdDsar';
+import LegalNotice from './pages/LegalNotice';
+import DataRights from './pages/DataRights';
 import __Layout from './Layout.jsx';
 
 
@@ -134,6 +136,8 @@ export const PAGES = {
     "AdminRgpdRegister": AdminRgpdRegister,
     "AdminRgpdRetention": AdminRgpdRetention,
     "AdminRgpdDsar": AdminRgpdDsar,
+    "LegalNotice": LegalNotice,
+    "DataRights": DataRights,
 }
 
 export const pagesConfig = {
