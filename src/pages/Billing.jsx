@@ -119,6 +119,41 @@ export default function Billing() {
   };
 
   const content = {
+    en: {
+      title: 'Billing & Subscription',
+      status: 'Subscription Status',
+      free: 'Free',
+      active: 'Active',
+      description: 'Welcome to GRANDTAROT. A subscription is required to access all features.',
+      cta: 'Subscribe now',
+      price: '€6.90/month',
+      features: [
+        'AI personalized daily reading',
+        '20 cosmic affinities per day',
+        '3 modes: Love, Friendship, Pro',
+        'Unlimited secure chat',
+        '78 cards encyclopedia'
+      ],
+      noPaymentLink: 'Payment link not configured. Contact admin.',
+      alreadySubscribed: 'You are subscribed ✅',
+      paymentSubmitted: 'I already paid',
+      proofTitle: 'Submit payment proof',
+      proofDesc: 'Describe your transaction (order number, amount, date, etc.)',
+      proofPlaceholder: 'Ex: Paid 6.90€ on 10/01 via Stripe order #...',
+      proofSubmit: 'Send',
+      proofCancel: 'Cancel',
+      freeAccess: 'Free access (paywall disabled)',
+      pendingReview: 'Your request is pending review...',
+      manualPaymentTitle: 'Payment without webhook?',
+      manualPaymentSteps: [
+        '1️⃣ Click "Subscribe now" to pay via Stripe (€6.90)',
+        '2️⃣ After payment, click the confirmation link',
+        '3️⃣ Come back here and click "I already paid"',
+        '4️⃣ Briefly describe your transaction (order number)'
+      ],
+      manualPaymentNote: 'Verification delay: 2-4 hours on business days',
+      alreadyPending: 'You already have a pending request. Please wait for verification.'
+    },
     fr: {
       title: 'Facturation & Abonnement',
       status: 'Statut de l\'abonnement',
