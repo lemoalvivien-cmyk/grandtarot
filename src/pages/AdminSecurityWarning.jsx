@@ -120,7 +120,7 @@ export default function AdminSecurityWarning() {
               Alternative (NON RECOMMANDÉE)
             </h2>
             <p className="text-slate-300 mb-4">
-              Remettre <code className="bg-slate-900 px-2 py-1 rounded">Message.create = "from_user_id == {'{user.email}'"</code>
+              Remettre <code className="bg-slate-900 px-2 py-1 rounded">Message.create = from_user_id == user.email</code>
             </p>
             <div className="space-y-2 text-sm text-slate-400">
               <p>✅ PRO: Le chat fonctionne à nouveau</p>
