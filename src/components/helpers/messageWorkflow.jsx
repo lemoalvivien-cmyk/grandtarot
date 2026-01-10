@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { moderateMessage } from './aiService';
+import { callFunctionRaw } from './functionFetch';
 
 /**
  * SECURE MESSAGE WORKFLOW - NO MERCY MODE
@@ -102,15 +103,28 @@ const applyModerationAction = async (userId, severity, flags) => {
  */
 export const openConversationSecure = async (otherUserEmail) => {
   try {
-    const response = await base44.functions.chat_open_conversation({ otherUserEmail });
+    const result = await callFunctionRaw('chat_open_conversation', { otherUserEmail });
     
-    if (!response.conversationId) {
-      throw new Error('Pas de conversationId retourné');
+    if (!result.success) {
+      return {
+        success: false,
+        status: result.status,
+        error: result.json?.error || result.text || 'Erreur ouverture conversation'
+      };
+    }
+    
+    if (!result.json?.conversationId) {
+      return {
+        success: false,
+        status: result.status,
+        error: 'Pas de conversationId retourné'
+      };
     }
     
     return {
       success: true,
-      conversationId: response.conversationId
+      conversationId: result.json.conversationId,
+      status: result.status
     };
   } catch (error) {
     console.error('[openConversation] Error:', error);
@@ -140,42 +154,59 @@ export const sendMessageSecure = async ({
   
   try {
     // Call backend function - ONLY conversationId + body + clientMsgId
-    const response = await base44.functions.chat_send_message({
+    const result = await callFunctionRaw('chat_send_message', {
       conversationId,
       body: messageBody,
       clientMsgId
     });
     
-    if (!response.message) {
-      throw new Error(response.error || 'Pas de message retourné');
+    if (!result.success) {
+      let errorMsg = lang === 'fr' 
+        ? 'Erreur lors de l\'envoi du message.' 
+        : 'Error sending message.';
+      
+      if (result.status === 403) {
+        errorMsg = lang === 'fr' ? 'Accès interdit.' : 'Access denied.';
+      } else if (result.status === 429) {
+        errorMsg = lang === 'fr' ? 'Trop rapide - Attendez 1 seconde.' : 'Too fast - Wait 1 second.';
+      } else if (result.status === 400) {
+        errorMsg = lang === 'fr' ? 'Message invalide.' : 'Invalid message.';
+      }
+      
+      return {
+        success: false,
+        status: result.status,
+        error: errorMsg,
+        code: `HTTP_${result.status}`
+      };
+    }
+    
+    if (!result.json?.message) {
+      return {
+        success: false,
+        status: result.status,
+        error: lang === 'fr' ? 'Pas de message retourné' : 'No message returned'
+      };
     }
     
     return {
       success: true,
-      message: response.message,
-      duplicate: response.duplicate || false
+      status: result.status,
+      message: result.json.message,
+      duplicate: result.json.duplicate || false
     };
     
   } catch (error) {
     console.error('[sendMessage] Error:', error);
     
-    // Parse error message
     let errorMsg = lang === 'fr' 
       ? 'Erreur lors de l\'envoi du message.' 
       : 'Error sending message.';
     
-    if (error.message?.includes('403') || error.message?.includes('Non autorisé')) {
-      errorMsg = lang === 'fr' ? 'Accès interdit.' : 'Access denied.';
-    } else if (error.message?.includes('429') || error.message?.includes('Trop rapide')) {
-      errorMsg = lang === 'fr' ? 'Trop rapide - Attendez 1 seconde.' : 'Too fast - Wait 1 second.';
-    } else if (error.message?.includes('400') || error.message?.includes('vide')) {
-      errorMsg = lang === 'fr' ? 'Message invalide.' : 'Invalid message.';
-    }
-    
     return {
       success: false,
       error: errorMsg,
-      code: error.statusCode || 'SERVER_ERROR'
+      code: 'EXCEPTION'
     };
   }
 };
