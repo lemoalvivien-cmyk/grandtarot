@@ -63,7 +63,8 @@ export default function AdminUsers() {
         entity_name: 'UserProfile',
         entity_id: profile.id,
         target_user_id: profile.user_id,
-        payload_summary: profile.is_banned ? 'User unbanned' : 'User banned'
+        payload_summary: profile.is_banned ? 'User unbanned' : 'User banned',
+        severity: 'warning'
       });
 
       // Refresh
@@ -93,7 +94,7 @@ export default function AdminUsers() {
         entity_name: 'UserProfile',
         entity_id: profile.id,
         target_user_id: profile.user_id,
-        payload_summary: 'Subscription status resynced'
+        payload_summary: `Subscription resynced to ${hasStripeSubscription ? 'active' : 'none'}`
       });
 
       alert('Subscription resynchronisée');

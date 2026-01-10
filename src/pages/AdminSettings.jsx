@@ -97,9 +97,14 @@ export default function AdminSettings() {
       // Log action
       const admin = await base44.auth.me();
       await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
         action: 'settings_changed',
-        admin_id: admin.email,
-        details: { settings: Object.keys(settings) }
+        entity_name: 'AppSettings',
+        payload_summary: `Updated ${Object.keys(settings).length} settings`,
+        payload_data: { 
+          updated_settings: Object.keys(settings)
+        }
       });
 
       alert('Paramètres sauvegardés');

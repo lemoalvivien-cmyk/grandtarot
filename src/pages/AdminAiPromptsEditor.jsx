@@ -73,6 +73,21 @@ export default function AdminAiPromptsEditor() {
       const { clearPromptCache } = await import('@/components/helpers/aiService');
       clearPromptCache();
       
+      // Audit log
+      const admin = await base44.auth.me();
+      await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
+        action: 'prompt_updated',
+        entity_name: 'AiPrompt',
+        entity_id: prompt.id,
+        payload_summary: `Updated AI prompt: ${promptKey}`,
+        payload_data: {
+          prompt_key: promptKey,
+          version: prompt.version
+        }
+      });
+      
       toast.success('Prompt sauvegardé');
     } catch (error) {
       console.error('Error saving prompt:', error);

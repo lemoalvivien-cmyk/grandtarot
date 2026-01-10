@@ -101,13 +101,19 @@ export default function AdminDailyCardManager() {
       }
 
       // Audit log
-      const admin = await base44.auth.me();
+      const adminUser = await base44.auth.me();
       await base44.entities.AuditLog.create({
-        actor_user_id: admin.email,
+        actor_user_id: adminUser.email,
         actor_role: 'admin',
-        action: 'content_published',
+        action: 'card_of_day_published',
         entity_name: 'AdminDailyCard',
-        payload_summary: `Published daily card for ${publishDate}`
+        entity_id: existing.length > 0 ? existing[0].id : null,
+        payload_summary: `Published daily card for ${publishDate}: ${selectedCard.name_fr}`,
+        payload_data: {
+          card_id: selectedCard.id,
+          card_name: selectedCard.name_fr,
+          publish_date: publishDate
+        }
       });
 
       alert('Carte publiée avec succès !');

@@ -126,7 +126,13 @@ export default function AdminModeration() {
         entity_name: 'Report',
         entity_id: selectedReport.id,
         target_user_id: selectedReport.target_user_id,
-        payload_summary: `Resolved report with action: ${actionTaken}`
+        payload_summary: `Resolved report with action: ${actionTaken}`,
+        payload_data: {
+          report_reason: selectedReport.reason,
+          action_taken: actionTaken,
+          notes: actionNotes
+        },
+        severity: actionTaken === 'permanent_ban' ? 'critical' : actionTaken === 'temporary_ban' ? 'warning' : 'info'
       });
 
       setActionModal(false);
@@ -155,7 +161,9 @@ export default function AdminModeration() {
         actor_role: 'admin',
         action: 'report_dismissed',
         entity_name: 'Report',
-        entity_id: report.id
+        entity_id: report.id,
+        target_user_id: report.target_user_id,
+        payload_summary: 'Report dismissed without action'
       });
 
       await loadReports();

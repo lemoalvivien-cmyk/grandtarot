@@ -65,7 +65,25 @@ export default function AdminSubscriptionManager() {
         updateData.subscription_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       }
 
+      const profile = profiles.find(p => p.id === profileId);
       await base44.entities.UserProfile.update(profileId, updateData);
+      
+      // Audit log
+      const admin = await base44.auth.me();
+      await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
+        action: 'subscription_resynced',
+        entity_name: 'UserProfile',
+        entity_id: profileId,
+        target_user_id: profile.user_id,
+        payload_summary: `Resynced subscription to ${newStatus}`,
+        payload_data: {
+          old_status: profile.subscription_status,
+          new_status: newStatus
+        }
+      });
+      
       await loadProfiles();
     } catch (error) {
       console.error('Error:', error);

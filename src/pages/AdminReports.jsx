@@ -84,14 +84,19 @@ export default function AdminReports() {
 
       // Log action
       await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
         action: dismiss ? 'report_dismissed' : 'report_resolved',
-        admin_id: admin.email,
+        entity_name: 'Report',
+        entity_id: selectedReport.id,
         target_user_id: selectedReport.reported_user_id,
-        details: { 
+        payload_summary: dismiss ? 'Report dismissed' : `Report resolved with action: ${action}`,
+        payload_data: { 
           report_id: selectedReport.id,
           action_taken: dismiss ? 'none' : action,
           notes: adminNotes
-        }
+        },
+        severity: !dismiss && (action === 'temporary_ban' || action === 'permanent_ban') ? 'critical' : 'info'
       });
 
       setSelectedReport(null);
