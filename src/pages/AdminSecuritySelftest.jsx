@@ -214,6 +214,47 @@ export default function AdminSecuritySelftest() {
         }
       }
 
+      // TEST 11: Conversation.create() attempt (MUST FAIL - admin-only)
+      try {
+        const user = await base44.auth.me();
+        await base44.entities.Conversation.create({
+          user_a_id: user.email,
+          user_b_id: 'other@test.com',
+          mode: 'love'
+        });
+        addResult('Conversation.create()', false, 'SECURITY BREACH: Create succeeded', 'Should be 403 (admin-only)');
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
+          addResult('Conversation.create()', true, `BLOCKED (admin-only): ${error.message}`);
+        } else {
+          addResult('Conversation.create()', false, `Unexpected error (should be 403)`, error.message);
+        }
+      }
+
+      // TEST 12: AppSettings.filter() attempt (MUST FAIL)
+      try {
+        await base44.entities.AppSettings.filter({}, null, 10);
+        addResult('AppSettings.filter()', false, 'SECURITY BREACH: Read succeeded', 'Should be 403');
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission')) {
+          addResult('AppSettings.filter()', true, `Blocked: ${error.message}`);
+        } else {
+          addResult('AppSettings.filter()', false, `Unexpected error`, error.message);
+        }
+      }
+
+      // TEST 13: AuditLog.filter() attempt (MUST FAIL)
+      try {
+        await base44.entities.AuditLog.filter({}, '-created_date', 10);
+        addResult('AuditLog.filter()', false, 'SECURITY BREACH: Read succeeded', 'Should be 403');
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission')) {
+          addResult('AuditLog.filter()', true, `Blocked: ${error.message}`);
+        } else {
+          addResult('AuditLog.filter()', false, `Unexpected error`, error.message);
+        }
+      }
+
     } catch (error) {
       addResult('Test Suite', false, 'Fatal error', error.message);
     }
