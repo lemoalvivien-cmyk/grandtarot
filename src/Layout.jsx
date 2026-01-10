@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, Menu, X, Globe, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import CookieBanner from '@/components/legal/CookieBanner';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -254,6 +255,9 @@ export default function Layout({ children, currentPageName }) {
         {children}
       </main>
 
+      {/* Cookie Banner (public pages only) */}
+      {isPublicPage && <CookieBanner lang={lang} />}
+
       {/* Footer (public pages only) */}
       {isPublicPage && (
         <footer className="border-t border-amber-500/10 bg-slate-950/50 backdrop-blur-xl py-12 mt-20">
@@ -297,12 +301,15 @@ export default function Layout({ children, currentPageName }) {
               <div>
                 <h4 className="font-semibold text-amber-200 mb-3">{lang === 'fr' ? 'Légal' : 'Legal'}</h4>
                 <div className="space-y-2">
-                  <a href="#" className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                  <Link to={createPageUrl('Terms')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
                     {lang === 'fr' ? 'CGU' : 'Terms'}
-                  </a>
-                  <a href="#" className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                  </Link>
+                  <Link to={createPageUrl('Privacy')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
                     {lang === 'fr' ? 'Confidentialité' : 'Privacy'}
-                  </a>
+                  </Link>
+                  <Link to={createPageUrl('Cookies')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                    {lang === 'fr' ? 'Cookies' : 'Cookies'}
+                  </Link>
                 </div>
               </div>
             </div>

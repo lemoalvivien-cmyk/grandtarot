@@ -38,6 +38,9 @@ import Settings from './pages/Settings';
 import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Cookies from './pages/Cookies';
 import __Layout from './Layout.jsx';
 
 
@@ -82,6 +85,9 @@ export const PAGES = {
     "Subscribe": Subscribe,
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
+    "Terms": Terms,
+    "Privacy": Privacy,
+    "Cookies": Cookies,
 }
 
 export const pagesConfig = {
