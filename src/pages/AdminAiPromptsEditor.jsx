@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Save, Eye, AlertCircle } from 'lucide-react';
+import { Sparkles, Save, Eye, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminAiPromptsEditor() {
   const [loading, setLoading] = useState(true);
@@ -16,23 +17,11 @@ export default function AdminAiPromptsEditor() {
   const [activeKey, setActiveKey] = useState('interpretation_love');
 
   useEffect(() => {
-    checkAdmin();
+    loadPrompts();
   }, []);
 
-  const checkAdmin = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('App');
-        return;
-      }
-
       await loadPrompts();
     } catch (error) {
       console.error('Error:', error);
@@ -140,14 +129,6 @@ export default function AdminAiPromptsEditor() {
     }
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   const currentPrompt = prompts[activeKey] || {
     prompt_key: activeKey,
     system_prompt_fr: '',
@@ -158,7 +139,18 @@ export default function AdminAiPromptsEditor() {
     is_active: true
   };
 
+  if (loading) {
+    return (
+      <AdminGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
+    );
+  }
+
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -326,5 +318,6 @@ export default function AdminAiPromptsEditor() {
         </div>
       </div>
     </div>
+    </AdminGuard>
   );
 }

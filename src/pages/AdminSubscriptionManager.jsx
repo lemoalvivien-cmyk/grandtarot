@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminSubscriptionManager() {
   const [loading, setLoading] = useState(true);
@@ -15,23 +16,11 @@ export default function AdminSubscriptionManager() {
   const [syncing, setSyncing] = useState(null);
 
   useEffect(() => {
-    checkAdmin();
+    loadProfiles();
   }, []);
 
-  const checkAdmin = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('App');
-        return;
-      }
-
       await loadProfiles();
     } catch (error) {
       console.error('Error:', error);
@@ -110,13 +99,16 @@ export default function AdminSubscriptionManager() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <AdminGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
     );
   }
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -236,5 +228,6 @@ export default function AdminSubscriptionManager() {
         </div>
       </div>
     </div>
+    </AdminGuard>
   );
 }

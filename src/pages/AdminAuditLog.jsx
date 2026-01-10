@@ -4,29 +4,18 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { ArrowLeft, Eye, Shield, Ban, AlertTriangle, Settings, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminAuditLog() {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
-    checkAdminAndLoad();
+    loadData();
   }, []);
 
-  const checkAdminAndLoad = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('Dashboard');
-        return;
-      }
-
       const logList = await base44.entities.AuditLog.list('-created_date', 100);
       setLogs(logList);
     } catch (error) {
@@ -49,13 +38,16 @@ export default function AdminAuditLog() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
-      </div>
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
     );
   }
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -113,5 +105,6 @@ export default function AdminAuditLog() {
         )}
       </div>
     </div>
+    </AdminGuard>
   );
 }

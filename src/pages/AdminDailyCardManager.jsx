@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminDailyCardManager() {
   const [loading, setLoading] = useState(true);
@@ -19,23 +20,11 @@ export default function AdminDailyCardManager() {
   const [drawing, setDrawing] = useState(false);
 
   useEffect(() => {
-    checkAdmin();
+    loadCards();
   }, []);
 
-  const checkAdmin = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('App');
-        return;
-      }
-
       await loadCards();
     } catch (error) {
       console.error('Error:', error);
@@ -132,13 +121,16 @@ export default function AdminDailyCardManager() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
     );
   }
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -274,5 +266,6 @@ export default function AdminDailyCardManager() {
         )}
       </div>
     </div>
+    </AdminGuard>
   );
 }

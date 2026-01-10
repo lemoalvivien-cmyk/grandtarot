@@ -4,34 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { Upload, Download, AlertCircle, CheckCircle, Loader2, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminTarotImport() {
-  const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
-
-  React.useEffect(() => {
-    checkAdmin();
-  }, []);
-
-  const checkAdmin = async () => {
-    try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('App');
-        return;
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      window.location.href = createPageUrl('Landing');
-    }
-  };
 
   const downloadTemplate = () => {
     const template = `slug,name_fr,name_en,arcana_type,suit,number,keywords_fr,keywords_en,meaning_upright_fr,meaning_upright_en,meaning_reversed_fr,meaning_reversed_en,love_meaning_fr,love_meaning_en,career_meaning_fr,career_meaning_en,friendship_meaning_fr,friendship_meaning_en,themes,image_url
@@ -130,6 +107,7 @@ the-fool,Le Mat,The Fool,major,none,0,"nouveaux départs,innocence,spontanéité
   };
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -284,5 +262,6 @@ the-fool,Le Mat,The Fool,major,none,0,"nouveaux départs,innocence,spontanéité
         </Card>
       </div>
     </div>
+    </AdminGuard>
   );
 }

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
@@ -31,23 +32,11 @@ export default function AdminSettings() {
   };
 
   useEffect(() => {
-    checkAdminAndLoad();
+    loadData();
   }, []);
 
-  const checkAdminAndLoad = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('Dashboard');
-        return;
-      }
-
       // Load existing settings
       const existingSettings = await base44.entities.AppSettings.list();
       const settingsMap = { ...defaultSettings };
@@ -122,19 +111,22 @@ export default function AdminSettings() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   const limitSettings = Object.entries(settings).filter(([_, s]) => s.category === 'limits');
   const pricingSettings = Object.entries(settings).filter(([_, s]) => s.category === 'pricing');
   const promptSettings = Object.entries(settings).filter(([_, s]) => s.category === 'prompts');
 
+  if (loading) {
+    return (
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
+    );
+  }
+
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -239,5 +231,6 @@ export default function AdminSettings() {
         </Tabs>
       </div>
     </div>
+    </AdminGuard>
   );
 }

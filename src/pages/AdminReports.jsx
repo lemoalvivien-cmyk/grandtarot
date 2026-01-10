@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminReports() {
   const [loading, setLoading] = useState(true);
@@ -18,24 +19,12 @@ export default function AdminReports() {
   const [action, setAction] = useState('none');
 
   useEffect(() => {
-    checkAdminAndLoad();
+    loadData();
   }, []);
 
-  const checkAdminAndLoad = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('Dashboard');
-        return;
-      }
-
-      const reportList = await base44.entities.Report.list('-created_date');
+      const reportList = await base44.entities.Report.list('-created_date', 100);
       setReports(reportList);
 
       // Load profiles
@@ -126,17 +115,20 @@ export default function AdminReports() {
     dismissed: 'bg-gray-500/20 text-gray-400'
   };
 
+  const pendingReports = reports.filter(r => r.status === 'pending' || r.status === 'reviewing');
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
-      </div>
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
     );
   }
 
-  const pendingReports = reports.filter(r => r.status === 'pending' || r.status === 'reviewing');
-
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -281,5 +273,6 @@ export default function AdminReports() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminGuard>
   );
 }
