@@ -41,8 +41,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import Sitemap from './pages/Sitemap';
-import Robots from './pages/Robots';
 import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
 import ManageSubscription from './pages/ManageSubscription';
 import AdminSubscriptionSync from './pages/AdminSubscriptionSync';
@@ -93,8 +91,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "Sitemap": Sitemap,
-    "Robots": Robots,
     "AdminSecuritySelftest": AdminSecuritySelftest,
     "ManageSubscription": ManageSubscription,
     "AdminSubscriptionSync": AdminSubscriptionSync,

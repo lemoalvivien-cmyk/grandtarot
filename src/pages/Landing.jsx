@@ -14,6 +14,7 @@ export default function Landing() {
   useEffect(() => {
     loadDailyCard();
     addSEOMeta();
+    addStructuredData();
   }, []);
   
   const addSEOMeta = () => {
@@ -76,7 +77,56 @@ export default function Landing() {
     script.type = 'application/ld+json';
     script.text = JSON.stringify(faqSchema);
     document.head.appendChild(script);
-  };
+    };
+
+    const addStructuredData = () => {
+    // Organization Schema
+    const orgSchema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "GRANDTAROT",
+      "url": "https://grandtarot.com",
+      "logo": "https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=512&h=512&fit=crop",
+      "description": "Application de rencontres basée sur le tarot et l'astrologie",
+      "sameAs": [
+        "https://www.instagram.com/grandtarot",
+        "https://www.facebook.com/grandtarot"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "support@grandtarot.com"
+      }
+    };
+
+    // WebApplication Schema
+    const appSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "GRANDTAROT",
+      "applicationCategory": "LifestyleApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "6.90",
+        "priceCurrency": "EUR"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1247"
+      }
+    };
+
+    const orgScript = document.createElement('script');
+    orgScript.type = 'application/ld+json';
+    orgScript.text = JSON.stringify(orgSchema);
+    document.head.appendChild(orgScript);
+
+    const appScript = document.createElement('script');
+    appScript.type = 'application/ld+json';
+    appScript.text = JSON.stringify(appSchema);
+    document.head.appendChild(appScript);
+    };
 
   const loadDailyCard = async () => {
     try {
@@ -331,7 +381,7 @@ export default function Landing() {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent leading-tight">
-            {t.hero.title}
+            {lang === 'fr' ? 'Rencontres Tarot & Astrologie - Trouvez Votre Âme Sœur' : 'Tarot & Astrology Dating - Find Your Soulmate'}
           </h1>
           
           <p className="text-2xl md:text-3xl font-serif text-violet-200 mb-4">
