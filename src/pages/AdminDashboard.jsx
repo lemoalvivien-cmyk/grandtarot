@@ -133,6 +133,13 @@ export default function AdminDashboard() {
       color: "bg-green-500/20 text-green-400"
     },
     { 
+      title: "Evidence Runs", 
+      icon: Shield, 
+      subtitle: "Saved test proofs", 
+      page: "AdminEvidenceRuns",
+      color: "bg-violet-500/20 text-violet-400"
+    },
+    { 
       title: "Prompts IA", 
       icon: Settings, 
       subtitle: "Interprétations & Modération", 

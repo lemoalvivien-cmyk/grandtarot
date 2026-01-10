@@ -47,9 +47,11 @@ export default function AdminSecuritySelftest() {
         testResults.push({ name: 'NON-PARTICIPANT => 403', passed: nonParticipantPass, result: nonPartRes });
         rawOutput += `NON-PARTICIPANT (fixture) | ${nonParticipantPass ? '✅ PASS' : '❌ FAIL'} | Status: ${nonPartRes.status}, Body: ${nonPartRes.json?.error || nonPartRes.text}\n`;
       } else {
-        rawOutput += `NON-PARTICIPANT (fixture) | ⏭️ SKIP | No fixture configured\n`;
+        testResults.push({ name: 'NON-PARTICIPANT => 403', passed: false, result: { status: 'SKIP', json: { reason: 'No fixture configured in AppSettings' } } });
+        rawOutput += `NON-PARTICIPANT (fixture) | ⏭️ SKIP | Reason: No fixture conversation ID configured (run /admin/security-fixtures first)\n`;
       }
     } catch (error) {
+      testResults.push({ name: 'NON-PARTICIPANT => 403', passed: false, result: { status: 'ERROR', json: { error: error.message } } });
       rawOutput += `NON-PARTICIPANT (fixture) | ❌ ERROR | ${error.message}\n`;
     }
 

@@ -57,6 +57,7 @@ import Terms from './pages/Terms';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import Billing from './pages/Billing';
 import AdminBillingRequests from './pages/AdminBillingRequests';
+import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
 import __Layout from './Layout.jsx';
 
 
@@ -120,6 +121,7 @@ export const PAGES = {
     "AdminLaunchChecklist": AdminLaunchChecklist,
     "Billing": Billing,
     "AdminBillingRequests": AdminBillingRequests,
+    "AdminEvidenceRuns": AdminEvidenceRuns,
 }
 
 export const pagesConfig = {
