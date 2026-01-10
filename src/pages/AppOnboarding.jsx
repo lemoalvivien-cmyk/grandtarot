@@ -219,7 +219,7 @@ export default function AppOnboarding() {
 
   return (
     <SubscriptionGuard allowOnboarding={true}>
-    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         {/* Progress */}
         <div className="flex items-center gap-2 mb-12">
@@ -463,6 +463,7 @@ export default function AppOnboarding() {
           * {lang === 'fr' ? 'Champs obligatoires' : 'Required fields'}
         </p>
       </div>
-    </div>
+      </div>
+    </SubscriptionGuard>
   );
 }

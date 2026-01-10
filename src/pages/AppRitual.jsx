@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppRitual() {
   const [loading, setLoading] = useState(true);
@@ -179,14 +180,17 @@ export default function AppRitual() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </SubscriptionGuard>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <SubscriptionGuard>
+      <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
@@ -424,7 +428,7 @@ export default function AppRitual() {
           </AnimatePresence>
         </div>
       </div>
-    </div>
+      </div>
     </SubscriptionGuard>
   );
 }
