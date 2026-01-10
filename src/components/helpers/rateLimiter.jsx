@@ -14,9 +14,10 @@ import { base44 } from '@/api/base44Client';
 export const canCreateReport = async (userEmail) => {
   try {
     const today = new Date().toISOString().split('T')[0];
+    // SECURED: Use filter with limit
     const reports = await base44.entities.Report.filter({ 
-      reporter_user_id: userEmail 
-    });
+      reporter_profile_id: userEmail 
+    }, '-created_date', 50);
     
     const todayReports = reports.filter(r => {
       const reportDate = new Date(r.created_date).toISOString().split('T')[0];
@@ -106,12 +107,12 @@ export const canGenerateDailyMatches = async (userEmail, mode) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    // Check if matches already exist for today + mode
+    // Check if matches already exist for today + mode (limit 20 since that's max)
     const existingMatches = await base44.entities.DailyMatch.filter({
-      user_id: userEmail,
+      profile_id: userEmail,
       match_date: today,
       mode: mode
-    });
+    }, null, 20);
     
     if (existingMatches.length > 0) {
       return { 

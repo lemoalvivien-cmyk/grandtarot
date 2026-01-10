@@ -54,8 +54,8 @@ const calculateTarotSynergy = async (userId, targetUserId) => {
     const today = new Date().toISOString().split('T')[0];
     
     const [userDraws, targetDraws] = await Promise.all([
-      base44.entities.DailyDraw.filter({ user_id: userId, draw_date: today }),
-      base44.entities.DailyDraw.filter({ user_id: targetUserId, draw_date: today })
+      base44.entities.DailyDraw.filter({ profile_id: userId, draw_date: today }, null, 1),
+      base44.entities.DailyDraw.filter({ profile_id: targetUserId, draw_date: today }, null, 1)
     ]);
     
     if (!userDraws.length || !targetDraws.length) return 0;
@@ -195,38 +195,37 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
  */
 const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 50) => {
   try {
-    // STEP 1: Get exclusion lists (small queries)
+    // STEP 1: Get exclusion lists (SECURED with limits)
     const [blocks, blockedBy, intentions] = await Promise.all([
-      base44.entities.Block.filter({ blocker_user_id: userProfile.user_id }),
-      base44.entities.Block.filter({ blocked_user_id: userProfile.user_id }),
-      base44.entities.Intention.filter({ from_user_id: userProfile.user_id })
+      base44.entities.Block.filter({ blocker_profile_id: userProfile.public_id }, null, 100),
+      base44.entities.Block.filter({ blocked_profile_id: userProfile.public_id }, null, 100),
+      base44.entities.Intention.filter({ from_user_id: userProfile.user_id }, null, 100)
     ]);
     
-    const blockedIds = new Set(blocks.map(b => b.blocked_user_id));
-    const blockerIds = new Set(blockedBy.map(b => b.blocker_user_id));
+    const blockedIds = new Set(blocks.map(b => b.blocked_profile_id));
+    const blockerIds = new Set(blockedBy.map(b => b.blocker_profile_id));
     const intentionSentTo = new Set(intentions.map(i => i.to_user_id));
     
-    // STEP 2: Fetch candidates with FILTERS (not list all)
+    // STEP 2: Fetch candidates with FILTERS (use ProfilePublic for matching)
     // Query only profiles that meet basic criteria
-    const candidates = await base44.entities.UserProfile.filter({
+    const candidates = await base44.entities.ProfilePublic.filter({
       is_visible: true,
-      photo_url: { $exists: true, $ne: null },
-      is_banned: false
+      photo_url: { $exists: true, $ne: null }
     }, '-last_active', limit * 2); // Fetch 2x limit for filtering
     
     // STEP 3: Filter candidates in memory (already reduced set)
     const filtered = candidates.filter(p => {
       // Not self
-      if (p.user_id === userProfile.user_id) return false;
+      if (p.public_id === userProfile.public_id) return false;
       
       // Must have same mode in looking_for
       if (!p.looking_for?.includes(userProfile.mode_active)) return false;
       
       // Not blocked
-      if (blockedIds.has(p.user_id) || blockerIds.has(p.user_id)) return false;
+      if (blockedIds.has(p.public_id) || blockerIds.has(p.public_id)) return false;
       
-      // Don't rematch if intention already sent
-      if (intentionSentTo.has(p.user_id)) return false;
+      // Don't rematch if intention already sent (check against user mapping)
+      if (intentionSentTo.has(p.public_id)) return false;
       
       // Location filter (with radius multiplier for fallback)
       const effectiveRadius = (userProfile.radius_km || 50) * radiusMultiplier;
@@ -265,7 +264,7 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
     
     // STEP 1: Check if matches already exist for today + mode (ALWAYS check first)
     const existing = await base44.entities.DailyMatch.filter({
-      user_id: userProfile.user_id,
+      profile_id: userProfile.public_id,
       match_date: today,
       mode: userProfile.mode_active
     }, '-compatibility_score', 20); // Limit to 20
@@ -294,7 +293,7 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
         candidates.map(async (candidate) => {
           const location = calculateDistanceScore(userProfile, candidate);
           const interests = calculateInterestsScore(userProfile, candidate);
-          const tarot_synergy = await calculateTarotSynergy(userProfile.user_id, candidate.user_id);
+          const tarot_synergy = await calculateTarotSynergy(userProfile.public_id, candidate.public_id);
           const pro_bonus = calculateProBonus(userProfile, candidate);
           const age = calculateAgeScore(userProfile, candidate);
           const activity = calculateActivityScore(candidate);
@@ -319,8 +318,8 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
       );
       
       // Add to matches (avoid duplicates)
-      const existingUserIds = new Set(allMatches.map(m => m.candidate.user_id));
-      const newMatches = scoredCandidates.filter(m => !existingUserIds.has(m.candidate.user_id));
+      const existingUserIds = new Set(allMatches.map(m => m.candidate.public_id));
+      const newMatches = scoredCandidates.filter(m => !existingUserIds.has(m.candidate.public_id));
       allMatches.push(...newMatches);
       
       // If we have enough matches, stop
@@ -340,10 +339,10 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
       const matchRecords = await Promise.all(
         topMatches.map(match => 
           base44.entities.DailyMatch.create({
-            user_id: userProfile.user_id,
+            profile_id: userProfile.public_id,
             match_date: today,
             mode: userProfile.mode_active,
-            matched_user_id: match.candidate.user_id,
+            matched_profile_id: match.candidate.public_id,
             compatibility_score: Math.round(match.totalScore),
             score_breakdown: match.scoreBreakdown,
             reasons: match.reasons,

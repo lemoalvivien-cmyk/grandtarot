@@ -22,9 +22,11 @@ export default function AdminUsers() {
 
   const loadData = async () => {
     try {
+      // ADMIN-ONLY: Can use .list() on User (built-in entity)
+      // UserProfile: Use filter with limit for scalability
       const [userList, profileList] = await Promise.all([
         base44.entities.User.list(),
-        base44.entities.UserProfile.list()
+        base44.entities.UserProfile.filter({}, '-created_date', 500)
       ]);
 
       setUsers(userList);
@@ -57,7 +59,7 @@ export default function AdminUsers() {
       });
 
       // Refresh
-      const updatedProfiles = await base44.entities.UserProfile.list();
+      const updatedProfiles = await base44.entities.UserProfile.filter({}, '-created_date', 500);
       setProfiles(updatedProfiles);
     } catch (error) {
       console.error('Error:', error);
@@ -87,7 +89,7 @@ export default function AdminUsers() {
       });
 
       alert('Subscription resynchronisée');
-      const updatedProfiles = await base44.entities.UserProfile.list();
+      const updatedProfiles = await base44.entities.UserProfile.filter({}, '-created_date', 500);
       setProfiles(updatedProfiles);
     } catch (error) {
       console.error('Error resyncing:', error);

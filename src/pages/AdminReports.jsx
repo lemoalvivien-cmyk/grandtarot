@@ -24,20 +24,25 @@ export default function AdminReports() {
 
   const loadData = async () => {
     try {
-      const reportList = await base44.entities.Report.list('-created_date', 100);
+      // SECURED: Use filter with limit instead of unbounded list
+      const reportList = await base44.entities.Report.filter({}, '-created_date', 100);
       setReports(reportList);
 
-      // Load profiles
+      // Load profiles (scoped query)
       const userIds = new Set();
       reportList.forEach(r => {
-        userIds.add(r.reporter_id);
-        userIds.add(r.reported_user_id);
+        userIds.add(r.reporter_profile_id);
+        userIds.add(r.target_profile_id);
       });
 
-      const allProfiles = await base44.entities.UserProfile.list();
+      // Fetch only needed profiles (efficient)
+      const allProfiles = await base44.entities.ProfilePublic.filter({
+        public_id: { $in: Array.from(userIds) }
+      }, null, 200);
+      
       const profileMap = {};
       allProfiles.forEach(p => {
-        profileMap[p.user_id] = p;
+        profileMap[p.public_id] = p;
       });
       setProfiles(profileMap);
     } catch (error) {
@@ -93,7 +98,7 @@ export default function AdminReports() {
       setAction('none');
 
       // Refresh
-      const updatedReports = await base44.entities.Report.list('-created_date');
+      const updatedReports = await base44.entities.Report.filter({}, '-created_date', 100);
       setReports(updatedReports);
     } catch (error) {
       console.error('Error:', error);

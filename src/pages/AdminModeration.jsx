@@ -36,9 +36,10 @@ export default function AdminModeration() {
 
   const loadReports = async () => {
     try {
+      // SECURED: Use filter with limits instead of unbounded list
       const [allReports, allProfiles] = await Promise.all([
-        base44.entities.Report.list(),
-        base44.entities.UserProfile.list()
+        base44.entities.Report.filter({}, '-created_date', 200),
+        base44.entities.ProfilePublic.filter({}, '-created_date', 500)
       ]);
 
       // Sort by severity then date
@@ -53,7 +54,7 @@ export default function AdminModeration() {
 
       const profileMap = {};
       allProfiles.forEach(p => {
-        profileMap[p.user_id] = p;
+        profileMap[p.public_id] = p;
       });
       setProfiles(profileMap);
     } catch (error) {
@@ -67,7 +68,7 @@ export default function AdminModeration() {
     setProcessing(true);
     try {
       const admin = await base44.auth.me();
-      const targetProfile = profiles[selectedReport.target_user_id];
+      const targetProfile = profiles[selectedReport.target_profile_id];
 
       // Apply action
       let actionTaken = 'none';
@@ -79,22 +80,38 @@ export default function AdminModeration() {
         actionTaken = 'temporary_ban';
         const cooldownEnd = new Date();
         cooldownEnd.setDate(cooldownEnd.getDate() + 3);
-        await base44.entities.UserProfile.update(targetProfile.id, {
-          cooldown_until: cooldownEnd.toISOString()
-        });
+        // Find UserProfile by public_id
+        const userProfiles = await base44.entities.UserProfile.filter({ 
+          user_id: targetProfile.public_id 
+        }, null, 1);
+        if (userProfiles.length > 0) {
+          await base44.entities.UserProfile.update(userProfiles[0].id, {
+            cooldown_until: cooldownEnd.toISOString()
+          });
+        }
       } else if (actionType === 'suspend') {
         actionTaken = 'temporary_ban';
         const suspendEnd = new Date();
         suspendEnd.setDate(suspendEnd.getDate() + 7);
-        await base44.entities.UserProfile.update(targetProfile.id, {
-          cooldown_until: suspendEnd.toISOString()
-        });
+        const userProfiles = await base44.entities.UserProfile.filter({ 
+          user_id: targetProfile.public_id 
+        }, null, 1);
+        if (userProfiles.length > 0) {
+          await base44.entities.UserProfile.update(userProfiles[0].id, {
+            cooldown_until: suspendEnd.toISOString()
+          });
+        }
       } else if (actionType === 'ban') {
         actionTaken = 'permanent_ban';
-        await base44.entities.UserProfile.update(targetProfile.id, {
-          is_banned: true,
-          ban_reason: selectedReport.reason
-        });
+        const userProfiles = await base44.entities.UserProfile.filter({ 
+          user_id: targetProfile.public_id 
+        }, null, 1);
+        if (userProfiles.length > 0) {
+          await base44.entities.UserProfile.update(userProfiles[0].id, {
+            is_banned: true,
+            ban_reason: selectedReport.reason
+          });
+        }
       }
 
       // Update report
@@ -114,7 +131,7 @@ export default function AdminModeration() {
         action: 'report_resolved',
         entity_name: 'Report',
         entity_id: selectedReport.id,
-        target_user_id: selectedReport.target_user_id,
+        target_user_id: selectedReport.target_profile_id,
         payload_summary: `Resolved report with action: ${actionTaken}`,
         payload_data: {
           report_reason: selectedReport.reason,
@@ -151,7 +168,7 @@ export default function AdminModeration() {
         action: 'report_dismissed',
         entity_name: 'Report',
         entity_id: report.id,
-        target_user_id: report.target_user_id,
+        target_user_id: report.target_profile_id,
         payload_summary: 'Report dismissed without action'
       });
 
@@ -279,7 +296,7 @@ export default function AdminModeration() {
                           {report.reason.replace(/_/g, ' ')}
                         </h3>
                         <p className="text-slate-400 text-sm mb-2">
-                          <span className="font-medium">Cible:</span> {targetProfile?.display_name || 'Unknown'} ({report.target_user_id})
+                          <span className="font-medium">Cible:</span> {targetProfile?.display_name || 'Unknown'} ({report.target_profile_id})
                         </p>
                         <p className="text-slate-400 text-sm mb-3">
                           <span className="font-medium">Reporter:</span> {reporterProfile?.display_name || 'Unknown'}
@@ -345,7 +362,7 @@ export default function AdminModeration() {
             <div className="space-y-4">
               <div className="p-4 bg-slate-800/50 rounded-lg">
                 <p className="text-sm text-slate-300 mb-2">
-                  <span className="font-medium">Utilisateur ciblé:</span> {profiles[selectedReport.target_user_id]?.display_name}
+                  <span className="font-medium">Utilisateur ciblé:</span> {profiles[selectedReport.target_profile_id]?.display_name}
                 </p>
                 <p className="text-sm text-slate-300">
                   <span className="font-medium">Raison:</span> {selectedReport.reason}

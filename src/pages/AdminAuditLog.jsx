@@ -16,7 +16,8 @@ export default function AdminAuditLog() {
 
   const loadData = async () => {
     try {
-      const logList = await base44.entities.AuditLog.list('-created_date', 100);
+      // ADMIN-ONLY: Use filter with limit
+      const logList = await base44.entities.AuditLog.filter({}, '-created_date', 100);
       setLogs(logList);
     } catch (error) {
       console.error('Error:', error);
