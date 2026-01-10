@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import MessageBubble from '@/components/chat/MessageBubble';
 import { sendMessageSecure, blockUser } from '@/components/helpers/messageWorkflow';
+import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function Chat() {
   const [loading, setLoading] = useState(true);
@@ -53,27 +54,10 @@ export default function Chat() {
 
   const checkAccess = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
       const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
-      
-      if (currentUser.role !== 'admin') {
-        const hasActiveSubscription = profiles.length > 0 && 
-          (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
-        
-        if (!hasActiveSubscription) {
-          window.location.href = createPageUrl('Subscribe');
-          return;
-        }
-      }
-
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
 
@@ -287,28 +271,33 @@ export default function Chat() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </SubscriptionGuard>
     );
   }
 
   if (error && !conversation) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <p className="text-red-300 mb-4">{error}</p>
-          <Button onClick={() => window.location.href = createPageUrl('AppIntentions')}>
-            {t.back}
-          </Button>
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <p className="text-red-300 mb-4">{error}</p>
+            <Button onClick={() => window.location.href = createPageUrl('AppIntentions')}>
+              {t.back}
+            </Button>
+          </div>
         </div>
-      </div>
+      </SubscriptionGuard>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <SubscriptionGuard>
+      <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b border-amber-500/10 bg-slate-900/50 backdrop-blur-xl px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -466,7 +455,7 @@ export default function Chat() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
     </SubscriptionGuard>
   );
 }

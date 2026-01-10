@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, Star, MessageCircle, ChevronRight } from 'lucide-react';
+import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -97,14 +98,17 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </SubscriptionGuard>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <SubscriptionGuard>
+      <div className="min-h-screen">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Welcome */}
         <div className="mb-12">
@@ -204,7 +208,7 @@ export default function App() {
           </Link>
         </div>
       </div>
-    </div>
+      </div>
     </SubscriptionGuard>
   );
 }

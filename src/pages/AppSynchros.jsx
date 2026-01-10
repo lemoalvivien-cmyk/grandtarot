@@ -256,7 +256,7 @@ export default function AppSynchros() {
 
   return (
     <SubscriptionGuard>
-    <div className="min-h-screen">
+      <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
@@ -406,7 +406,7 @@ export default function AppSynchros() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
     </SubscriptionGuard>
   );
 }
