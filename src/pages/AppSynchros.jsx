@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import ProfileCard from '@/components/synchros/ProfileCard';
 import { generateDailyMatches } from '@/components/helpers/matchingEngine';
 import { canSendIntention, checkCooldown } from '@/components/helpers/quotaManager';
+import { canSendIntention as rateLimitCheck, logRateLimitViolation } from '@/components/helpers/rateLimiter';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 export default function AppSynchros() {
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,7 @@ export default function AppSynchros() {
   const [intentionMessage, setIntentionMessage] = useState('');
   const [icebreakers, setIcebreakers] = useState([]);
   const [sending, setSending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState(null);
 
   useEffect(() => {
     checkAccess();
@@ -131,6 +134,21 @@ export default function AppSynchros() {
       return;
     }
 
+    if (!turnstileToken) {
+      alert(lang === 'fr' ? 'Veuillez valider le captcha' : 'Please validate captcha');
+      return;
+    }
+
+    // RATE LIMIT: Server-side check (DB-based)
+    const rateLimitResult = await rateLimitCheck(user.email);
+    if (!rateLimitResult.allowed) {
+      await logRateLimitViolation(user.email, 'send_intention', rateLimitResult);
+      alert(lang === 'fr' 
+        ? `Limite atteinte: ${rateLimitResult.reason}` 
+        : `Limit reached: ${rateLimitResult.reason}`);
+      return;
+    }
+
     setSending(true);
     try {
       // Create intention
@@ -164,6 +182,7 @@ export default function AppSynchros() {
       setIcebreakers([]);
       setSelectedMatch(null);
       setSelectedProfile(null);
+      setTurnstileToken(null);
     } catch (error) {
       console.error('Error sending intention:', error);
     } finally {
@@ -408,6 +427,16 @@ export default function AppSynchros() {
                 {intentionMessage.length}/500 {intentionMessage.length < 20 && `(${t.minChars})`}
               </span>
             </div>
+
+            {/* Turnstile */}
+            <TurnstileWidget
+              onVerify={(token) => setTurnstileToken(token)}
+              onError={(err) => {
+                console.error('Turnstile error:', err);
+                setTurnstileToken(null);
+              }}
+              lang={lang}
+            />
 
             <div className="flex gap-3">
               <Button

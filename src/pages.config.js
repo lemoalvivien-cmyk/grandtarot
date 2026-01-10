@@ -44,6 +44,7 @@ import Terms from './pages/Terms';
 import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
 import ManageSubscription from './pages/ManageSubscription';
 import AdminSubscriptionSync from './pages/AdminSubscriptionSync';
+import CreateReport from './pages/CreateReport';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "AdminSecuritySelftest": AdminSecuritySelftest,
     "ManageSubscription": ManageSubscription,
     "AdminSubscriptionSync": AdminSubscriptionSync,
+    "CreateReport": CreateReport,
 }
 
 export const pagesConfig = {
