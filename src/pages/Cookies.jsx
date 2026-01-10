@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import LegalPageLayout from '@/components/legal/LegalPageLayout.jsx';
+import { resetConsent } from '@/components/helpers/cookieConsent';
 
 export default function Cookies() {
   const [supportEmail, setSupportEmail] = useState('[support@grandtarot.com]');
+  const [lang, setLang] = useState('fr');
 
   useEffect(() => {
     loadSupportEmail();
   }, []);
+
+  const handleResetConsent = async () => {
+    await resetConsent(base44);
+    alert(lang === 'fr' 
+      ? 'Vos préférences cookies ont été réinitialisées. Actualisez la page.' 
+      : 'Your cookie preferences have been reset. Please refresh the page.');
+  };
 
   const loadSupportEmail = async () => {
     try {
@@ -278,6 +289,20 @@ export default function Cookies() {
         </section>
 
         <section>
+          <h2 className="text-2xl font-bold text-amber-100 mb-4">Gérer mes préférences</h2>
+          <p className="text-slate-300 mb-4">
+            Si vous souhaitez modifier ou réinitialiser vos préférences de cookies, cliquez sur le bouton ci-dessous.
+          </p>
+          <Button 
+            onClick={handleResetConsent}
+            className="bg-amber-600 hover:bg-amber-700 mb-6"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Réinitialiser mon choix
+          </Button>
+        </section>
+
+        <section>
           <h2 className="text-2xl font-bold text-amber-100 mb-4">Questions sur les cookies ?</h2>
           <p className="text-slate-300">
             Contactez {supportEmail} pour toute question sur notre utilisation des cookies.
@@ -527,6 +552,20 @@ export default function Cookies() {
               </ul>
             </div>
           </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold text-amber-100 mb-4">Manage My Preferences</h2>
+          <p className="text-slate-300 mb-4">
+            If you want to change or reset your cookie preferences, click the button below.
+          </p>
+          <Button 
+            onClick={handleResetConsent}
+            className="bg-amber-600 hover:bg-amber-700 mb-6"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reset my choice
+          </Button>
         </section>
 
         <section>
