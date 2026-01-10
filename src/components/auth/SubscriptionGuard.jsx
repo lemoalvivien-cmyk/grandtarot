@@ -36,7 +36,7 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
         return;
       }
 
-      // Check paywall status
+      // Check paywall status (PLAN_STATUS is authoritative)
       const settings = await base44.entities.AppSettings.filter({
         setting_key: 'paywall_enabled'
       }, null, 1);
@@ -44,7 +44,8 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
       const paywallEnabled = settings.length > 0 && settings[0].value_boolean === true;
 
       if (paywallEnabled) {
-        // Check plan_status in AccountPrivate (primary)
+        // STRICT: Check plan_status in AccountPrivate (PRIMARY AUTHORITY)
+        // NO fallback to subscription_status (prevents bypass)
         const accounts = await base44.entities.AccountPrivate.filter({
           user_email: user.email
         }, null, 1);
@@ -62,32 +63,23 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
           setChecking(false);
           return;
         }
-      } else {
-        // Fallback: check UserProfile.subscription_status (legacy)
-        const profiles = await base44.entities.UserProfile.filter({ 
-          user_id: user.email 
-        }, null, 1);
+      }
 
-        if (profiles.length === 0) {
-          window.location.href = createPageUrl('Subscribe');
-          return;
-        }
+      // Onboarding check (after paywall)
+      const profiles = await base44.entities.UserProfile.filter({ 
+        user_id: user.email 
+      }, null, 1);
 
-        const profile = profiles[0];
-        const activeStatuses = ['active', 'trialing'];
-        const hasActiveSubscription = activeStatuses.includes(profile.subscription_status);
+      if (profiles.length === 0) {
+        window.location.href = createPageUrl('Subscribe');
+        return;
+      }
 
-        if (!hasActiveSubscription) {
-          setNeedsSubscription(true);
-          setChecking(false);
-          return;
-        }
+      const profile = profiles[0];
 
-        // Check onboarding
-        if (!allowOnboarding && !profile.onboarding_completed) {
-          window.location.href = createPageUrl('AppOnboarding');
-          return;
-        }
+      if (!allowOnboarding && !profile.onboarding_completed) {
+        window.location.href = createPageUrl('AppOnboarding');
+        return;
       }
 
       setAuthorized(true);

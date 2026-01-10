@@ -33,6 +33,7 @@ export default function AppOnboarding() {
     pro_current_challenge: '',
     language_pref: 'fr'
   });
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   useEffect(() => {
     checkAccess();
@@ -123,6 +124,11 @@ export default function AppOnboarding() {
       return;
     }
 
+    if (!ageConfirmed) {
+      alert(lang === 'fr' ? 'Veuillez confirmer que vous avez plus de 18 ans' : 'Please confirm you are 18 or older');
+      return;
+    }
+
     setSaving(true);
     try {
       // Calculate profile completion
@@ -138,6 +144,17 @@ export default function AppOnboarding() {
         profile_completion: completion,
         last_active: new Date().toISOString()
       });
+
+      // Store age confirmation in AccountPrivate
+      const accounts = await base44.entities.AccountPrivate.filter({
+        user_email: user.email
+      }, null, 1);
+
+      if (accounts.length > 0) {
+        await base44.entities.AccountPrivate.update(accounts[0].id, {
+          age_confirmed_at: new Date().toISOString()
+        });
+      }
       
       window.location.href = createPageUrl('App');
     } catch (error) {
@@ -177,7 +194,9 @@ export default function AppOnboarding() {
       proChallenge: "Défi actuel (optionnel)",
       next: "Continuer",
       back: "Retour",
-      finish: "Commencer l'aventure"
+      finish: "Commencer l'aventure",
+      ageConfirm: "J'ai plus de 18 ans et j'accepte les conditions d'utilisation",
+      ageMustConfirm: "Vous devez confirmer que vous avez plus de 18 ans"
     },
     en: {
       steps: {
@@ -208,7 +227,9 @@ export default function AppOnboarding() {
       proChallenge: "Current challenge (optional)",
       next: "Continue",
       back: "Back",
-      finish: "Start the adventure"
+      finish: "Start the adventure",
+      ageConfirm: "I am 18 years or older and accept the terms of service",
+      ageMustConfirm: "You must confirm that you are 18 years or older"
     }
   };
 
@@ -425,6 +446,21 @@ export default function AppOnboarding() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Age Gate (Final Step) */}
+        {step === 3 && (
+          <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={(e) => setAgeConfirmed(e.target.checked)}
+                className="w-5 h-5 mt-0.5 accent-amber-500"
+              />
+              <span className="text-sm text-amber-100">{t.ageConfirm}</span>
+            </label>
           </div>
         )}
 

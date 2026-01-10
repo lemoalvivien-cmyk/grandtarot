@@ -49,6 +49,7 @@ export default function Layout({ children, currentPageName }) {
   const isPublicPage = ['Landing', 'CardOfDay', 'Encyclopedia', 'CardDetail', 'Blog', 'BlogPost', 'Pricing'].includes(currentPageName);
   const isAuthPage = ['Login', 'Signup'].includes(currentPageName);
   const isAdminPage = currentPageName?.startsWith('Admin');
+  const showFooter = true; // Footer visible on all pages (with legal links)
 
   const modes = {
     love: { icon: Heart, label: lang === 'fr' ? 'Amour' : 'Love', color: 'from-rose-500 to-pink-600' },
@@ -292,66 +293,88 @@ export default function Layout({ children, currentPageName }) {
       {/* Cookie Banner (public pages only) */}
       {isPublicPage && <CookieBanner lang={lang} />}
 
-      {/* Footer (public pages only) */}
-      {isPublicPage && (
-        <footer className="border-t border-amber-500/10 bg-slate-950/50 backdrop-blur-xl py-12 mt-20">
+      {/* Footer (all pages — legal links visible everywhere) */}
+      {showFooter && (
+        <footer className="border-t border-amber-500/10 bg-slate-950/50 backdrop-blur-xl py-8 mt-12">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid md:grid-cols-4 gap-8 mb-8">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
-                  <span className="font-serif font-bold text-lg bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-                    GRANDTAROT
-                  </span>
+            {/* Public pages have full footer grid */}
+            {isPublicPage && (
+              <div className="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <span className="font-serif font-bold text-lg bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+                      GRANDTAROT
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400">
+                    {lang === 'fr' 
+                      ? 'Connexions guidées par les astres' 
+                      : 'Star-guided connections'}
+                  </p>
                 </div>
-                <p className="text-sm text-slate-400">
-                  {lang === 'fr' 
-                    ? 'Connexions guidées par les astres' 
-                    : 'Star-guided connections'}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-amber-200 mb-3">{t.cards}</h4>
-                <div className="space-y-2">
-                  <Link to={createPageUrl('CardOfDay')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {lang === 'fr' ? 'Carte du jour' : 'Card of the day'}
-                  </Link>
-                  <Link to={createPageUrl('Encyclopedia')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {lang === 'fr' ? 'Encyclopédie' : 'Encyclopedia'}
-                  </Link>
+                <div>
+                  <h4 className="font-semibold text-amber-200 mb-3">{t.cards}</h4>
+                  <div className="space-y-2">
+                    <Link to={createPageUrl('CardOfDay')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Carte du jour' : 'Card of the day'}
+                    </Link>
+                    <Link to={createPageUrl('Encyclopedia')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Encyclopédie' : 'Encyclopedia'}
+                    </Link>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-amber-200 mb-3">{lang === 'fr' ? 'Ressources' : 'Resources'}</h4>
+                  <div className="space-y-2">
+                    <Link to={createPageUrl('Blog')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {t.blog}
+                    </Link>
+                    <Link to={createPageUrl('Pricing')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {t.pricing}
+                    </Link>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-amber-200 mb-3">{lang === 'fr' ? 'Légal' : 'Legal'}</h4>
+                  <div className="space-y-2">
+                    <Link to={createPageUrl('Terms')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'CGU' : 'Terms'}
+                    </Link>
+                    <Link to={createPageUrl('Privacy')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Confidentialité' : 'Privacy'}
+                    </Link>
+                    <Link to={createPageUrl('Cookies')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
+                      {lang === 'fr' ? 'Cookies' : 'Cookies'}
+                    </Link>
+                  </div>
                 </div>
               </div>
-              <div>
-                <h4 className="font-semibold text-amber-200 mb-3">{lang === 'fr' ? 'Ressources' : 'Resources'}</h4>
-                <div className="space-y-2">
-                  <Link to={createPageUrl('Blog')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {t.blog}
-                  </Link>
-                  <Link to={createPageUrl('Pricing')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {t.pricing}
-                  </Link>
-                </div>
+            )}
+            
+            {/* Minimal footer for app pages (legal links always visible) */}
+            {!isPublicPage && (
+              <div className="mb-6 flex flex-wrap gap-4 justify-center">
+                <Link to={createPageUrl('Terms')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'CGU' : 'Terms'}
+                </Link>
+                <span className="text-xs text-slate-600">•</span>
+                <Link to={createPageUrl('Privacy')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'Confidentialité' : 'Privacy'}
+                </Link>
+                <span className="text-xs text-slate-600">•</span>
+                <Link to={createPageUrl('Cookies')} className="text-xs text-slate-400 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'Cookies' : 'Cookies'}
+                </Link>
               </div>
-              <div>
-                <h4 className="font-semibold text-amber-200 mb-3">{lang === 'fr' ? 'Légal' : 'Legal'}</h4>
-                <div className="space-y-2">
-                  <Link to={createPageUrl('Terms')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {lang === 'fr' ? 'CGU' : 'Terms'}
-                  </Link>
-                  <Link to={createPageUrl('Privacy')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {lang === 'fr' ? 'Confidentialité' : 'Privacy'}
-                  </Link>
-                  <Link to={createPageUrl('Cookies')} className="block text-sm text-slate-400 hover:text-amber-200 transition-colors">
-                    {lang === 'fr' ? 'Cookies' : 'Cookies'}
-                  </Link>
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-amber-500/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+            )}
+
+            {/* Copyright */}
+            <div className="border-t border-amber-500/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
               <p>© {new Date().getFullYear()} GRANDTAROT. {lang === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}</p>
               <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4" />
-                <span>{lang === 'fr' ? 'Disponible en FR & EN' : 'Available in FR & EN'}</span>
+                <Globe className="w-3 h-3" />
+                <span>{lang === 'fr' ? 'FR & EN' : 'FR & EN'}</span>
               </div>
             </div>
           </div>
