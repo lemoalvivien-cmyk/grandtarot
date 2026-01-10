@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Heart, Users, Briefcase, RefreshCw, Loader2 } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import ProfileCard from '@/components/synchros/ProfileCard';
 import { generateDailyMatches } from '@/components/helpers/matchingEngine';
+import { canSendIntention, checkCooldown } from '@/components/helpers/quotaManager';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppSynchros() {
@@ -88,31 +89,20 @@ export default function AppSynchros() {
   };
 
   const handleSendIntention = async (match, targetProfile) => {
-    // Check cooldown
-    if (profile.cooldown_until) {
-      const cooldownEnd = new Date(profile.cooldown_until);
-      if (cooldownEnd > new Date()) {
-        alert(lang === 'fr' 
-          ? 'Vous êtes en cooldown suite à plusieurs refus. Réessayez demain.' 
-          : 'You are in cooldown after multiple refusals. Try again tomorrow.');
-        return;
-      }
-    }
-
-    // Check daily quota
-    const today = new Date().toISOString().split('T')[0];
-    if (profile.last_intention_reset !== today) {
-      // Reset counter
-      await base44.entities.UserProfile.update(profile.id, {
-        intentions_sent_today: 0,
-        last_intention_reset: today
-      });
-      setProfile(prev => ({ ...prev, intentions_sent_today: 0, last_intention_reset: today }));
-    } else if (profile.intentions_sent_today >= 5) {
-      alert(lang === 'fr' 
-        ? 'Quota atteint : 5 intentions maximum par jour.' 
-        : 'Quota reached: 5 intentions maximum per day.');
+    // QUOTA CHECK: Use centralized quota manager
+    const quotaCheck = await canSendIntention(profile, lang);
+    
+    if (!quotaCheck.canSend) {
+      alert(quotaCheck.reason);
       return;
+    }
+    
+    // Update local profile if it was reset
+    if (quotaCheck.remainingQuota === 5) {
+      const profiles = await base44.entities.UserProfile.filter({ user_id: profile.user_id });
+      if (profiles.length > 0) {
+        setProfile(profiles[0]);
+      }
     }
 
     // Load icebreakers
@@ -271,6 +261,39 @@ export default function AppSynchros() {
             {t.title}
           </h1>
           <p className="text-lg text-slate-400 mb-6">{t.subtitle}</p>
+          
+          {/* Cooldown Alert */}
+          {(() => {
+            const cooldownStatus = checkCooldown(profile, lang);
+            if (cooldownStatus.inCooldown) {
+              return (
+                <div className="max-w-2xl mx-auto mb-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-left">
+                    <p className="text-orange-300 font-medium">
+                      {lang === 'fr' ? 'Cooldown actif' : 'Cooldown active'}
+                    </p>
+                    <p className="text-orange-200/70 text-sm">
+                      {lang === 'fr' 
+                        ? `Suite à plusieurs refus consécutifs, vous ne pouvez pas envoyer d'intentions. ${cooldownStatus.remainingTime}` 
+                        : `After consecutive refusals, you cannot send intentions. ${cooldownStatus.remainingTime}`}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+          
+          {/* Quota Counter */}
+          {!checkCooldown(profile, lang).inCooldown && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-amber-500/10 rounded-full mb-6">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-slate-300 text-sm">
+                {lang === 'fr' ? 'Intentions restantes' : 'Remaining intentions'}: {5 - (profile.intentions_sent_today || 0)}/5
+              </span>
+            </div>
+          )}
 
           {matches.length > 0 && user?.role === 'admin' && (
             <Button
