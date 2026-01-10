@@ -11,6 +11,7 @@ export default function AdminBillingRequests() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [searchEmail, setSearchEmail] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectModal, setRejectModal] = useState(false);
@@ -36,6 +37,7 @@ export default function AdminBillingRequests() {
   const handleApprove = async (request) => {
     setProcessing(true);
     try {
+      const adminUser = await base44.auth.me();
       const accounts = await base44.entities.AccountPrivate.filter({
         user_email: request.requester_user_email
       }, null, 1);
@@ -53,10 +55,25 @@ export default function AdminBillingRequests() {
 
       await base44.entities.BillingRequest.update(request.id, {
         status: 'approved',
-        reviewed_by: (await base44.auth.me()).email,
+        reviewed_by: adminUser.email,
         reviewed_at: new Date().toISOString(),
         action_taken: 'plan_activated'
       });
+
+      // Log audit (non-blocking)
+      try {
+        await base44.entities.AuditLog.create({
+          actor_user_id: adminUser.email,
+          actor_role: 'admin',
+          action: 'subscription_started',
+          entity_name: 'BillingRequest',
+          entity_id: request.id,
+          target_user_id: request.requester_user_email,
+          payload_summary: `Approved billing request and activated plan for ${request.requester_user_email}`
+        });
+      } catch (e) {
+        console.error('Audit log failed (non-blocking):', e);
+      }
 
       loadRequests();
     } catch (error) {
@@ -75,12 +92,28 @@ export default function AdminBillingRequests() {
 
     setProcessing(true);
     try {
+      const adminUser = await base44.auth.me();
       await base44.entities.BillingRequest.update(selectedRequest.id, {
         status: 'rejected',
-        reviewed_by: (await base44.auth.me()).email,
+        reviewed_by: adminUser.email,
         reviewed_at: new Date().toISOString(),
         admin_notes: rejectReason.trim()
       });
+
+      // Log audit (non-blocking)
+      try {
+        await base44.entities.AuditLog.create({
+          actor_user_id: adminUser.email,
+          actor_role: 'admin',
+          action: 'subscription_cancelled',
+          entity_name: 'BillingRequest',
+          entity_id: selectedRequest.id,
+          target_user_id: selectedRequest.requester_user_email,
+          payload_summary: `Rejected billing request for ${selectedRequest.requester_user_email}: ${rejectReason.trim()}`
+        });
+      } catch (e) {
+        console.error('Audit log failed (non-blocking):', e);
+      }
 
       setRejectModal(false);
       setRejectReason('');
@@ -93,6 +126,10 @@ export default function AdminBillingRequests() {
       setProcessing(false);
     }
   };
+
+  const filteredRequests = requests.filter(req => 
+    !searchEmail || req.requester_user_email.toLowerCase().includes(searchEmail.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -116,7 +153,7 @@ export default function AdminBillingRequests() {
             <CreditCard className="w-10 h-10 text-amber-500" />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-6 flex gap-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48 bg-slate-800/50 border-slate-700">
                 <SelectValue />
@@ -127,15 +164,22 @@ export default function AdminBillingRequests() {
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
+            <input
+              type="text"
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              placeholder="Search by email..."
+              className="flex-1 bg-slate-800/50 border border-slate-700 text-white rounded-lg px-3 py-2"
+            />
           </div>
 
-          {requests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-slate-400">No {statusFilter} requests found</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {requests.map((req) => (
+              {filteredRequests.map((req) => (
                 <div
                   key={req.id}
                   className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:border-amber-500/30 transition-all"
@@ -151,6 +195,15 @@ export default function AdminBillingRequests() {
                         }`}>
                           {req.status}
                         </span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => navigator.clipboard.writeText(req.requester_user_email)}
+                          className="text-slate-500 hover:text-amber-400 h-6 w-6"
+                          title="Copy email"
+                        >
+                          📋
+                        </Button>
                       </div>
                       <p className="text-sm text-slate-400 mb-2">{req.request_type}</p>
                       <p className="text-sm text-slate-300 break-words">{req.description}</p>
