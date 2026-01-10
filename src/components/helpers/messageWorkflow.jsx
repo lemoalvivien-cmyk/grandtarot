@@ -199,12 +199,14 @@ export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_inte
       is_admin_enforced: false
     });
     
-    // Archive all conversations between them
-    const conversations = await base44.entities.Conversation.list();
-    const userConversations = conversations.filter(c => 
-      (c.user_a_id === blockerUserId && c.user_b_id === blockedUserId) ||
-      (c.user_a_id === blockedUserId && c.user_b_id === blockerUserId)
-    );
+    // Archive all conversations between them (FIXED: use filtered query)
+    const conversations = await base44.entities.Conversation.filter({
+      $or: [
+        { user_a_id: blockerUserId, user_b_id: blockedUserId },
+        { user_a_id: blockedUserId, user_b_id: blockerUserId }
+      ]
+    }, null, 10);
+    const userConversations = conversations;
     
     for (const conv of userConversations) {
       await base44.entities.Conversation.update(conv.id, {
