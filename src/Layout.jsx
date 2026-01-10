@@ -6,6 +6,7 @@ import { Sparkles, Heart, Users, Briefcase, Menu, X, Globe, Crown, User, Shield,
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CookieBanner from '@/components/legal/CookieBanner';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -96,6 +97,7 @@ export default function Layout({ children, currentPageName }) {
   if (isAuthPage) return children;
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-amber-500/10 bg-slate-950/80 backdrop-blur-xl">

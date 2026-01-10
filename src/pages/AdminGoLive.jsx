@@ -24,6 +24,8 @@ export default function AdminGoLive() {
   const [editSupportEmail, setEditSupportEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [templateCopied, setTemplateCopied] = useState(false);
+  const [pendingOver48h, setPendingOver48h] = useState(0);
+  const [recentLogs, setRecentLogs] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -58,6 +60,21 @@ export default function AdminGoLive() {
       const emailVal = emailSetting.length > 0 ? emailSetting[0].value_string : '';
       setSupportEmail(emailVal);
       setEditSupportEmail(emailVal);
+
+      // Load health metrics
+      const allPending = await base44.entities.BillingRequest.filter(
+        { status: 'pending' },
+        '-created_date',
+        50
+      );
+      
+      const now48h = new Date();
+      now48h.setHours(now48h.getHours() - 48);
+      const over48h = allPending.filter(r => new Date(r.created_date) < now48h).length;
+      setPendingOver48h(over48h);
+
+      const logs = await base44.entities.AuditLog.list('-created_date', 20);
+      setRecentLogs(logs);
     } catch (error) {
       console.error('Error loading go-live data:', error);
     } finally {
@@ -178,6 +195,26 @@ Billing Verification SLA: ${slaHours} hours (business days)
 
 Payment issues? Contact support with your order details.`;
     navigator.clipboard.writeText(msg);
+    setTemplateCopied(true);
+    setTimeout(() => setTemplateCopied(false), 2000);
+  };
+
+  const copySummary = () => {
+    const summary = `
+=== HEALTH SUMMARY ===
+Billing Requests Pending >48h: ${pendingOver48h}
+Recent Actions: ${recentLogs.length}
+Last Action: ${recentLogs[0]?.action || 'N/A'} at ${recentLogs[0]?.created_date || 'N/A'}
+
+Support Email: ${supportEmail || 'not set'}
+SLA: ${slaHours}h
+
+=== RECENT AUDIT LOG ===
+${recentLogs.slice(0, 10).map(log => 
+  `${log.created_date} | ${log.action} | ${log.payload_summary}`
+).join('\n')}
+    `.trim();
+    navigator.clipboard.writeText(summary);
     setTemplateCopied(true);
     setTimeout(() => setTemplateCopied(false), 2000);
   };
@@ -363,9 +400,43 @@ Generated for launch verification.`;
             </Button>
           </div>
 
+          {/* Health Section */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <p className="text-xs text-slate-500 mb-1">Billing Requests Pending >48h</p>
+              <p className="text-4xl font-bold text-amber-100">{pendingOver48h}</p>
+              <p className="text-xs text-slate-400 mt-2">⚠️ Action needed</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <p className="text-xs text-slate-500 mb-1">Recent Audit Actions</p>
+              <p className="text-4xl font-bold text-green-100">{recentLogs.length}</p>
+              <p className="text-xs text-slate-400 mt-2">Last 20</p>
+            </div>
+          </div>
+
+          {/* Recent Logs */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
+            <h3 className="text-lg font-semibold text-amber-100 mb-4">Recent Audit Logs (top 10)</h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {recentLogs.slice(0, 10).map((log, i) => (
+                <div key={i} className="text-xs border-l-2 border-slate-600 pl-3 py-1">
+                  <p className="text-slate-300">{log.action}</p>
+                  <p className="text-slate-500">{log.payload_summary}</p>
+                  <p className="text-slate-600 text-xs">{log.created_date}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Copy Summary */}
           <div className="text-center">
             <Button
+              onClick={copySummary}
+              variant="outline"
+              className="border-slate-600 mb-4"
+            >
+              {templateCopied ? 'Summary Copied!' : 'Copy Health Summary'}
+            </Button>
               onClick={copySummary}
               className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-8"
             >
