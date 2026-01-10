@@ -60,6 +60,7 @@ import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminGoLive from './pages/AdminGoLive';
 import AppHome from './pages/AppHome';
+import Legal from './pages/Legal';
 import __Layout from './Layout.jsx';
 
 
@@ -126,6 +127,7 @@ export const PAGES = {
     "Terms": Terms,
     "AdminGoLive": AdminGoLive,
     "AppHome": AppHome,
+    "Legal": Legal,
 }
 
 export const pagesConfig = {
