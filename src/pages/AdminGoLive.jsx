@@ -17,7 +17,13 @@ export default function AdminGoLive() {
   const [copied, setCopied] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [editLink, setEditLink] = useState('');
+  const [slaHours, setSlaHours] = useState(48);
+  const [supportEmail, setSupportEmail] = useState('');
+  const [editSlaModal, setEditSlaModal] = useState(false);
+  const [editSlaValue, setEditSlaValue] = useState(48);
+  const [editSupportEmail, setEditSupportEmail] = useState('');
   const [saving, setSaving] = useState(false);
+  const [templateCopied, setTemplateCopied] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -26,12 +32,14 @@ export default function AdminGoLive() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [paySettings, stripeSettings, pending, users, logs] = await Promise.all([
+      const [paySettings, stripeSettings, pending, users, logs, slaSetting, emailSetting] = await Promise.all([
         base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1),
         base44.entities.BillingRequest.filter({ status: 'pending' }, '-created_date', 1),
         base44.entities.AccountPrivate.filter({ plan_status: 'active' }, null, 50),
-        base44.entities.AuditLog.list('-created_date', 20)
+        base44.entities.AuditLog.list('-created_date', 20),
+        base44.entities.AppSettings.filter({ setting_key: 'billing_review_sla_hours' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'support_email' }, null, 1)
       ]);
 
       setData({
@@ -42,6 +50,14 @@ export default function AdminGoLive() {
         recentLogs: logs
       });
       setEditLink(stripeSettings.length > 0 ? stripeSettings[0].value_string : '');
+      
+      const slhVal = slaSetting.length > 0 ? slaSetting[0].value_number : 48;
+      setSlaHours(slhVal);
+      setEditSlaValue(slhVal);
+      
+      const emailVal = emailSetting.length > 0 ? emailSetting[0].value_string : '';
+      setSupportEmail(emailVal);
+      setEditSupportEmail(emailVal);
     } catch (error) {
       console.error('Error loading go-live data:', error);
     } finally {
@@ -100,6 +116,72 @@ export default function AdminGoLive() {
     }
   };
 
+  const handleSaveSla = async () => {
+    if (!editSlaValue || editSlaValue < 1) {
+      alert('SLA must be at least 1 hour');
+      return;
+    }
+    setSaving(true);
+    try {
+      const settings = await base44.entities.AppSettings.filter({ setting_key: 'billing_review_sla_hours' }, null, 1);
+      if (settings.length > 0) {
+        await base44.entities.AppSettings.update(settings[0].id, {
+          value_number: editSlaValue
+        });
+      } else {
+        await base44.entities.AppSettings.create({
+          setting_key: 'billing_review_sla_hours',
+          value_number: editSlaValue,
+          category: 'payment'
+        });
+      }
+      setEditSlaModal(false);
+      await loadData();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSupportEmail = async () => {
+    if (!editSupportEmail.trim()) {
+      alert('Email cannot be empty');
+      return;
+    }
+    setSaving(true);
+    try {
+      const settings = await base44.entities.AppSettings.filter({ setting_key: 'support_email' }, null, 1);
+      if (settings.length > 0) {
+        await base44.entities.AppSettings.update(settings[0].id, {
+          value_string: editSupportEmail.trim()
+        });
+      } else {
+        await base44.entities.AppSettings.create({
+          setting_key: 'support_email',
+          value_string: editSupportEmail.trim(),
+          category: 'system'
+        });
+      }
+      await loadData();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyServiceMessage = () => {
+    const msg = `Support Contact:
+Email: ${supportEmail || 'support@grandtarot.com'}
+Billing Verification SLA: ${slaHours} hours (business days)
+
+Payment issues? Contact support with your order details.`;
+    navigator.clipboard.writeText(msg);
+    setTemplateCopied(true);
+    setTimeout(() => setTemplateCopied(false), 2000);
+  };
+
   const generateSummary = () => {
     const summary = `GO-LIVE STATUS — ${new Date().toISOString()}
 
@@ -153,7 +235,22 @@ Generated for launch verification.`;
                 <Power className="w-5 h-5" />
                 Paywall Status
               </h3>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
+              <div>
+                <p className="text-xs text-slate-500">SLA (Billing Review)</p>
+                <p className="text-lg font-semibold text-amber-100">{slaHours}h</p>
+              </div>
+              <Button
+                onClick={() => setEditSlaModal(true)}
+                size="sm"
+                variant="outline"
+                className="border-slate-600 h-8 text-xs"
+              >
+                Edit
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
                 <span className="text-slate-300">Paywall Enabled:</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   data.paywallEnabled 
@@ -191,14 +288,23 @@ Generated for launch verification.`;
                   {data.stripeLink ? '✓ Configured' : '✗ Missing'}
                 </span>
               </div>
-              <Button
-                onClick={() => setEditModal(true)}
-                variant="outline"
-                className="w-full border-slate-600"
-              >
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit Link
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setEditModal(true)}
+                  variant="outline"
+                  className="flex-1 border-slate-600 h-8 text-xs"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  onClick={copyServiceMessage}
+                  variant="outline"
+                  className="flex-1 border-slate-600 h-8 text-xs"
+                >
+                  {templateCopied ? 'Copied!' : 'Message'}
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -235,6 +341,26 @@ Generated for launch verification.`;
             </div>
           </div>
 
+          {/* Support Email */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
+            <h3 className="text-lg font-semibold text-amber-100 mb-4">Support Email</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              {supportEmail ? `Current: ${supportEmail}` : 'Not set'}
+            </p>
+            <Button
+              onClick={() => setEditSupportEmail(supportEmail)}
+              size="sm"
+              variant="outline"
+              className="border-slate-600 w-full text-xs"
+              onClick={() => {
+                setEditSupportEmail(supportEmail);
+                // Show inline edit for support email
+              }}
+            >
+              Edit Support Email
+            </Button>
+          </div>
+
           {/* Copy Summary */}
           <div className="text-center">
             <Button
@@ -255,6 +381,40 @@ Generated for launch verification.`;
             </Button>
           </div>
         </div>
+
+        {/* Edit SLA Modal */}
+        <Dialog open={editSlaModal} onOpenChange={setEditSlaModal}>
+          <DialogContent className="bg-slate-900 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-amber-100">Edit Billing Review SLA (hours)</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <input
+                type="number"
+                value={editSlaValue}
+                onChange={(e) => setEditSlaValue(parseInt(e.target.value) || 48)}
+                min="1"
+                className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg px-4 py-2"
+              />
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setEditSlaModal(false)}
+                  variant="outline"
+                  className="flex-1 border-slate-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveSla}
+                  disabled={saving}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Link Modal */}
         <Dialog open={editModal} onOpenChange={setEditModal}>

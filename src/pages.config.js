@@ -59,6 +59,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminGoLive from './pages/AdminGoLive';
+import AppHome from './pages/AppHome';
 import __Layout from './Layout.jsx';
 
 
@@ -124,6 +125,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "AdminGoLive": AdminGoLive,
+    "AppHome": AppHome,
 }
 
 export const pagesConfig = {

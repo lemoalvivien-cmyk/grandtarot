@@ -16,6 +16,7 @@ export default function Billing() {
   const [showProofModal, setShowProofModal] = useState(false);
   const [proofDescription, setProofDescription] = useState('');
   const [recentRequest, setRecentRequest] = useState(null);
+  const [slaHours, setSlaHours] = useState(48);
   const [lang, setLang] = useState('fr');
 
   useEffect(() => {
@@ -27,12 +28,13 @@ export default function Billing() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const [accounts, paySettings, stripeSettings, profiles, requests] = await Promise.all([
+      const [accounts, paySettings, stripeSettings, profiles, requests, slaSetting] = await Promise.all([
         base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1),
         base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1),
-        base44.entities.BillingRequest.filter({ requester_user_email: currentUser.email }, '-created_date', 1)
+        base44.entities.BillingRequest.filter({ requester_user_email: currentUser.email }, '-created_date', 1),
+        base44.entities.AppSettings.filter({ setting_key: 'billing_review_sla_hours' }, null, 1)
       ]);
 
       if (accounts && accounts.length > 0) {
@@ -49,6 +51,10 @@ export default function Billing() {
 
       if (profiles && profiles.length > 0) {
         setLang(profiles[0].language_pref || 'fr');
+      }
+
+      if (slaSetting && slaSetting.length > 0) {
+        setSlaHours(slaSetting[0].value_number || 48);
       }
 
       if (requests && requests.length > 0) {
@@ -315,7 +321,7 @@ export default function Billing() {
                    <p key={i} className="text-sm text-blue-100">{step}</p>
                  ))}
                </div>
-               <p className="text-xs text-blue-300 italic">{t.manualPaymentNote}</p>
+               <p className="text-xs text-blue-300 italic">{t.manualPaymentNote(slaHours)}</p>
              </div>
 
              {/* Pricing Card */}
