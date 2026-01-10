@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminModeration() {
   const [loading, setLoading] = useState(true);
@@ -20,23 +21,11 @@ export default function AdminModeration() {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    checkAdmin();
+    loadReports();
   }, []);
 
   const checkAdmin = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('App');
-        return;
-      }
-
       await loadReports();
     } catch (error) {
       console.error('Error:', error);
@@ -193,13 +182,16 @@ export default function AdminModeration() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-      </div>
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
     );
   }
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -404,5 +396,6 @@ export default function AdminModeration() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminGuard>
   );
 }

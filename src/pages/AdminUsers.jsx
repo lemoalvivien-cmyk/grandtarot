@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
@@ -16,23 +17,11 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    checkAdminAndLoad();
+    loadData();
   }, []);
 
-  const checkAdminAndLoad = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
-        return;
-      }
-
-      const user = await base44.auth.me();
-      if (user.role !== 'admin') {
-        window.location.href = createPageUrl('Dashboard');
-        return;
-      }
-
       const [userList, profileList] = await Promise.all([
         base44.entities.User.list(),
         base44.entities.UserProfile.list()
@@ -114,13 +103,16 @@ export default function AdminUsers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
-      </div>
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
     );
   }
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -224,5 +216,6 @@ export default function AdminUsers() {
         </div>
       </div>
     </div>
+    </AdminGuard>
   );
 }

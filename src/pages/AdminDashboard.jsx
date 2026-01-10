@@ -7,6 +7,7 @@ import {
   BarChart3, MessageSquare, Ban, Eye, ChevronRight 
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -19,30 +20,16 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    checkAdmin();
+    loadData();
   }, []);
 
-  const checkAdmin = async () => {
+  const loadData = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        window.location.href = createPageUrl('Login');
-        return;
-      }
-
       const currentUser = await base44.auth.me();
-      
-      if (currentUser.role !== 'admin') {
-        // Not admin, redirect
-        window.location.href = createPageUrl('Dashboard');
-        return;
-      }
-
       setUser(currentUser);
       await loadStats();
     } catch (error) {
       console.error('Error:', error);
-      window.location.href = createPageUrl('Login');
     } finally {
       setLoading(false);
     }
@@ -65,14 +52,6 @@ export default function AdminDashboard() {
       console.error('Error loading stats:', error);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   const adminSections = [
     { 
@@ -141,7 +120,18 @@ export default function AdminDashboard() {
     }
   ];
 
+  if (loading) {
+    return (
+      <AdminGuard>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        </div>
+      </AdminGuard>
+    );
+  }
+
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
@@ -223,5 +213,6 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
+    </AdminGuard>
   );
 }
