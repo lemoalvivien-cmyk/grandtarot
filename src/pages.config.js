@@ -53,6 +53,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminSecurityFixtures from './pages/AdminSecurityFixtures';
+import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
 import __Layout from './Layout.jsx';
 
 
@@ -112,6 +113,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "AdminSecurityFixtures": AdminSecurityFixtures,
+    "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
 }
 
 export const pagesConfig = {

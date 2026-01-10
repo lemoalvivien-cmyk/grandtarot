@@ -112,6 +112,13 @@ export default function AdminDashboard() {
       color: "bg-violet-500/20 text-violet-400"
     },
     { 
+      title: "Release Candidate", 
+      icon: CheckCircle, 
+      subtitle: "Chat Module Verification", 
+      page: "AdminReleaseCheckCandidate",
+      color: "bg-green-500/20 text-green-400"
+    },
+    { 
       title: "Prompts IA", 
       icon: Settings, 
       subtitle: "Interprétations & Modération", 
