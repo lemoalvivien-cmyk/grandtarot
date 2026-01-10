@@ -7,7 +7,7 @@
  * - Ignore TOUS les champs injectés (from_user_id, to_user_id, participant_*)
  * - Force les valeurs depuis auth.me() + conversation
  * - Rate limit 1 msg/sec (query limit=1)
- * - Idempotence clientMsgId (query limit=5)
+ * - Idempotence RÉELLE via client_msg_id (query limit=1)
  * - Utilise serviceRole pour bypass admin-only create
  */
 
@@ -107,22 +107,19 @@ export default async function handler(req, context) {
     };
   }
   
-  // STEP 5: IDEMPOTENCE - Check clientMsgId (1min window)
-  if (clientMsgId) {
+  // STEP 5: TRUE IDEMPOTENCE - Check client_msg_id (EXACT MATCH)
+  if (clientMsgId && typeof clientMsgId === 'string' && clientMsgId.trim().length > 0) {
     const existingMsgs = await serviceClient.entities.Message.filter({
       conversation_id: conversationId,
-      from_user_id: userEmail
-    }, '-created_date', 5);
+      from_user_id: userEmail,
+      client_msg_id: clientMsgId
+    }, null, 1);
     
-    const duplicate = existingMsgs.find(m => 
-      m.body === trimmedBody && 
-      (Date.now() - new Date(m.created_date).getTime()) < 60000
-    );
-    
-    if (duplicate) {
+    if (existingMsgs.length > 0) {
+      // Message déjà créé avec ce clientMsgId => return existing
       return {
         statusCode: 200,
-        body: { message: duplicate, duplicate: true }
+        body: { message: existingMsgs[0], duplicate: true }
       };
     }
   }
@@ -163,6 +160,7 @@ export default async function handler(req, context) {
       from_user_id: userEmail,           // FORCED from auth.me()
       to_user_id: toUserId,              // CALCULATED server-side
       body: trimmedBody,
+      client_msg_id: clientMsgId || null, // STORE for idempotence
       contains_link: containsUrl,
       contains_phone: containsPhone,
       moderation_status: 'clean'

@@ -2,10 +2,12 @@ import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminAuditLog from './pages/AdminAuditLog';
+import AdminBackendHealth from './pages/AdminBackendHealth';
 import AdminBackendSetup from './pages/AdminBackendSetup';
 import AdminBackfillMessages from './pages/AdminBackfillMessages';
 import AdminBlogEditor from './pages/AdminBlogEditor';
 import AdminCardEditor from './pages/AdminCardEditor';
+import AdminCodeAudit from './pages/AdminCodeAudit';
 import AdminContent from './pages/AdminContent';
 import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
@@ -50,8 +52,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminBackendHealth from './pages/AdminBackendHealth';
-import AdminCodeAudit from './pages/AdminCodeAudit';
 import __Layout from './Layout.jsx';
 
 
@@ -60,10 +60,12 @@ export const PAGES = {
     "AdminAiPromptsEditor": AdminAiPromptsEditor,
     "AdminAnalytics": AdminAnalytics,
     "AdminAuditLog": AdminAuditLog,
+    "AdminBackendHealth": AdminBackendHealth,
     "AdminBackendSetup": AdminBackendSetup,
     "AdminBackfillMessages": AdminBackfillMessages,
     "AdminBlogEditor": AdminBlogEditor,
     "AdminCardEditor": AdminCardEditor,
+    "AdminCodeAudit": AdminCodeAudit,
     "AdminContent": AdminContent,
     "AdminDailyCardManager": AdminDailyCardManager,
     "AdminDashboard": AdminDashboard,
@@ -108,8 +110,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminBackendHealth": AdminBackendHealth,
-    "AdminCodeAudit": AdminCodeAudit,
 }
 
 export const pagesConfig = {

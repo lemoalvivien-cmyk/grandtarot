@@ -4,7 +4,7 @@
  * 
  * SÉCURITÉ:
  * - Exige Intention MUTUELLE accepted (A->B ET B->A)
- * - Vérifie absence de Block
+ * - Vérifie absence de Block (via ProfilePublic.public_id)
  * - Utilise serviceRole pour bypass admin-only create
  * - Canonise user_a/user_b pour éviter doublons
  */
@@ -69,15 +69,41 @@ export default async function handler(req, context) {
       };
     }
     
-    // STEP 3.5: Vérifier qu'aucun Block n'existe
+    // STEP 3.5: CHARGER PROFILES POUR OBTENIR public_id (requis pour Block check)
+    const currentProfiles = await serviceClient.entities.ProfilePublic.filter({
+      user_id: userEmail
+    }, null, 1);
+    
+    const otherProfiles = await serviceClient.entities.ProfilePublic.filter({
+      user_id: otherUserEmail
+    }, null, 1);
+    
+    if (currentProfiles.length === 0) {
+      return {
+        statusCode: 403,
+        body: { error: 'Profil public introuvable pour utilisateur courant (onboarding incomplet)' }
+      };
+    }
+    
+    if (otherProfiles.length === 0) {
+      return {
+        statusCode: 403,
+        body: { error: 'Profil public introuvable pour destinataire (onboarding incomplet)' }
+      };
+    }
+    
+    const currentPublicId = currentProfiles[0].public_id;
+    const otherPublicId = otherProfiles[0].public_id;
+    
+    // STEP 3.6: Vérifier qu'aucun Block n'existe (via public_id, PAS email)
     const blocksAB = await serviceClient.entities.Block.filter({
-      blocker_profile_id: userEmail,
-      blocked_profile_id: otherUserEmail
+      blocker_profile_id: currentPublicId,
+      blocked_profile_id: otherPublicId
     }, null, 1);
     
     const blocksBA = await serviceClient.entities.Block.filter({
-      blocker_profile_id: otherUserEmail,
-      blocked_profile_id: userEmail
+      blocker_profile_id: otherPublicId,
+      blocked_profile_id: currentPublicId
     }, null, 1);
     
     if (blocksAB.length > 0 || blocksBA.length > 0) {
