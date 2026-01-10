@@ -102,7 +102,7 @@ const applyModerationAction = async (userId, severity, flags) => {
  * - participant_a_id, participant_b_id = FROM CONVERSATION (DENORMALIZED)
  * - to_user_id = CALCULATED (other participant)
  * 
- * ANY CLIENT-PROVIDED participant_*/from_user_id IS IGNORED
+ * ANY CLIENT-PROVIDED participant fields or from_user_id ARE IGNORED
  */
 export const sendMessageSecure = async ({ 
   conversationId, 
