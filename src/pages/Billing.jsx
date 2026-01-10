@@ -90,19 +90,60 @@ export default function Billing() {
 
     if (recentRequest && recentRequest.status === 'pending') {
       alert(lang === 'fr'
-        ? t.alreadyPending
-        : t.alreadyPending);
+        ? 'Vous avez déjà envoyé une demande en attente. Veuillez attendre la vérification.'
+        : 'You already have a pending request. Please wait for verification.');
       return;
+    }
+
+    // Anti-spam: check 3 requests in last 7 days
+    try {
+      const allRequests = await base44.entities.BillingRequest.filter(
+        { requester_user_email: user.email },
+        '-created_date',
+        10
+      );
+      
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const recentCount = allRequests.filter(r => 
+        new Date(r.created_date) > sevenDaysAgo
+      ).length;
+      
+      if (recentCount >= 3) {
+        alert(lang === 'fr'
+          ? 'Limite: 3 demandes par 7 jours. Contactez le support.'
+          : 'Limit: 3 requests per 7 days. Contact support.');
+        return;
+      }
+    } catch (e) {
+      // Continue anyway
     }
 
     setSubmittingProof(true);
     try {
-      await base44.entities.BillingRequest.create({
+      const newRequest = await base44.entities.BillingRequest.create({
         requester_user_email: user.email,
         request_type: 'payment_proof',
         description: proofDescription,
         status: 'pending'
       });
+
+      // Log audit (non-blocking)
+      try {
+        await base44.entities.AuditLog.create({
+          actor_user_id: user.email,
+          actor_role: 'user',
+          action: 'billing_request_created',
+          entity_name: 'BillingRequest',
+          entity_id: newRequest.id,
+          payload_summary: `Payment proof submitted (${proofDescription.slice(0, 50)}...)`,
+          severity: 'info',
+          status: 'success'
+        }).catch(() => {});
+      } catch (e) {
+        // Non-blocking
+      }
 
       setShowProofModal(false);
       setProofDescription('');
