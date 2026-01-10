@@ -8,10 +8,13 @@ import AdminContent from './pages/AdminContent';
 import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminModeration from './pages/AdminModeration';
+import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReports from './pages/AdminReports';
+import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
 import AdminSettings from './pages/AdminSettings';
 import AdminStripeConfig from './pages/AdminStripeConfig';
 import AdminSubscriptionManager from './pages/AdminSubscriptionManager';
+import AdminSubscriptionSync from './pages/AdminSubscriptionSync';
 import AdminTarotImport from './pages/AdminTarotImport';
 import AdminUsers from './pages/AdminUsers';
 import Affinities from './pages/Affinities';
@@ -27,10 +30,12 @@ import CardDetail from './pages/CardDetail';
 import CardOfDay from './pages/CardOfDay';
 import Chat from './pages/Chat';
 import Cookies from './pages/Cookies';
+import CreateReport from './pages/CreateReport';
 import DailyReading from './pages/DailyReading';
 import Dashboard from './pages/Dashboard';
 import Encyclopedia from './pages/Encyclopedia';
 import Landing from './pages/Landing';
+import ManageSubscription from './pages/ManageSubscription';
 import Messages from './pages/Messages';
 import Onboarding from './pages/Onboarding';
 import Paywall from './pages/Paywall';
@@ -41,11 +46,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
-import ManageSubscription from './pages/ManageSubscription';
-import AdminSubscriptionSync from './pages/AdminSubscriptionSync';
-import CreateReport from './pages/CreateReport';
-import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import __Layout from './Layout.jsx';
 
 
@@ -60,10 +60,13 @@ export const PAGES = {
     "AdminDailyCardManager": AdminDailyCardManager,
     "AdminDashboard": AdminDashboard,
     "AdminModeration": AdminModeration,
+    "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReports": AdminReports,
+    "AdminSecuritySelftest": AdminSecuritySelftest,
     "AdminSettings": AdminSettings,
     "AdminStripeConfig": AdminStripeConfig,
     "AdminSubscriptionManager": AdminSubscriptionManager,
+    "AdminSubscriptionSync": AdminSubscriptionSync,
     "AdminTarotImport": AdminTarotImport,
     "AdminUsers": AdminUsers,
     "Affinities": Affinities,
@@ -79,10 +82,12 @@ export const PAGES = {
     "CardOfDay": CardOfDay,
     "Chat": Chat,
     "Cookies": Cookies,
+    "CreateReport": CreateReport,
     "DailyReading": DailyReading,
     "Dashboard": Dashboard,
     "Encyclopedia": Encyclopedia,
     "Landing": Landing,
+    "ManageSubscription": ManageSubscription,
     "Messages": Messages,
     "Onboarding": Onboarding,
     "Paywall": Paywall,
@@ -93,11 +98,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminSecuritySelftest": AdminSecuritySelftest,
-    "ManageSubscription": ManageSubscription,
-    "AdminSubscriptionSync": AdminSubscriptionSync,
-    "CreateReport": CreateReport,
-    "AdminReleaseCheck": AdminReleaseCheck,
 }
 
 export const pagesConfig = {

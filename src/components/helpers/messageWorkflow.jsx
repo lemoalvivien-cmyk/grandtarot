@@ -2,8 +2,8 @@ import { base44 } from '@/api/base44Client';
 import { moderateMessage } from './aiService';
 
 /**
- * Message Security Workflow
- * Validates and moderates messages before sending
+ * SECURE MESSAGE WORKFLOW - NO MERCY MODE
+ * Anti-spoof, participants-only, zero trust client input
  */
 
 // Regex patterns for detection
@@ -22,27 +22,22 @@ const PATTERNS = {
 const basicValidation = (message) => {
   const errors = [];
   
-  // Check for URLs
   if (PATTERNS.url.test(message)) {
     errors.push({ type: 'url', severity: 'high' });
   }
   
-  // Check for phone numbers
   if (PATTERNS.phone.test(message)) {
     errors.push({ type: 'phone', severity: 'high' });
   }
   
-  // Check for emails
   if (PATTERNS.email.test(message)) {
     errors.push({ type: 'email', severity: 'medium' });
   }
   
-  // Check for external contact requests
   if (PATTERNS.externalContact.test(message)) {
     errors.push({ type: 'external_contact', severity: 'high' });
   }
   
-  // Check for crypto/money mentions
   if (PATTERNS.crypto.test(message) || PATTERNS.money.test(message)) {
     errors.push({ type: 'financial', severity: 'critical' });
   }
@@ -55,7 +50,7 @@ const basicValidation = (message) => {
  */
 const applyModerationAction = async (userId, severity, flags) => {
   try {
-    const profiles = await base44.entities.UserProfile.filter({ user_id: userId });
+    const profiles = await base44.entities.UserProfile.filter({ user_id: userId }, null, 1);
     if (!profiles.length) return;
     
     const profile = profiles[0];
@@ -96,23 +91,68 @@ const applyModerationAction = async (userId, severity, flags) => {
 };
 
 /**
- * Main workflow: Send Message Securely
+ * ⚠️ SECURE MESSAGE CREATION - ANTI-SPOOF WORKFLOW ⚠️
+ * 
+ * CLIENT MUST ONLY SEND:
+ * - conversationId (required)
+ * - body (required)
+ * 
+ * SERVER ENFORCES:
+ * - from_user_id = {user.email} (FORCED)
+ * - participant_a_id, participant_b_id = FROM CONVERSATION (DENORMALIZED)
+ * - to_user_id = CALCULATED (other participant)
+ * 
+ * ANY CLIENT-PROVIDED participant_*/from_user_id IS IGNORED
  */
 export const sendMessageSecure = async ({ 
   conversationId, 
-  fromUserId, 
   messageBody, 
   lang 
 }) => {
   try {
-    // 1. Basic validation
+    // Get current user email (TRUSTED SOURCE)
+    const currentUser = await base44.auth.me();
+    const fromUserId = currentUser.email;
+    
+    // 1. LOAD CONVERSATION (with auth check)
+    const conversations = await base44.entities.Conversation.filter({ id: conversationId }, null, 1);
+    
+    if (conversations.length === 0) {
+      return {
+        success: false,
+        error: lang === 'fr' ? 'Conversation introuvable.' : 'Conversation not found.',
+        code: 'CONVERSATION_NOT_FOUND'
+      };
+    }
+    
+    const conversation = conversations[0];
+    
+    // 2. AUTH CHECK - User MUST be participant
+    const isParticipant = 
+      conversation.user_a_id === fromUserId || 
+      conversation.user_b_id === fromUserId;
+    
+    if (!isParticipant) {
+      console.error(`[SECURITY] User ${fromUserId} attempted to send message in conversation ${conversationId} (not participant)`);
+      return {
+        success: false,
+        error: lang === 'fr' ? 'Accès interdit.' : 'Access denied.',
+        code: 'NOT_PARTICIPANT'
+      };
+    }
+    
+    // 3. DENORMALIZE PARTICIPANTS (from conversation, NOT client)
+    const participantA = conversation.user_a_id;
+    const participantB = conversation.user_b_id;
+    const toUserId = participantA === fromUserId ? participantB : participantA;
+    
+    // 4. Basic validation
     const basicErrors = basicValidation(messageBody);
     
     if (basicErrors.length > 0) {
       const highSeverity = basicErrors.some(e => e.severity === 'high' || e.severity === 'critical');
       
       if (highSeverity) {
-        // Apply immediate action for critical violations
         const critical = basicErrors.find(e => e.severity === 'critical');
         if (critical) {
           await applyModerationAction(fromUserId, 'critical', [critical.type]);
@@ -128,30 +168,21 @@ export const sendMessageSecure = async ({
       }
     }
     
-    // 2. AI Moderation (async, doesn't block)
-    let aiModeration = { safe: true, flags: [] };
+    // 5. AI Moderation (async, doesn't block)
+    let aiModeration = { safe: true, flags: [], details: {} };
     try {
       aiModeration = await moderateMessage({ message: messageBody, lang });
     } catch (error) {
       console.error('AI moderation failed, allowing message:', error);
-      // Fail open - don't block if AI fails
     }
     
-    // 3. Fetch conversation to denormalize participants
-    const conversations = await base44.entities.Conversation.filter({ id: conversationId });
-    if (conversations.length === 0) {
-      throw new Error('Conversation not found');
-    }
-    const conv = conversations[0];
-    const toUserId = conv.user_a_id === fromUserId ? conv.user_b_id : conv.user_a_id;
-
-    // 4. Create message with denormalized participants
+    // 6. CREATE MESSAGE (with FORCED fields)
     const message = await base44.entities.Message.create({
       conversation_id: conversationId,
-      participant_a_id: conv.user_a_id,
-      participant_b_id: conv.user_b_id,
-      from_user_id: fromUserId,
-      to_user_id: toUserId,
+      participant_a_id: participantA,  // FORCED from conversation
+      participant_b_id: participantB,  // FORCED from conversation
+      from_user_id: fromUserId,        // FORCED from auth
+      to_user_id: toUserId,            // CALCULATED
       body: messageBody,
       flagged_scam: aiModeration.flags.includes('scam'),
       flagged_harassment: aiModeration.flags.includes('harassment'),
@@ -162,14 +193,20 @@ export const sendMessageSecure = async ({
       flag_details: aiModeration.details || {}
     });
     
-    // 5. Update conversation
+    // 7. Update conversation
+    const messageCount = (await base44.entities.Message.filter(
+      { conversation_id: conversationId }, 
+      '-created_date', 
+      1000
+    )).length;
+    
     await base44.entities.Conversation.update(conversationId, {
       last_message_at: new Date().toISOString(),
       last_message_preview: messageBody.substring(0, 100),
-      message_count: (await base44.entities.Message.filter({ conversation_id: conversationId })).length
+      message_count: messageCount
     });
     
-    // 6. Apply moderation actions if needed
+    // 8. Apply moderation actions if needed
     if (!aiModeration.safe && aiModeration.flags.length > 0) {
       const hasCritical = aiModeration.flags.some(f => ['scam', 'harassment'].includes(f));
       await applyModerationAction(
@@ -186,18 +223,19 @@ export const sendMessageSecure = async ({
     };
     
   } catch (error) {
-    console.error('Error in message workflow:', error);
+    console.error('[SECURITY] Error in secure message workflow:', error);
     return {
       success: false,
       error: lang === 'fr' 
         ? 'Erreur lors de l\'envoi du message.' 
-        : 'Error sending message.'
+        : 'Error sending message.',
+      code: 'SERVER_ERROR'
     };
   }
 };
 
 /**
- * Block a user
+ * Block a user (with scoped queries)
  */
 export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_interested') => {
   try {
@@ -210,16 +248,17 @@ export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_inte
       is_admin_enforced: false
     });
     
-    // Archive all conversations between them
-    // Query both directions separately (Base44 may not support $or)
+    // Archive conversations (SCOPED queries, no .list())
     const convsA = await base44.entities.Conversation.filter({ 
       user_a_id: blockerUserId, 
       user_b_id: blockedUserId 
     }, null, 5);
+    
     const convsB = await base44.entities.Conversation.filter({ 
       user_a_id: blockedUserId, 
       user_b_id: blockerUserId 
     }, null, 5);
+    
     const userConversations = [...convsA, ...convsB];
     
     for (const conv of userConversations) {
