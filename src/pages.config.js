@@ -44,6 +44,7 @@ import Terms from './pages/Terms';
 import Sitemap from './pages/Sitemap';
 import Robots from './pages/Robots';
 import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
+import ManageSubscription from './pages/ManageSubscription';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "Sitemap": Sitemap,
     "Robots": Robots,
     "AdminSecuritySelftest": AdminSecuritySelftest,
+    "ManageSubscription": ManageSubscription,
 }
 
 export const pagesConfig = {
