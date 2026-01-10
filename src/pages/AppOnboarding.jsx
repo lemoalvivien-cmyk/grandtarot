@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import PhotoUpload from '@/components/onboarding/PhotoUpload';
 import InterestSelector from '@/components/onboarding/InterestSelector';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 export default function AppOnboarding() {
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,7 @@ export default function AppOnboarding() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [lang, setLang] = useState('fr');
+  const [turnstileToken, setTurnstileToken] = useState(null);
   const [formData, setFormData] = useState({
     display_name: '',
     birth_year: '',
@@ -114,6 +116,11 @@ export default function AppOnboarding() {
         alert(lang === 'fr' ? 'Complétez les informations professionnelles' : 'Complete professional information');
         return;
       }
+    }
+
+    if (!turnstileToken) {
+      alert(lang === 'fr' ? 'Veuillez valider le captcha' : 'Please validate captcha');
+      return;
     }
 
     setSaving(true);
