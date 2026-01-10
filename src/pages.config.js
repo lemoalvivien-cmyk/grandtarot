@@ -43,6 +43,7 @@ import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import Sitemap from './pages/Sitemap';
 import Robots from './pages/Robots';
+import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
 import __Layout from './Layout.jsx';
 
 
@@ -92,6 +93,7 @@ export const PAGES = {
     "Terms": Terms,
     "Sitemap": Sitemap,
     "Robots": Robots,
+    "AdminSecuritySelftest": AdminSecuritySelftest,
 }
 
 export const pagesConfig = {
