@@ -10,10 +10,12 @@ export default function Billing() {
   const [user, setUser] = useState(null);
   const [account, setAccount] = useState(null);
   const [paymentLink, setPaymentLink] = useState('');
+  const [paywallEnabled, setPaywallEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [submittingProof, setSubmittingProof] = useState(false);
   const [showProofModal, setShowProofModal] = useState(false);
   const [proofDescription, setProofDescription] = useState('');
+  const [recentRequest, setRecentRequest] = useState(null);
   const [lang, setLang] = useState('fr');
 
   useEffect(() => {
@@ -33,12 +35,20 @@ export default function Billing() {
         setAccount(accounts[0]);
       }
 
-      const settings = await base44.entities.AppSettings.filter({
+      const paySettings = await base44.entities.AppSettings.filter({
+        setting_key: 'paywall_enabled'
+      }, null, 1);
+
+      if (paySettings.length > 0) {
+        setPaywallEnabled(paySettings[0].value_boolean === true);
+      }
+
+      const stripeSettings = await base44.entities.AppSettings.filter({
         setting_key: 'stripe_payment_link'
       }, null, 1);
 
-      if (settings.length > 0) {
-        setPaymentLink(settings[0].value_string);
+      if (stripeSettings.length > 0) {
+        setPaymentLink(stripeSettings[0].value_string);
       }
 
       const profiles = await base44.entities.UserProfile.filter({
@@ -47,6 +57,20 @@ export default function Billing() {
 
       if (profiles.length > 0) {
         setLang(profiles[0].language_pref || 'fr');
+      }
+
+      // Check for recent billing request (last 24h)
+      const requests = await base44.entities.BillingRequest.filter({
+        requester_user_email: currentUser.email
+      }, '-created_date', 1);
+
+      if (requests.length > 0) {
+        const createdTime = new Date(requests[0].created_date).getTime();
+        const nowTime = new Date().getTime();
+        const diffHours = (nowTime - createdTime) / (1000 * 60 * 60);
+        if (diffHours < 24) {
+          setRecentRequest(requests[0]);
+        }
       }
     } catch (error) {
       console.error('Error loading billing data:', error);
@@ -63,7 +87,16 @@ export default function Billing() {
 
   const handleSubmitProof = async () => {
     if (!proofDescription.trim() || proofDescription.length < 20) {
-      alert('Please provide at least 20 characters of description');
+      alert(lang === 'fr' 
+        ? 'Veuillez fournir au moins 20 caractères' 
+        : 'Please provide at least 20 characters');
+      return;
+    }
+
+    if (recentRequest) {
+      alert(lang === 'fr'
+        ? 'Vous avez déjà envoyé une demande. Veuillez attendre 24h.'
+        : 'You already submitted a request. Please wait 24 hours.');
       return;
     }
 
@@ -81,6 +114,7 @@ export default function Billing() {
       alert(lang === 'fr' 
         ? 'Demande envoyée. Un admin va examiner votre preuve.' 
         : 'Request sent. An admin will review your proof.');
+      loadData();
     } catch (error) {
       alert(`Error: ${error.message}`);
     } finally {
@@ -135,7 +169,35 @@ export default function Billing() {
       proofDesc: 'Describe your transaction (order number, amount, date, etc.)',
       proofPlaceholder: 'Ex: Paid 6.90€ on 10/01 via Stripe order #...',
       proofSubmit: 'Send',
-      proofCancel: 'Cancel'
+      proofCancel: 'Cancel',
+      freeAccess: 'Free access (paywall disabled)',
+      pendingReview: 'Your request is pending review...'
+    },
+    fr: {
+      title: 'Facturation & Abonnement',
+      status: 'Statut de l\'abonnement',
+      free: 'Gratuit',
+      active: 'Actif',
+      description: 'Bienvenue sur GRANDTAROT. Pour accéder aux fonctionnalités complètes, un abonnement est requis.',
+      cta: 'S\'abonner maintenant',
+      price: '6,90€/mois',
+      features: [
+        'Tirage quotidien IA personnalisé',
+        '20 affinités cosmiques par jour',
+        '3 modes : Amour, Amitié, Pro',
+        'Chat sécurisé illimité',
+        'Encyclopédie 78 cartes'
+      ],
+      noPaymentLink: 'Lien de paiement non configuré. Contactez l\'admin.',
+      alreadySubscribed: 'Vous êtes abonné(e) ✅',
+      paymentSubmitted: 'J\'ai déjà payé',
+      proofTitle: 'Soumettre une preuve de paiement',
+      proofDesc: 'Décrivez votre transaction (numéro de commande, montant, date, etc.)',
+      proofPlaceholder: 'Ex: Payé 6.90€ le 10/01 via Stripe order #...',
+      proofSubmit: 'Envoyer',
+      proofCancel: 'Annuler',
+      freeAccess: 'Accès libre (paywall désactivé)',
+      pendingReview: 'Votre demande est en attente d\'examen...'
     }
   };
 
@@ -171,6 +233,11 @@ export default function Billing() {
                   <CheckCircle className="w-5 h-5 text-green-400" />
                   <span className="text-green-300 font-semibold">{t.active}</span>
                 </div>
+              ) : !paywallEnabled ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/30 rounded-full">
+                  <CheckCircle className="w-5 h-5 text-blue-400" />
+                  <span className="text-blue-300 font-semibold">{t.freeAccess}</span>
+                </div>
               ) : (
                 <div className="flex items-center gap-2 px-4 py-2 bg-slate-500/20 border border-slate-500/30 rounded-full">
                   <AlertCircle className="w-5 h-5 text-slate-300" />
@@ -186,51 +253,62 @@ export default function Billing() {
                 </p>
                 {account?.plan_activated_at && (
                   <p className="text-slate-400 text-xs mt-2">
-                    Since {new Date(account.plan_activated_at).toLocaleDateString()}
+                    {lang === 'fr' ? 'Depuis' : 'Since'} {new Date(account.plan_activated_at).toLocaleDateString()}
                   </p>
                 )}
               </div>
             )}
+
+            {!isActive && paywallEnabled && recentRequest && (
+              <div className="p-4 bg-amber-900/20 border border-amber-500/30 rounded-lg">
+                <p className="text-amber-300 text-sm">
+                  {t.pendingReview}
+                </p>
+                <p className="text-slate-400 text-xs mt-2">
+                  {lang === 'fr' ? 'Demande du' : 'Request from'} {new Date(recentRequest.created_date).toLocaleDateString()}
+                </p>
+              </div>
+            )}
           </div>
 
-          {!isActive && (
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-2xl blur-2xl" />
-              <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-8">
-                <div className="text-center mb-8">
-                  <div className="text-5xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent mb-2">
-                    {t.price}
-                  </div>
-                  <p className="text-slate-400">Unlimited access</p>
-                </div>
+          {!isActive && paywallEnabled && (
+           <div className="relative mb-8">
+             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-2xl blur-2xl" />
+             <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-8">
+               <div className="text-center mb-8">
+                 <div className="text-5xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent mb-2">
+                   {t.price}
+                 </div>
+                 <p className="text-slate-400">{lang === 'fr' ? 'Accès illimité' : 'Unlimited access'}</p>
+               </div>
 
-                <ul className="space-y-3 mb-8">
-                  {t.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-300">
-                      <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+               <ul className="space-y-3 mb-8">
+                 {t.features.map((feature, i) => (
+                   <li key={i} className="flex items-center gap-3 text-slate-300">
+                     <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                     {feature}
+                   </li>
+                 ))}
+               </ul>
 
-                {paymentLink ? (
-                  <Button
-                    onClick={handleSubscribe}
-                    className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg rounded-xl"
-                  >
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    {t.cta}
-                  </Button>
-                ) : (
-                  <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                    {t.noPaymentLink}
-                  </div>
-                )}
-              </div>
-            </div>
+               {paymentLink ? (
+                 <Button
+                   onClick={handleSubscribe}
+                   className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg rounded-xl"
+                 >
+                   <CreditCard className="w-5 h-5 mr-2" />
+                   {t.cta}
+                 </Button>
+               ) : (
+                 <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                   {t.noPaymentLink}
+                 </div>
+               )}
+             </div>
+           </div>
           )}
 
-          {!isActive && (
+          {!isActive && paywallEnabled && !recentRequest && (
             <div className="text-center">
               <p className="text-slate-400 mb-4">
                 {lang === 'fr' 
