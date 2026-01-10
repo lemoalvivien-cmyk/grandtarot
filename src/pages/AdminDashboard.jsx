@@ -98,6 +98,14 @@ export default function AdminDashboard() {
       color: "bg-purple-500/20 text-purple-400"
     },
     { 
+      title: "Backend Setup", 
+      icon: Settings, 
+      subtitle: "Message Backend Config", 
+      page: "AdminBackendSetup",
+      color: "bg-violet-500/20 text-violet-400",
+      urgent: true
+    },
+    { 
       title: "Prompts IA", 
       icon: Settings, 
       subtitle: "Interprétations & Modération", 

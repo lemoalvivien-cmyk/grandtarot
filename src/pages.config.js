@@ -2,6 +2,7 @@ import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminAuditLog from './pages/AdminAuditLog';
+import AdminBackfillMessages from './pages/AdminBackfillMessages';
 import AdminBlogEditor from './pages/AdminBlogEditor';
 import AdminCardEditor from './pages/AdminCardEditor';
 import AdminContent from './pages/AdminContent';
@@ -11,6 +12,7 @@ import AdminModeration from './pages/AdminModeration';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReports from './pages/AdminReports';
 import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
+import AdminSecurityWarning from './pages/AdminSecurityWarning';
 import AdminSettings from './pages/AdminSettings';
 import AdminStripeConfig from './pages/AdminStripeConfig';
 import AdminSubscriptionManager from './pages/AdminSubscriptionManager';
@@ -46,8 +48,7 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminBackfillMessages from './pages/AdminBackfillMessages';
-import AdminSecurityWarning from './pages/AdminSecurityWarning';
+import AdminBackendSetup from './pages/AdminBackendSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "AdminAiPromptsEditor": AdminAiPromptsEditor,
     "AdminAnalytics": AdminAnalytics,
     "AdminAuditLog": AdminAuditLog,
+    "AdminBackfillMessages": AdminBackfillMessages,
     "AdminBlogEditor": AdminBlogEditor,
     "AdminCardEditor": AdminCardEditor,
     "AdminContent": AdminContent,
@@ -65,6 +67,7 @@ export const PAGES = {
     "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReports": AdminReports,
     "AdminSecuritySelftest": AdminSecuritySelftest,
+    "AdminSecurityWarning": AdminSecurityWarning,
     "AdminSettings": AdminSettings,
     "AdminStripeConfig": AdminStripeConfig,
     "AdminSubscriptionManager": AdminSubscriptionManager,
@@ -100,8 +103,7 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminBackfillMessages": AdminBackfillMessages,
-    "AdminSecurityWarning": AdminSecurityWarning,
+    "AdminBackendSetup": AdminBackendSetup,
 }
 
 export const pagesConfig = {

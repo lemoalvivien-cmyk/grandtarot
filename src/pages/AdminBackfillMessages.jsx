@@ -18,16 +18,29 @@ export default function AdminBackfillMessages() {
     setProgress({ total: 0, processed: 0, fixed: 0, errors: 0, quarantined: 0 });
     setLogs([]);
 
-    try {
-      addLog('info', '🔍 Chargement des messages...');
-      
-      // ADMIN QUERY: Load all messages (admin bypass accessRules)
-      const allMessages = await base44.entities.Message.filter({}, '-created_date', 1000);
-      
-      setProgress(prev => ({ ...prev, total: allMessages.length }));
-      addLog('info', `📊 ${allMessages.length} messages à traiter`);
+    const BATCH_SIZE = 200;
+    let skip = 0;
+    let hasMore = true;
 
-      for (const message of allMessages) {
+    try {
+      addLog('info', '🔍 Démarrage backfill paginé (batch: 200)...');
+      
+      // First, count total (estimate)
+      const sampleBatch = await base44.entities.Message.filter({}, '-created_date', 1);
+      addLog('info', '📊 Traitement par batch de 200 messages...');
+
+      while (hasMore) {
+        // Load batch
+        const batch = await base44.entities.Message.filter({}, '-created_date', BATCH_SIZE);
+        
+        if (batch.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        addLog('info', `📦 Traitement batch: ${batch.length} messages (skip: ${skip})`);
+
+        for (const message of batch) {
         try {
           // Check if already has participants
           if (message.participant_a_id && message.participant_b_id && message.to_user_id) {
@@ -88,6 +101,12 @@ export default function AdminBackfillMessages() {
             errors: prev.errors + 1 
           }));
         }
+      }
+
+        skip += BATCH_SIZE;
+        
+        // Small delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       addLog('info', '✅ BACKFILL TERMINÉ');
