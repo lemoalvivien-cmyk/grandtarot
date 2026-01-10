@@ -22,16 +22,34 @@ export default function SubscribeSuccess() {
       }
 
       const user = await base44.auth.me();
+      
+      // Get URL params (Stripe session info if available)
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      const customerId = urlParams.get('customer_id');
+      
       const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
+      const now = new Date().toISOString();
+      const subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // +30 days
+      
+      const updateData = {
+        subscription_status: 'active',
+        subscription_start: now,
+        subscription_end: subscriptionEnd,
+        is_subscribed: true
+      };
+      
+      if (customerId) {
+        updateData.stripe_customer_id = customerId;
+      }
       
       if (profiles.length === 0) {
         // Create profile if doesn't exist
         await base44.entities.UserProfile.create({
           user_id: user.email,
           display_name: user.full_name || '',
-          subscription_status: 'active',
-          subscription_start: new Date().toISOString(),
-          is_subscribed: true
+          language_pref: 'fr',
+          ...updateData
         });
       } else {
         // Update existing profile
@@ -45,16 +63,12 @@ export default function SubscribeSuccess() {
             window.location.href = profile.onboarding_completed 
               ? createPageUrl('App') 
               : createPageUrl('AppOnboarding');
-          }, 2000);
+          }, 1500);
           return;
         }
 
         // Activate subscription
-        await base44.entities.UserProfile.update(profile.id, {
-          subscription_status: 'active',
-          subscription_start: new Date().toISOString(),
-          is_subscribed: true
-        });
+        await base44.entities.UserProfile.update(profile.id, updateData);
 
         // Audit log
         await base44.entities.AuditLog.create({
@@ -63,8 +77,10 @@ export default function SubscribeSuccess() {
           action: 'subscription_started',
           entity_name: 'UserProfile',
           entity_id: profile.id,
-          payload_summary: 'User subscribed successfully',
-          severity: 'info'
+          payload_summary: `Subscription activated - Session: ${sessionId || 'N/A'}`,
+          payload_data: { sessionId, customerId, activatedAt: now },
+          severity: 'info',
+          status: 'success'
         });
       }
 
@@ -75,7 +91,7 @@ export default function SubscribeSuccess() {
         window.location.href = updatedProfiles[0].onboarding_completed 
           ? createPageUrl('App') 
           : createPageUrl('AppOnboarding');
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.error('Error activating subscription:', error);
       setError(error.message);
