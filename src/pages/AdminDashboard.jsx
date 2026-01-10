@@ -99,23 +99,23 @@ export default function AdminDashboard() {
     },
     { 
       title: "Backend Health", 
-      icon: Settings, 
-      subtitle: "Functions Deployment Check", 
+      icon: Shield, 
+      subtitle: "Entity limits & schema validation", 
       page: "AdminBackendHealth",
       color: "bg-green-500/20 text-green-400"
     },
     { 
-      title: "Security Fixtures", 
+      title: "Security Selftest", 
       icon: Shield, 
-      subtitle: "Test Data Setup", 
-      page: "AdminSecurityFixtures",
+      subtitle: "Paywall & access control checks", 
+      page: "AdminSecuritySelftest",
       color: "bg-violet-500/20 text-violet-400"
     },
     { 
-      title: "Release Candidate", 
+      title: "Release Check", 
       icon: CheckCircle, 
-      subtitle: "Chat Module Verification", 
-      page: "AdminReleaseCheckCandidate",
+      subtitle: "Chat module & idempotence verification", 
+      page: "AdminReleaseCheck",
       color: "bg-green-500/20 text-green-400"
     },
     { 
