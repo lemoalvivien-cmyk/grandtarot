@@ -13,6 +13,7 @@ import AdminContent from './pages/AdminContent';
 import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
+import AdminGoLive from './pages/AdminGoLive';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import AdminModeration from './pages/AdminModeration';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
@@ -29,6 +30,7 @@ import AdminTarotImport from './pages/AdminTarotImport';
 import AdminUsers from './pages/AdminUsers';
 import Affinities from './pages/Affinities';
 import App from './pages/App';
+import AppHome from './pages/AppHome';
 import AppIntentions from './pages/AppIntentions';
 import AppOnboarding from './pages/AppOnboarding';
 import AppRitual from './pages/AppRitual';
@@ -47,6 +49,7 @@ import DailyReading from './pages/DailyReading';
 import Dashboard from './pages/Dashboard';
 import Encyclopedia from './pages/Encyclopedia';
 import Landing from './pages/Landing';
+import Legal from './pages/Legal';
 import ManageSubscription from './pages/ManageSubscription';
 import Messages from './pages/Messages';
 import Onboarding from './pages/Onboarding';
@@ -58,9 +61,9 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminGoLive from './pages/AdminGoLive';
-import AppHome from './pages/AppHome';
-import Legal from './pages/Legal';
+import AdminRgpdRegister from './pages/AdminRgpdRegister';
+import AdminRgpdRetention from './pages/AdminRgpdRetention';
+import AdminRgpdDsar from './pages/AdminRgpdDsar';
 import __Layout from './Layout.jsx';
 
 
@@ -80,6 +83,7 @@ export const PAGES = {
     "AdminDailyCardManager": AdminDailyCardManager,
     "AdminDashboard": AdminDashboard,
     "AdminEvidenceRuns": AdminEvidenceRuns,
+    "AdminGoLive": AdminGoLive,
     "AdminLaunchChecklist": AdminLaunchChecklist,
     "AdminModeration": AdminModeration,
     "AdminReleaseCheck": AdminReleaseCheck,
@@ -96,6 +100,7 @@ export const PAGES = {
     "AdminUsers": AdminUsers,
     "Affinities": Affinities,
     "App": App,
+    "AppHome": AppHome,
     "AppIntentions": AppIntentions,
     "AppOnboarding": AppOnboarding,
     "AppRitual": AppRitual,
@@ -114,6 +119,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "Encyclopedia": Encyclopedia,
     "Landing": Landing,
+    "Legal": Legal,
     "ManageSubscription": ManageSubscription,
     "Messages": Messages,
     "Onboarding": Onboarding,
@@ -125,9 +131,9 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminGoLive": AdminGoLive,
-    "AppHome": AppHome,
-    "Legal": Legal,
+    "AdminRgpdRegister": AdminRgpdRegister,
+    "AdminRgpdRetention": AdminRgpdRetention,
+    "AdminRgpdDsar": AdminRgpdDsar,
 }
 
 export const pagesConfig = {
