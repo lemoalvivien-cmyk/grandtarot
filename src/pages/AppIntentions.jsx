@@ -5,6 +5,7 @@ import { MessageCircle, Inbox, Send as SendIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReceivedIntentionCard from '@/components/intentions/ReceivedIntentionCard';
 import SentIntentionCard from '@/components/intentions/SentIntentionCard';
+import { trackIntentionRefusal } from '@/components/helpers/quotaManager';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppIntentions() {
@@ -107,29 +108,8 @@ export default function AppIntentions() {
         responded_at: new Date().toISOString()
       });
 
-      // Check for 3 consecutive refusals from this sender
-      const senderIntentions = await base44.entities.Intention.filter({
-        from_user_id: intention.from_user_id,
-        status: 'refused'
-      });
-
-      // Get last 3 intentions from sender
-      const recentRefusals = senderIntentions
-        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-        .slice(0, 3);
-
-      // If all 3 most recent are refused, apply cooldown
-      if (recentRefusals.length >= 3 && recentRefusals.every(i => i.status === 'refused')) {
-        const cooldownEnd = new Date();
-        cooldownEnd.setHours(cooldownEnd.getHours() + 24);
-        
-        const senderProfile = profiles[intention.from_user_id];
-        if (senderProfile) {
-          await base44.entities.UserProfile.update(senderProfile.id, {
-            cooldown_until: cooldownEnd.toISOString()
-          });
-        }
-      }
+      // COOLDOWN MANAGEMENT: Track refusals and apply cooldown if 3+ consecutive
+      await trackIntentionRefusal(intention.from_user_id);
 
       // Update local state
       setReceivedIntentions(prev => 
