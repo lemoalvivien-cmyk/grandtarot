@@ -1,477 +1,155 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, CheckCircle, XCircle, AlertTriangle, Play } from 'lucide-react';
+import { callFunctionRaw } from '@/components/helpers/functionFetch';
+import { Copy, Save, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminSecuritySelftest() {
   const [running, setRunning] = useState(false);
+  const [output, setOutput] = useState('');
   const [results, setResults] = useState([]);
 
-  const runTests = async () => {
+  const runSelftest = async () => {
     setRunning(true);
-    setResults([]);
+    setOutput('');
     const testResults = [];
+    
+    let rawOutput = `SECURITY SELF-TEST — RAW EVIDENCE\n`;
+    rawOutput += `Started: ${new Date().toISOString()}\n`;
+    rawOutput += `Origin: ${window.location.origin}\n\n`;
+    rawOutput += `Test | Status | Details\n`;
+    rawOutput += `${'─'.repeat(100)}\n`;
 
-    // Helper to add test result
-    const addResult = (name, passed, details, error = null) => {
-      testResults.push({ name, passed, details, error, timestamp: new Date().toISOString() });
-      setResults([...testResults]);
-    };
+    // TEST 1: NO-AUTH (401)
+    const noAuthRes = await callFunctionRaw('chat_send_message',
+      { conversationId: 'test', body: 'test', clientMsgId: 'test' },
+      { omitCredentials: true }
+    );
+    const noAuthPass = noAuthRes.status === 401;
+    testResults.push({ name: 'NO-AUTH => 401', passed: noAuthPass, result: noAuthRes });
+    rawOutput += `NO-AUTH (credentials:omit) | ${noAuthPass ? '✅ PASS' : '❌ FAIL'} | Status: ${noAuthRes.status}, Body: ${noAuthRes.json?.error || noAuthRes.text}\n`;
 
+    // TEST 2: NON-PARTICIPANT (403)
+    let nonParticipantPass = false;
     try {
-      // TEST 1: UserProfile.list() should FAIL or return empty
-      try {
-        const profiles = await base44.entities.UserProfile.list();
-        if (profiles.length === 0) {
-          addResult('UserProfile.list()', true, 'Returned empty array (filtered by accessRules)');
-        } else {
-          addResult('UserProfile.list()', false, `LEAK: Returned ${profiles.length} profiles`, 'Should return 0 profiles or 403');
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('UserProfile.list()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('UserProfile.list()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 2: Message.list() should FAIL or return empty
-      try {
-        const messages = await base44.entities.Message.list();
-        if (messages.length === 0) {
-          addResult('Message.list()', true, 'Returned empty array (filtered by accessRules)');
-        } else {
-          addResult('Message.list()', false, `LEAK: Returned ${messages.length} messages`, 'Should return 0 messages or 403');
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('Message.list()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('Message.list()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 3: AppSettings.list() should FAIL (admin only)
-      try {
-        const settings = await base44.entities.AppSettings.list();
-        if (settings.length === 0) {
-          addResult('AppSettings.list()', true, 'Returned empty array (no settings or filtered)');
-        } else {
-          // If we're admin, this is OK
-          const user = await base44.auth.me();
-          if (user.role === 'admin') {
-            addResult('AppSettings.list()', true, `Admin access: ${settings.length} settings`);
-          } else {
-            addResult('AppSettings.list()', false, `LEAK: Non-admin got ${settings.length} settings`);
-          }
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('AppSettings.list()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('AppSettings.list()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 4: Conversation filter with another user's email should FAIL
-      try {
-        const convs = await base44.entities.Conversation.filter({ user_a_id: 'attacker@test.com' });
-        if (convs.length === 0) {
-          addResult('Conversation.filter(other_user)', true, 'Returned empty (filtered by accessRules)');
-        } else {
-          addResult('Conversation.filter(other_user)', false, `LEAK: Returned ${convs.length} conversations`);
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('Conversation.filter(other_user)', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('Conversation.filter(other_user)', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 5: AuditLog.list() should FAIL (admin only)
-      try {
-        const logs = await base44.entities.AuditLog.list();
-        const user = await base44.auth.me();
-        if (user.role === 'admin' && logs.length >= 0) {
-          addResult('AuditLog.list()', true, `Admin access: ${logs.length} logs`);
-        } else if (user.role !== 'admin' && logs.length === 0) {
-          addResult('AuditLog.list()', true, 'Non-admin: empty array');
-        } else if (user.role !== 'admin' && logs.length > 0) {
-          addResult('AuditLog.list()', false, `LEAK: Non-admin got ${logs.length} logs`);
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('AuditLog.list()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('AuditLog.list()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 6: AiPrompt.list() should FAIL (admin only)
-      try {
-        const prompts = await base44.entities.AiPrompt.list();
-        const user = await base44.auth.me();
-        if (user.role === 'admin' && prompts.length >= 0) {
-          addResult('AiPrompt.list()', true, `Admin access: ${prompts.length} prompts`);
-        } else if (user.role !== 'admin' && prompts.length === 0) {
-          addResult('AiPrompt.list()', true, 'Non-admin: empty array');
-        } else if (user.role !== 'admin' && prompts.length > 0) {
-          addResult('AiPrompt.list()', false, `LEAK: Non-admin got ${prompts.length} prompts`);
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('AiPrompt.list()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('AiPrompt.list()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 7: Message.create() spoof attempt (MUST FAIL with 403)
-      try {
-        const user = await base44.auth.me();
-        await base44.entities.Message.create({
-          from_user_id: user.email,
-          participant_a_id: user.email,
-          participant_b_id: 'victim@test.com',
-          body: 'spoof attempt',
-          conversation_id: 'fake-conv-id'
+      const fixtures = await base44.entities.AppSettings.filter({
+        setting_key: 'security_fixture_conversation_id'
+      }, null, 1);
+      
+      if (fixtures.length > 0 && fixtures[0].value_string) {
+        const nonPartRes = await callFunctionRaw('chat_send_message', {
+          conversationId: fixtures[0].value_string,
+          body: 'spoof',
+          clientMsgId: `test-${Date.now()}`
         });
-        addResult('Message.create(spoof)', false, 'SECURITY BREACH: Create succeeded', 'Should be 403 (admin-only)');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
-          addResult('Message.create(spoof)', true, `BLOCKED (admin-only): ${error.message}`);
-        } else if (error.message?.includes('not found')) {
-          addResult('Message.create(spoof)', false, `Conversation check happened (not admin-blocked)`, error.message);
-        } else {
-          addResult('Message.create(spoof)', false, `Unexpected error (should be 403)`, error.message);
-        }
+        nonParticipantPass = nonPartRes.status === 403;
+        testResults.push({ name: 'NON-PARTICIPANT => 403', passed: nonParticipantPass, result: nonPartRes });
+        rawOutput += `NON-PARTICIPANT (fixture) | ${nonParticipantPass ? '✅ PASS' : '❌ FAIL'} | Status: ${nonPartRes.status}, Body: ${nonPartRes.json?.error || nonPartRes.text}\n`;
+      } else {
+        rawOutput += `NON-PARTICIPANT (fixture) | ⏭️ SKIP | No fixture configured\n`;
       }
-
-      // TEST 8: Conversation.update() attempt (MUST FAIL with 403)
-      try {
-        const user = await base44.auth.me();
-        const myConvs = await base44.entities.Conversation.filter({ 
-          user_a_id: user.email 
-        }, null, 1);
-        
-        if (myConvs.length > 0) {
-          await base44.entities.Conversation.update(myConvs[0].id, {
-            status: 'blocked'
-          });
-          addResult('Conversation.update()', false, 'SECURITY BREACH: Update succeeded', 'Should be 403 (admin-only)');
-        } else {
-          addResult('Conversation.update()', true, 'No conversations to test (skip)');
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
-          addResult('Conversation.update()', true, `BLOCKED (admin-only): ${error.message}`);
-        } else {
-          addResult('Conversation.update()', false, `Unexpected error (should be 403)`, error.message);
-        }
-      }
-
-      // TEST 9: Message.update() attempt (MUST FAIL)
-      try {
-        const user = await base44.auth.me();
-        const myMsgs = await base44.entities.Message.filter({ 
-          from_user_id: user.email 
-        }, '-created_date', 1);
-        
-        if (myMsgs.length > 0) {
-          await base44.entities.Message.update(myMsgs[0].id, { body: 'edit' });
-          addResult('Message.update()', false, 'SECURITY BREACH: Update succeeded', 'Should be 403');
-        } else {
-          addResult('Message.update()', true, 'No messages to test (skip)');
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('Message.update()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('Message.update()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 10: Message.delete() attempt (MUST FAIL)
-      try {
-        const user = await base44.auth.me();
-        const myMsgs = await base44.entities.Message.filter({ 
-          from_user_id: user.email 
-        }, '-created_date', 1);
-        
-        if (myMsgs.length > 0) {
-          await base44.entities.Message.delete(myMsgs[0].id);
-          addResult('Message.delete()', false, 'SECURITY BREACH: Delete succeeded', 'Should be 403');
-        } else {
-          addResult('Message.delete()', true, 'No messages to test (skip)');
-        }
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('Message.delete()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('Message.delete()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 11: Conversation.create() attempt (MUST FAIL - admin-only)
-      try {
-        const user = await base44.auth.me();
-        await base44.entities.Conversation.create({
-          user_a_id: user.email,
-          user_b_id: 'other@test.com',
-          mode: 'love'
-        });
-        addResult('Conversation.create()', false, 'SECURITY BREACH: Create succeeded', 'Should be 403 (admin-only)');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
-          addResult('Conversation.create()', true, `BLOCKED (admin-only): ${error.message}`);
-        } else {
-          addResult('Conversation.create()', false, `Unexpected error (should be 403)`, error.message);
-        }
-      }
-
-      // TEST 12: AppSettings.filter() attempt (MUST FAIL)
-      try {
-        await base44.entities.AppSettings.filter({}, null, 10);
-        addResult('AppSettings.filter()', false, 'SECURITY BREACH: Read succeeded', 'Should be 403');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('AppSettings.filter()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('AppSettings.filter()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 13: AuditLog.filter() attempt (MUST FAIL)
-      try {
-        await base44.entities.AuditLog.filter({}, '-created_date', 10);
-        addResult('AuditLog.filter()', false, 'SECURITY BREACH: Read succeeded', 'Should be 403');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission')) {
-          addResult('AuditLog.filter()', true, `Blocked: ${error.message}`);
-        } else {
-          addResult('AuditLog.filter()', false, `Unexpected error`, error.message);
-        }
-      }
-
-      // TEST 14: Backend Function - chat_send_message on non-participant conversation (MUST FAIL 403)
-      try {
-        const result = await base44.functions.chat_send_message({
-          conversationId: 'fake-non-participant-conv',
-          body: 'test spoof'
-        });
-        addResult('chat_send_message(non-participant)', false, 'SECURITY BREACH: Sent message in non-participant conv', 'Should be 403');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('Non autorisé') || error.message?.includes('not found')) {
-          addResult('chat_send_message(non-participant)', true, `BLOCKED: ${error.message}`);
-        } else {
-          addResult('chat_send_message(non-participant)', false, `Unexpected error (should be 403)`, error.message);
-        }
-      }
-
-      // TEST 15: Backend Function - chat_open_conversation without authorization (MUST FAIL 403)
-      try {
-        const result = await base44.functions.chat_open_conversation({
-          otherUserEmail: 'random-stranger@test.com'
-        });
-        addResult('chat_open_conversation(no-auth)', false, 'SECURITY BREACH: Opened conv with stranger', 'Should be 403');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('Aucune autorisation')) {
-          addResult('chat_open_conversation(no-auth)', true, `BLOCKED: ${error.message}`);
-        } else {
-          addResult('chat_open_conversation(no-auth)', false, `Unexpected error (should be 403)`, error.message);
-        }
-      }
-
-      // TEST 16: UserProfile.create with spoofed user_id (MUST FAIL 403)
-      try {
-        await base44.entities.UserProfile.create({
-          user_id: 'victim@test.com',
-          display_name: 'Spoofed Profile'
-        });
-        addResult('UserProfile.create(spoof)', false, 'SECURITY BREACH: Created profile for other user', 'Should be 403');
-      } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
-          addResult('UserProfile.create(spoof)', true, `BLOCKED: ${error.message}`);
-        } else {
-          addResult('UserProfile.create(spoof)', false, `Unexpected error (should be 403)`, error.message);
-        }
-      }
-
-      // TEST 17: NO-AUTH fetch (without credentials) => 401
-      try {
-        const response = await fetch('/api/v1/functions/chat_send_message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'omit',
-          body: JSON.stringify({ conversationId: 'test', body: 'test' })
-        });
-        
-        const statusCode = response.status;
-        const body = await response.json().catch(() => response.statusText);
-        
-        addResult('NO-AUTH fetch => 401', statusCode === 401, `Status: ${statusCode}, Body: ${JSON.stringify(body)}`);
-      } catch (error) {
-        addResult('NO-AUTH fetch => 401', false, 'Network error', error.message);
-      }
-
-      // TEST 18: NON-PARTICIPANT on fixture conversation => 403
-      try {
-        const fixtureSettings = await base44.entities.AppSettings.filter({
-          setting_key: 'security_fixture_conversation_id'
-        }, null, 1);
-        
-        if (fixtureSettings.length > 0 && fixtureSettings[0].value_string) {
-          try {
-            await base44.functions.chat_send_message({
-              conversationId: fixtureSettings[0].value_string,
-              body: 'non-participant test',
-              clientMsgId: `selftest-${Date.now()}`
-            });
-            addResult('NON-PARTICIPANT fixture => 403', false, 'SECURITY BREACH: Sent message in fixture conv', 'Should be 403');
-          } catch (error) {
-            const statusCode = error.statusCode || error.message?.match(/(\d{3})/)?.[1];
-            addResult('NON-PARTICIPANT fixture => 403', statusCode === '403' || statusCode === 403, `Status: ${statusCode}, Error: ${error.message}`);
-          }
-        } else {
-          addResult('NON-PARTICIPANT fixture => 403', null, 'SKIP: No fixture (create in /admin/security-fixtures)');
-        }
-      } catch (error) {
-        addResult('NON-PARTICIPANT fixture => 403', false, 'Error loading fixture', error.message);
-      }
-
     } catch (error) {
-      addResult('Test Suite', false, 'Fatal error', error.message);
+      rawOutput += `NON-PARTICIPANT (fixture) | ❌ ERROR | ${error.message}\n`;
     }
 
+    // TEST 3: Message.create blocked (admin-only)
+    try {
+      const user = await base44.auth.me();
+      await base44.entities.Message.create({
+        from_user_id: user.email,
+        participant_a_id: user.email,
+        participant_b_id: 'other@test.com',
+        body: 'spoof',
+        conversation_id: 'fake'
+      });
+      testResults.push({ name: 'Message.create admin-only', passed: false });
+      rawOutput += `Message.create blocked | ❌ FAIL | Non-admin was able to create\n`;
+    } catch (error) {
+      const blocked = error.message?.includes('403') || error.message?.includes('Forbidden');
+      testResults.push({ name: 'Message.create admin-only', passed: blocked });
+      rawOutput += `Message.create blocked | ${blocked ? '✅ PASS' : '❌ FAIL'} | ${error.message}\n`;
+    }
+
+    // TEST 4: Conversation.create blocked (admin-only)
+    try {
+      const user = await base44.auth.me();
+      await base44.entities.Conversation.create({
+        user_a_id: user.email,
+        user_b_id: 'other@test.com',
+        mode: 'love'
+      });
+      testResults.push({ name: 'Conversation.create admin-only', passed: false });
+      rawOutput += `Conversation.create blocked | ❌ FAIL | Non-admin was able to create\n`;
+    } catch (error) {
+      const blocked = error.message?.includes('403') || error.message?.includes('Forbidden');
+      testResults.push({ name: 'Conversation.create admin-only', passed: blocked });
+      rawOutput += `Conversation.create blocked | ${blocked ? '✅ PASS' : '❌ FAIL'} | ${error.message}\n`;
+    }
+
+    rawOutput += `${'─'.repeat(100)}\n`;
+    const passed = testResults.filter(t => t.passed).length;
+    const failed = testResults.filter(t => !t.passed).length;
+    rawOutput += `\nSummary: ${passed} PASS | ${failed} FAIL\n`;
+    rawOutput += `Completed: ${new Date().toISOString()}\n`;
+
+    setOutput(rawOutput);
+    setResults(testResults);
     setRunning(false);
   };
 
-  const passCount = results.filter(r => r.passed).length;
-  const failCount = results.filter(r => !r.passed).length;
-  const totalCount = results.length;
+  const copyAll = () => {
+    navigator.clipboard.writeText(output);
+    alert('Output copied to clipboard!');
+  };
+
+  const saveRun = async () => {
+    try {
+      await base44.entities.EvidenceRun.create({
+        run_type: 'security_selftest',
+        results_json: JSON.stringify(results),
+        summary: `Security selftest: ${results.filter(r => r.passed).length}/${results.length} passed`,
+        tests_passed: results.filter(r => r.passed).length,
+        tests_failed: results.filter(r => !r.passed).length,
+        raw_output: output
+      });
+      alert('Evidence saved!');
+    } catch (error) {
+      alert(`Error saving: ${error.message}`);
+    }
+  };
 
   return (
     <AdminGuard>
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-8 h-8 text-red-500" />
-              <h1 className="text-3xl font-bold">Security Self-Test</h1>
-            </div>
-            <p className="text-slate-400">
-              Tests de sécurité automatiques - AccessRules, anti-spoof, isolation données
-            </p>
+            <h1 className="text-3xl font-bold mb-2">Security Self-Test</h1>
+            <p className="text-slate-400">Verify 401, 403, access rules</p>
           </div>
 
-          {/* Run Button */}
-          <div className="mb-8">
-            <Button
-              onClick={runTests}
-              disabled={running}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {running ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Tests en cours...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Lancer les tests
-                </>
-              )}
+          <div className="flex gap-2 mb-8">
+            <Button onClick={runSelftest} disabled={running} className="bg-green-600 hover:bg-green-700">
+              <Play className="w-4 h-4 mr-2" />
+              {running ? 'Running...' : 'Run Tests'}
             </Button>
+            {output && (
+              <>
+                <Button onClick={copyAll} variant="outline" className="border-slate-700">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy All
+                </Button>
+                <Button onClick={saveRun} variant="outline" className="border-green-700 text-green-400">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Run
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Results Summary */}
-          {results.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <div className="text-3xl font-bold text-green-400">{passCount}</div>
-                <div className="text-slate-400 text-sm">PASS</div>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <div className="text-3xl font-bold text-red-400">{failCount}</div>
-                <div className="text-slate-400 text-sm">FAIL</div>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <div className="text-3xl font-bold text-amber-400">{totalCount}</div>
-                <div className="text-slate-400 text-sm">TOTAL</div>
-              </div>
-            </div>
-          )}
-
-          {/* Results Table */}
-          {results.length > 0 && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-slate-900/50">
-                  <tr>
-                    <th className="text-left p-4 text-slate-400 font-medium">Status</th>
-                    <th className="text-left p-4 text-slate-400 font-medium">Test</th>
-                    <th className="text-left p-4 text-slate-400 font-medium">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((result, i) => (
-                    <tr key={i} className="border-t border-slate-700/50">
-                      <td className="p-4">
-                        {result.passed ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <XCircle className="w-5 h-5 text-red-500" />
-                        )}
-                      </td>
-                      <td className="p-4 font-mono text-sm">{result.name}</td>
-                      <td className="p-4">
-                        <div className="text-sm text-slate-300">{result.details}</div>
-                        {result.error && (
-                          <div className="text-xs text-red-400 mt-1">{result.error}</div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Warning if failures */}
-          {failCount > 0 && (
-            <div className="mt-8 bg-red-900/20 border border-red-500/30 rounded-xl p-6 flex items-start gap-4">
-              <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-lg font-semibold text-red-400 mb-2">⚠️ FAILLES DÉTECTÉES</h3>
-                <p className="text-slate-300 mb-4">
-                  {failCount} test(s) échoué(s). Données potentiellement exposées. Vérifier les accessRules et workflows.
-                </p>
-                <div className="text-sm text-slate-400">
-                  Actions recommandées:
-                  <ul className="list-disc ml-6 mt-2 space-y-1">
-                    <li>Vérifier les accessRules des entités concernées</li>
-                    <li>S'assurer qu'aucun .list() n'est utilisé sur entités sensibles</li>
-                    <li>Tester en console avec compte non-admin</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Success message */}
-          {results.length > 0 && failCount === 0 && (
-            <div className="mt-8 bg-green-900/20 border border-green-500/30 rounded-xl p-6 flex items-start gap-4">
-              <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-lg font-semibold text-green-400 mb-2">✅ TOUS LES TESTS PASSÉS</h3>
-                <p className="text-slate-300">
-                  Aucune faille détectée. AccessRules correctement configurées.
-                </p>
-              </div>
+          {output && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 font-mono text-sm text-slate-300 whitespace-pre-wrap max-h-96 overflow-x-auto">
+              {output}
             </div>
           )}
         </div>

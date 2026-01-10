@@ -55,6 +55,8 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
+import Billing from './pages/Billing';
+import AdminBillingRequests from './pages/AdminBillingRequests';
 import __Layout from './Layout.jsx';
 
 
@@ -116,6 +118,8 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "AdminLaunchChecklist": AdminLaunchChecklist,
+    "Billing": Billing,
+    "AdminBillingRequests": AdminBillingRequests,
 }
 
 export const pagesConfig = {
