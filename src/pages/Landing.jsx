@@ -13,7 +13,70 @@ export default function Landing() {
   
   useEffect(() => {
     loadDailyCard();
+    addSEOMeta();
   }, []);
+  
+  const addSEOMeta = () => {
+    // OpenGraph meta tags
+    const ogTags = [
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: 'https://grandtarot.com' },
+      { property: 'og:title', content: 'GRANDTAROT - Connexions Guidées par les Astres' },
+      { property: 'og:description', content: 'Rencontres basées sur le tarot et l\'astrologie. Tirage quotidien IA personnalisé, 20 affinités cosmiques par jour. 3 modes : Amour, Amitié, Pro.' },
+      { property: 'og:image', content: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=1200&h=630&fit=crop' },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'GRANDTAROT - Connexions Guidées par les Astres' },
+      { name: 'twitter:description', content: 'Rencontres basées sur le tarot et l\'astrologie. Tirage quotidien IA personnalisé, 20 affinités cosmiques par jour.' },
+      { name: 'twitter:image', content: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=1200&h=630&fit=crop' }
+    ];
+    
+    ogTags.forEach(tag => {
+      const meta = document.createElement('meta');
+      if (tag.property) meta.setAttribute('property', tag.property);
+      if (tag.name) meta.setAttribute('name', tag.name);
+      meta.content = tag.content;
+      document.head.appendChild(meta);
+    });
+    
+    // JSON-LD Structured Data for FAQ
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Comment fonctionne le tirage quotidien ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaque matin, notre IA analyse votre profil et tire 3 cartes de tarot personnalisées. L'interprétation est adaptée à votre mode actif (Amour, Amitié, Pro) et à vos intentions du moment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment sont calculées les 20 affinités ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Notre algorithme cosmique croise compatibilité astrale (signes), centres d'intérêt communs, synergies tarot et proximité géographique pour vous proposer 20 profils ultra-compatibles chaque jour."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Puis-je changer de mode en cours d'abonnement ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolument ! Vous pouvez basculer entre Amour, Amitié et Pro à tout moment depuis vos paramètres. Vos affinités s'adapteront automatiquement."
+          }
+        }
+      ]
+    };
+    
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(faqSchema);
+    document.head.appendChild(script);
+  };
 
   const loadDailyCard = async () => {
     try {

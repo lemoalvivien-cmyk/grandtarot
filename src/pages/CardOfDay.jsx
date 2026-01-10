@@ -14,6 +14,47 @@ export default function CardOfDay() {
   useEffect(() => {
     loadCardOfDay();
   }, []);
+  
+  useEffect(() => {
+    if (card) {
+      addSEOMeta();
+    }
+  }, [card, lang]);
+  
+  const addSEOMeta = () => {
+    if (!card) return;
+    
+    const cardName = lang === 'fr' ? card.name_fr : card.name_en;
+    const interpretation = card.admin_interpretation_fr || card.admin_interpretation_en || 
+                          (lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en) || '';
+    const excerpt = interpretation.slice(0, 150) + '...';
+    
+    // Remove existing OG tags
+    document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]').forEach(el => el.remove());
+    
+    // OpenGraph meta tags
+    const ogTags = [
+      { property: 'og:type', content: 'article' },
+      { property: 'og:url', content: 'https://grandtarot.com/carte-du-jour' },
+      { property: 'og:title', content: `Carte du Jour : ${cardName} | GRANDTAROT` },
+      { property: 'og:description', content: excerpt },
+      { property: 'og:image', content: card.image_url || 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=1200&h=630&fit=crop' },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: `Carte du Jour : ${cardName}` },
+      { name: 'twitter:description', content: excerpt },
+      { name: 'twitter:image', content: card.image_url || 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=1200&h=630&fit=crop' }
+    ];
+    
+    ogTags.forEach(tag => {
+      const meta = document.createElement('meta');
+      if (tag.property) meta.setAttribute('property', tag.property);
+      if (tag.name) meta.setAttribute('name', tag.name);
+      meta.content = tag.content;
+      document.head.appendChild(meta);
+    });
+  };
 
   const loadCardOfDay = async () => {
     try {
