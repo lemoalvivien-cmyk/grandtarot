@@ -425,5 +425,6 @@ export default function AppRitual() {
         </div>
       </div>
     </div>
+    </SubscriptionGuard>
   );
 }
