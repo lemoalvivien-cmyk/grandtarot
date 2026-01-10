@@ -13,7 +13,9 @@ import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminModeration from './pages/AdminModeration';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
+import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
 import AdminReports from './pages/AdminReports';
+import AdminSecurityFixtures from './pages/AdminSecurityFixtures';
 import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
 import AdminSecurityWarning from './pages/AdminSecurityWarning';
 import AdminSettings from './pages/AdminSettings';
@@ -52,8 +54,7 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminSecurityFixtures from './pages/AdminSecurityFixtures';
-import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
+import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import __Layout from './Layout.jsx';
 
 
@@ -73,7 +74,9 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdminModeration": AdminModeration,
     "AdminReleaseCheck": AdminReleaseCheck,
+    "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
     "AdminReports": AdminReports,
+    "AdminSecurityFixtures": AdminSecurityFixtures,
     "AdminSecuritySelftest": AdminSecuritySelftest,
     "AdminSecurityWarning": AdminSecurityWarning,
     "AdminSettings": AdminSettings,
@@ -112,8 +115,7 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminSecurityFixtures": AdminSecurityFixtures,
-    "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
+    "AdminLaunchChecklist": AdminLaunchChecklist,
 }
 
 export const pagesConfig = {

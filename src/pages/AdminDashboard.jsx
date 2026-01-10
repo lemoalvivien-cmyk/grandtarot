@@ -119,6 +119,13 @@ export default function AdminDashboard() {
       color: "bg-green-500/20 text-green-400"
     },
     { 
+      title: "Launch Checklist", 
+      icon: CheckCircle, 
+      subtitle: "V1 Pre-Launch Verification", 
+      page: "AdminLaunchChecklist",
+      color: "bg-amber-500/20 text-amber-400"
+    },
+    { 
       title: "Prompts IA", 
       icon: Settings, 
       subtitle: "Interprétations & Modération", 

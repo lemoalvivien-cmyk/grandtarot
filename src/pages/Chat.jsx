@@ -250,13 +250,17 @@ export default function Chat() {
     
     const currentBody = messageText.trim();
     
+    // Safe UUID generation (no crypto crashes)
+    const genUUID = () => {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+      return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    };
+    
     // Generate stable clientMsgId ONCE (for retry idempotence)
     let msgId;
     if (!pendingClientMsgId || currentBody !== pendingBody) {
       // New message OR text changed => new ID
-      msgId = typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      msgId = genUUID();
       setPendingClientMsgId(msgId);
       setPendingBody(currentBody);
     } else {
