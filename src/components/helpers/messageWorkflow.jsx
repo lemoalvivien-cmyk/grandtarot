@@ -64,16 +64,8 @@ const applyModerationAction = async (userId, severity, flags) => {
         cooldown_until: banEnd.toISOString()
       });
       
-      // Create auto-report
-      await base44.entities.Report.create({
-        reporter_user_id: 'system@grandtarot.com',
-        target_user_id: userId,
-        reason: 'scam',
-        severity: 'critical',
-        description: `Auto-flagged: ${flags.join(', ')}`,
-        status: 'pending',
-        auto_flagged: true
-      });
+      // Auto-reports not allowed from client (admin-only via backend if needed)
+      console.warn('[SECURITY] Auto-report blocked - requires backend function');
     }
     
     // High violations = warning cooldown

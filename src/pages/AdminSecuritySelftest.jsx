@@ -284,6 +284,21 @@ export default function AdminSecuritySelftest() {
         }
       }
 
+      // TEST 16: UserProfile.create with spoofed user_id (MUST FAIL 403)
+      try {
+        await base44.entities.UserProfile.create({
+          user_id: 'victim@test.com',
+          display_name: 'Spoofed Profile'
+        });
+        addResult('UserProfile.create(spoof)', false, 'SECURITY BREACH: Created profile for other user', 'Should be 403');
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
+          addResult('UserProfile.create(spoof)', true, `BLOCKED: ${error.message}`);
+        } else {
+          addResult('UserProfile.create(spoof)', false, `Unexpected error (should be 403)`, error.message);
+        }
+      }
+
     } catch (error) {
       addResult('Test Suite', false, 'Fatal error', error.message);
     }

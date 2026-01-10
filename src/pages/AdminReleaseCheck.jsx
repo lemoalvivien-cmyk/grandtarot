@@ -18,8 +18,21 @@ export default function AdminReleaseCheck() {
       entities_patched: [],
       critical_fixes: [],
       warnings: [],
-      stats: {}
+      stats: {},
+      backend_status: { deployed: false, errors: [] }
     };
+
+    // Test Backend Functions deployment
+    try {
+      await base44.functions.chat_send_message({ conversationId: 'test', body: '' });
+      checkReport.backend_status.errors.push('Unexpected success');
+    } catch (error) {
+      if (error.message?.includes('400') || error.message?.includes('vide')) {
+        checkReport.backend_status.deployed = true;
+      } else {
+        checkReport.backend_status.errors.push(error.message);
+      }
+    }
 
     // ENTITIES PATCHED
     checkReport.entities_patched = [
@@ -106,7 +119,8 @@ export default function AdminReleaseCheck() {
       owner_entities: 11,
       critical_patches: 7,
       backend_functions: 2,
-      chat_status: 'ENABLED (Backend Functions)',
+      backend_deployed: checkReport.backend_status.deployed,
+      chat_status: checkReport.backend_status.deployed ? 'ENABLED (Backend Functions)' : 'DISABLED (Backend not deployed)',
       message_create: 'ADMIN-ONLY (via chat_send_message function)',
       conversation_create: 'ADMIN-ONLY (via chat_open_conversation function)'
     };
@@ -246,6 +260,24 @@ export default function AdminReleaseCheck() {
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              {/* Backend Status */}
+              <div className={`border rounded-xl p-6 ${report.backend_status.deployed ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                <h2 className={`text-xl font-bold mb-2 ${report.backend_status.deployed ? 'text-green-400' : 'text-red-400'}`}>
+                  {report.backend_status.deployed ? '✅ Backend Functions DEPLOYED' : '❌ Backend Functions NOT DEPLOYED'}
+                </h2>
+                <p className="text-slate-300 mb-2">
+                  Status: <span className="font-mono font-bold">{report.stats.chat_status}</span>
+                </p>
+                {report.backend_status.errors.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-red-300 text-sm font-semibold mb-2">Errors:</p>
+                    {report.backend_status.errors.map((err, i) => (
+                      <p key={i} className="text-red-400 text-xs font-mono">{err}</p>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Version Info */}
