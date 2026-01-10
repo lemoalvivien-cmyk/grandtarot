@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { 
   Shield, Users, AlertTriangle, Settings, FileText, 
-  BarChart3, MessageSquare, Ban, Eye, ChevronRight 
+  BarChart3, MessageSquare, Ban, Eye, ChevronRight, CreditCard, CheckCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -124,6 +124,13 @@ export default function AdminDashboard() {
       subtitle: "V1 Pre-Launch Verification", 
       page: "AdminLaunchChecklist",
       color: "bg-amber-500/20 text-amber-400"
+    },
+    { 
+      title: "Billing Requests", 
+      icon: CreditCard, 
+      subtitle: "Approve payment proofs", 
+      page: "AdminBillingRequests",
+      color: "bg-green-500/20 text-green-400"
     },
     { 
       title: "Prompts IA", 

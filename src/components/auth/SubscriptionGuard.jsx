@@ -22,47 +22,73 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
   const checkAccess = async () => {
     try {
       const isAuth = await base44.auth.isAuthenticated();
-      
+
       if (!isAuth) {
         window.location.href = createPageUrl('Landing');
         return;
       }
 
       const user = await base44.auth.me();
-      const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
-      
-      if (profiles.length === 0) {
-        window.location.href = createPageUrl('Subscribe');
-        return;
-      }
 
-      const profile = profiles[0];
-      
-      // Admin bypass (toujours autorisé)
+      // Admin bypass (always authorized)
       if (user.role === 'admin') {
         setAuthorized(true);
         setChecking(false);
         return;
       }
 
-      // Vérification statut abonnement
-      const activeStatuses = ['active', 'trialing'];
-      const blockedStatuses = ['past_due', 'canceled', 'none'];
-      const hasActiveSubscription = activeStatuses.includes(profile.subscription_status);
+      // Check paywall status
+      const settings = await base44.entities.AppSettings.filter({
+        setting_key: 'paywall_enabled'
+      }, null, 1);
 
-      if (!hasActiveSubscription || blockedStatuses.includes(profile.subscription_status)) {
-        setNeedsSubscription(true);
-        setChecking(false);
-        return;
+      const paywallEnabled = settings.length > 0 && settings[0].value_boolean === true;
+
+      if (paywallEnabled) {
+        // Check plan_status in AccountPrivate
+        const accounts = await base44.entities.AccountPrivate.filter({
+          user_email: user.email
+        }, null, 1);
+
+        if (accounts.length > 0) {
+          const planStatus = accounts[0].plan_status || 'free';
+
+          if (planStatus !== 'active') {
+            setNeedsSubscription(true);
+            setChecking(false);
+            return;
+          }
+        } else {
+          setNeedsSubscription(true);
+          setChecking(false);
+          return;
+        }
+      } else {
+        // Fallback: check UserProfile.subscription_status
+        const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
+
+        if (profiles.length === 0) {
+          window.location.href = createPageUrl('Subscribe');
+          return;
+        }
+
+        const profile = profiles[0];
+        const activeStatuses = ['active', 'trialing'];
+        const hasActiveSubscription = activeStatuses.includes(profile.subscription_status);
+
+        if (!hasActiveSubscription) {
+          setNeedsSubscription(true);
+          setChecking(false);
+          return;
+        }
+
+        // Check onboarding
+        if (!allowOnboarding && !profile.onboarding_completed) {
+          window.location.href = createPageUrl('AppOnboarding');
+          return;
+        }
       }
 
-      // Vérification onboarding (sauf si allowOnboarding = true)
-      if (!allowOnboarding && !profile.onboarding_completed) {
-        window.location.href = createPageUrl('AppOnboarding');
-        return;
-      }
-
-      // Accès autorisé
       setAuthorized(true);
     } catch (error) {
       console.error('Subscription guard error:', error);
