@@ -128,7 +128,7 @@ export default function AdminSecuritySelftest() {
         }
       }
 
-      // TEST 7: Message.create() spoof attempt (if possible to test)
+      // TEST 7: Message.create() spoof attempt (MUST FAIL with 403)
       try {
         const user = await base44.auth.me();
         await base44.entities.Message.create({
@@ -138,12 +138,79 @@ export default function AdminSecuritySelftest() {
           body: 'spoof attempt',
           conversation_id: 'fake-conv-id'
         });
-        addResult('Message.create(spoof)', false, 'SECURITY BREACH: Spoof succeeded', 'Should have failed');
+        addResult('Message.create(spoof)', false, 'SECURITY BREACH: Create succeeded', 'Should be 403 (admin-only)');
       } catch (error) {
-        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('not found')) {
-          addResult('Message.create(spoof)', true, `Blocked: ${error.message}`);
+        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
+          addResult('Message.create(spoof)', true, `BLOCKED (admin-only): ${error.message}`);
+        } else if (error.message?.includes('not found')) {
+          addResult('Message.create(spoof)', false, `Conversation check happened (not admin-blocked)`, error.message);
         } else {
-          addResult('Message.create(spoof)', true, `Failed (expected): ${error.message}`);
+          addResult('Message.create(spoof)', false, `Unexpected error (should be 403)`, error.message);
+        }
+      }
+
+      // TEST 8: Conversation.update() attempt (MUST FAIL with 403)
+      try {
+        const user = await base44.auth.me();
+        const myConvs = await base44.entities.Conversation.filter({ 
+          user_a_id: user.email 
+        }, null, 1);
+        
+        if (myConvs.length > 0) {
+          await base44.entities.Conversation.update(myConvs[0].id, {
+            status: 'blocked'
+          });
+          addResult('Conversation.update()', false, 'SECURITY BREACH: Update succeeded', 'Should be 403 (admin-only)');
+        } else {
+          addResult('Conversation.update()', true, 'No conversations to test (skip)');
+        }
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission') || error.message?.includes('Forbidden')) {
+          addResult('Conversation.update()', true, `BLOCKED (admin-only): ${error.message}`);
+        } else {
+          addResult('Conversation.update()', false, `Unexpected error (should be 403)`, error.message);
+        }
+      }
+
+      // TEST 9: Message.update() attempt (MUST FAIL)
+      try {
+        const user = await base44.auth.me();
+        const myMsgs = await base44.entities.Message.filter({ 
+          from_user_id: user.email 
+        }, '-created_date', 1);
+        
+        if (myMsgs.length > 0) {
+          await base44.entities.Message.update(myMsgs[0].id, { body: 'edit' });
+          addResult('Message.update()', false, 'SECURITY BREACH: Update succeeded', 'Should be 403');
+        } else {
+          addResult('Message.update()', true, 'No messages to test (skip)');
+        }
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission')) {
+          addResult('Message.update()', true, `Blocked: ${error.message}`);
+        } else {
+          addResult('Message.update()', false, `Unexpected error`, error.message);
+        }
+      }
+
+      // TEST 10: Message.delete() attempt (MUST FAIL)
+      try {
+        const user = await base44.auth.me();
+        const myMsgs = await base44.entities.Message.filter({ 
+          from_user_id: user.email 
+        }, '-created_date', 1);
+        
+        if (myMsgs.length > 0) {
+          await base44.entities.Message.delete(myMsgs[0].id);
+          addResult('Message.delete()', false, 'SECURITY BREACH: Delete succeeded', 'Should be 403');
+        } else {
+          addResult('Message.delete()', true, 'No messages to test (skip)');
+        }
+      } catch (error) {
+        if (error.message?.includes('403') || error.message?.includes('permission')) {
+          addResult('Message.delete()', true, `Blocked: ${error.message}`);
+        } else {
+          addResult('Message.delete()', false, `Unexpected error`, error.message);
         }
       }
 

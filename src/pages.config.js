@@ -46,6 +46,8 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
+import AdminBackfillMessages from './pages/AdminBackfillMessages';
+import AdminSecurityWarning from './pages/AdminSecurityWarning';
 import __Layout from './Layout.jsx';
 
 
@@ -98,6 +100,8 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
+    "AdminBackfillMessages": AdminBackfillMessages,
+    "AdminSecurityWarning": AdminSecurityWarning,
 }
 
 export const pagesConfig = {
