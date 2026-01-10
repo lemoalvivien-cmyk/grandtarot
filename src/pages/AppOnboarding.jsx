@@ -34,6 +34,8 @@ export default function AppOnboarding() {
     language_pref: 'fr'
   });
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   useEffect(() => {
     checkAccess();
@@ -129,6 +131,16 @@ export default function AppOnboarding() {
       return;
     }
 
+    if (!termsAccepted) {
+      alert(lang === 'fr' ? 'Vous devez accepter les Conditions d\'utilisation' : 'You must accept Terms of Service');
+      return;
+    }
+
+    if (!privacyAccepted) {
+      alert(lang === 'fr' ? 'Vous devez accepter la Politique de confidentialité' : 'You must accept Privacy Policy');
+      return;
+    }
+
     setSaving(true);
     try {
       // Calculate profile completion
@@ -151,8 +163,14 @@ export default function AppOnboarding() {
       }, null, 1);
 
       if (accounts.length > 0) {
+        const termsVersion = '1.0';
+        const privacyVersion = '1.0';
         await base44.entities.AccountPrivate.update(accounts[0].id, {
-          age_confirmed_at: new Date().toISOString()
+          age_confirmed_at: new Date().toISOString(),
+          terms_accepted_at: new Date().toISOString(),
+          terms_version_accepted: termsVersion,
+          privacy_accepted_at: new Date().toISOString(),
+          privacy_version_accepted: privacyVersion
         });
       }
       
@@ -195,8 +213,10 @@ export default function AppOnboarding() {
       next: "Continuer",
       back: "Retour",
       finish: "Commencer l'aventure",
-      ageConfirm: "J'ai plus de 18 ans et j'accepte les conditions d'utilisation",
-      ageMustConfirm: "Vous devez confirmer que vous avez plus de 18 ans"
+      ageConfirm: "J'ai plus de 18 ans",
+      ageMustConfirm: "Vous devez confirmer que vous avez plus de 18 ans",
+      termsAccept: "J'accepte les Conditions d'utilisation",
+      privacyAccept: "J'ai lu la Politique de confidentialité"
     },
     en: {
       steps: {
@@ -228,8 +248,10 @@ export default function AppOnboarding() {
       next: "Continue",
       back: "Back",
       finish: "Start the adventure",
-      ageConfirm: "I am 18 years or older and accept the terms of service",
-      ageMustConfirm: "You must confirm that you are 18 years or older"
+      ageConfirm: "I am 18 years or older",
+      ageMustConfirm: "You must confirm that you are 18 years or older",
+      termsAccept: "I accept the Terms of Service",
+      privacyAccept: "I have read the Privacy Policy"
     }
   };
 
@@ -449,20 +471,62 @@ export default function AppOnboarding() {
           </div>
         )}
 
-        {/* Age Gate (Final Step) */}
-        {step === 3 && (
-          <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ageConfirmed}
-                onChange={(e) => setAgeConfirmed(e.target.checked)}
-                className="w-5 h-5 mt-0.5 accent-amber-500"
-              />
-              <span className="text-sm text-amber-100">{t.ageConfirm}</span>
-            </label>
-          </div>
-        )}
+        {/* Legal Checkboxes (Final Step) */}
+         {step === 3 && (
+           <div className="mt-8 space-y-3 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+             <label className="flex items-start gap-3 cursor-pointer">
+               <input
+                 type="checkbox"
+                 checked={ageConfirmed}
+                 onChange={(e) => setAgeConfirmed(e.target.checked)}
+                 className="w-5 h-5 mt-0.5 accent-amber-500"
+               />
+               <span className="text-sm text-amber-100">{t.ageConfirm}</span>
+             </label>
+
+             <label className="flex items-start gap-3 cursor-pointer">
+               <input
+                 type="checkbox"
+                 checked={termsAccepted}
+                 onChange={(e) => setTermsAccepted(e.target.checked)}
+                 className="w-5 h-5 mt-0.5 accent-amber-500"
+               />
+               <div className="text-sm text-amber-100">
+                 {t.termsAccept}
+                 {' '}
+                 <a 
+                   href={createPageUrl('Terms')} 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="underline text-amber-300 hover:text-amber-200"
+                 >
+                   {lang === 'fr' ? 'Lire les CGU' : 'Read Terms'}
+                 </a>
+               </div>
+             </label>
+
+             <label className="flex items-start gap-3 cursor-pointer">
+               <input
+                 type="checkbox"
+                 checked={privacyAccepted}
+                 onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                 className="w-5 h-5 mt-0.5 accent-amber-500"
+               />
+               <div className="text-sm text-amber-100">
+                 {t.privacyAccept}
+                 {' '}
+                 <a 
+                   href={createPageUrl('Privacy')} 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="underline text-amber-300 hover:text-amber-200"
+                 >
+                   {lang === 'fr' ? 'Lire la politique' : 'Read Policy'}
+                 </a>
+               </div>
+             </label>
+           </div>
+         )}
 
         {/* Navigation */}
         <div className="mt-12 space-y-4">
