@@ -41,7 +41,6 @@ export default function Billing() {
         setPaymentLink(settings[0].value_string);
       }
 
-      // Get language preference (limit=1 explicit)
       const profiles = await base44.entities.UserProfile.filter({
         user_id: currentUser.email
       }, null, 1);
@@ -157,7 +156,6 @@ export default function Billing() {
     <SubscriptionGuard allowOnboarding>
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
         <div className="max-w-3xl mx-auto">
-          {/* Header */}
           <div className="mb-12 text-center">
             <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
               {t.title}
@@ -165,7 +163,6 @@ export default function Billing() {
             <p className="text-slate-400">{t.description}</p>
           </div>
 
-          {/* Status Card */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-amber-100">{t.status}</h2>
@@ -196,7 +193,6 @@ export default function Billing() {
             )}
           </div>
 
-          {/* Pricing Card */}
           {!isActive && (
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-2xl blur-2xl" />
@@ -234,7 +230,6 @@ export default function Billing() {
             </div>
           )}
 
-          {/* Already paid section */}
           {!isActive && (
             <div className="text-center">
               <p className="text-slate-400 mb-4">
@@ -252,7 +247,6 @@ export default function Billing() {
             </div>
           )}
 
-          {/* Proof Modal */}
           <Dialog open={showProofModal} onOpenChange={setShowProofModal}>
             <DialogContent className="bg-slate-900 border-slate-700">
               <DialogHeader>

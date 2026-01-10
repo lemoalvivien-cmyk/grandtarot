@@ -21,28 +21,16 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   
-  // Idempotence - clientMsgId + body stable on retry
   const [pendingClientMsgId, setPendingClientMsgId] = useState(null);
   const [pendingBody, setPendingBody] = useState('');
   
-  // Pagination
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [oldestMessageDate, setOldestMessageDate] = useState(null);
   
-  // Rate limiting
   const [lastSendTime, setLastSendTime] = useState(0);
   const [sendAttempts, setSendAttempts] = useState(0);
   
-  // Auto-reset pendingClientMsgId if message text changed
-  useEffect(() => {
-    if (pendingClientMsgId && messageText.trim() !== pendingBody) {
-      setPendingClientMsgId(null);
-      setPendingBody('');
-    }
-  }, [messageText, pendingClientMsgId, pendingBody]);
-  
-  // Modals
   const [blockModal, setBlockModal] = useState(false);
   const [reportModal, setReportModal] = useState(false);
   const [blocking, setBlocking] = useState(false);
@@ -54,12 +42,18 @@ export default function Chat() {
   const messagesTopRef = useRef(null);
 
   useEffect(() => {
+    if (pendingClientMsgId && messageText.trim() !== pendingBody) {
+      setPendingClientMsgId(null);
+      setPendingBody('');
+    }
+  }, [messageText, pendingClientMsgId, pendingBody]);
+
+  useEffect(() => {
     checkAccess();
   }, []);
 
   useEffect(() => {
     if (conversation && messages.length > 0) {
-      // OPTIMIZED: Poll every 12 seconds for new messages only
       const interval = setInterval(() => {
         loadNewMessages(conversation.id);
       }, 12000);
@@ -88,7 +82,6 @@ export default function Chat() {
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
 
-      // Get conversation ID from URL
       const params = new URLSearchParams(window.location.search);
       const conversationId = params.get('conversation');
       
@@ -115,13 +108,11 @@ export default function Chat() {
 
       const conv = conversations[0];
       
-      // Check user is participant
       if (conv.user_a_id !== userId && conv.user_b_id !== userId) {
         window.location.href = createPageUrl('AppIntentions');
         return;
       }
 
-      // Check not blocked
       if (conv.status === 'blocked') {
         setError(lang === 'fr' 
           ? 'Cette conversation est bloquée.' 
@@ -132,9 +123,8 @@ export default function Chat() {
 
       setConversation(conv);
 
-      // Load other user profile
       const otherUserId = conv.user_a_id === userId ? conv.user_b_id : conv.user_a_id;
-      const profiles = await base44.entities.UserProfile.filter({ user_id: otherUserId });
+      const profiles = await base44.entities.UserProfile.filter({ user_id: otherUserId }, null, 1);
       if (profiles.length > 0) {
         setOtherProfile(profiles[0]);
       }
@@ -147,28 +137,21 @@ export default function Chat() {
     }
   };
 
-  const loadMessages = async (conversationId, silent = false) => {
+  const loadMessages = async (conversationId) => {
     try {
-      // SCALABLE: Load only last 50 messages initially
       const msgs = await base44.entities.Message.filter({ 
         conversation_id: conversationId,
         is_deleted: false 
       }, '-created_date', 50);
       
-      // Check if there are more messages
       setHasMore(msgs.length === 50);
       
-      // Reverse to show chronological order (oldest first)
       msgs.reverse();
       setMessages(msgs);
       
-      // Track oldest message for pagination
       if (msgs.length > 0) {
         setOldestMessageDate(msgs[0].created_date);
       }
-
-      // NOTE: Mark as read disabled (Message.update = admin-only)
-      // Would require backend function to mark as read
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -178,14 +161,12 @@ export default function Chat() {
     try {
       if (messages.length === 0) return;
       
-      // OPTIMIZED: Load only NEW messages since last message
       const lastMessage = messages[messages.length - 1];
       const allMessages = await base44.entities.Message.filter({ 
         conversation_id: conversationId,
         is_deleted: false 
       }, '-created_date', 50);
       
-      // Find messages newer than what we have
       const newMessages = allMessages.filter(m => 
         new Date(m.created_date) > new Date(lastMessage.created_date)
       );
@@ -193,7 +174,6 @@ export default function Chat() {
       if (newMessages.length > 0) {
         newMessages.reverse();
         setMessages(prev => [...prev, ...newMessages]);
-        // NOTE: Mark as read disabled (Message.update = admin-only)
       }
     } catch (error) {
       console.error('Error loading new messages:', error);
@@ -205,7 +185,6 @@ export default function Chat() {
     
     setLoadingMore(true);
     try {
-      // PAGINATION: Load 50 more messages before oldest (LIMIT EXPLICIT)
       const olderMessages = await base44.entities.Message.filter({ 
         conversation_id: conversation.id,
         is_deleted: false,
@@ -231,13 +210,11 @@ export default function Chat() {
     
     if (!messageText.trim() || messageText.length > 2000) return;
     
-    // Guard: conversation must exist
     if (!conversation?.id) {
       setError(lang === 'fr' ? 'Conversation invalide' : 'Invalid conversation');
       return;
     }
     
-    // RATE LIMITING: Max 1 message per second
     const now = Date.now();
     if (now - lastSendTime < 1000) {
       setError(lang === 'fr' 
@@ -246,7 +223,6 @@ export default function Chat() {
       return;
     }
     
-    // SPAM PROTECTION: Max 10 messages per minute
     if (sendAttempts >= 10) {
       setError(lang === 'fr' 
         ? 'Trop de messages envoyés. Attendez 1 minute.' 
@@ -260,21 +236,17 @@ export default function Chat() {
     
     const currentBody = messageText.trim();
     
-    // Safe UUID generation (no crypto crashes)
     const genUUID = () => {
       if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
       return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     };
     
-    // Generate stable clientMsgId ONCE (for retry idempotence)
     let msgId;
     if (!pendingClientMsgId || currentBody !== pendingBody) {
-      // New message OR text changed => new ID
       msgId = genUUID();
       setPendingClientMsgId(msgId);
       setPendingBody(currentBody);
     } else {
-      // Retry same message => reuse ID
       msgId = pendingClientMsgId;
     }
     
@@ -289,23 +261,19 @@ export default function Chat() {
       if (!result.success) {
         setError(result.error);
         setSending(false);
-        // Keep pendingClientMsgId + pendingBody for retry
         return;
       }
 
-      // Success: reset everything
       setMessageText('');
       setPendingClientMsgId(null);
       setPendingBody('');
       setLastSendTime(now);
       setSendAttempts(prev => prev + 1);
       
-      // Add message optimistically
       await loadNewMessages(conversation.id);
     } catch (error) {
       console.error('Error sending message:', error);
       setError(lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Error sending message');
-      // Keep pendingClientMsgId + pendingBody for retry
     } finally {
       setSending(false);
     }
@@ -328,13 +296,12 @@ export default function Chat() {
 
     setReporting(true);
     try {
-      // Get current user's ProfilePublic.public_id (NEVER use email)
       const publicProfiles = await base44.entities.ProfilePublic.filter({ 
-        public_id: profile.public_id 
+        user_id: user.email
       }, null, 1);
       
       const targetPublicProfiles = await base44.entities.ProfilePublic.filter({ 
-        public_id: otherProfile.public_id 
+        user_id: otherProfile.user_id
       }, null, 1);
       
       if (publicProfiles.length === 0 || targetPublicProfiles.length === 0) {
@@ -447,7 +414,6 @@ export default function Chat() {
   return (
     <SubscriptionGuard>
       <div className="h-screen flex flex-col">
-      {/* Header */}
       <div className="border-b border-amber-500/10 bg-slate-900/50 backdrop-blur-xl px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
@@ -495,10 +461,8 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6 bg-gradient-to-b from-slate-950 to-slate-900">
         <div className="max-w-4xl mx-auto">
-          {/* Load More Button */}
           {hasMore && (
             <div className="text-center mb-4">
               <Button
@@ -530,7 +494,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Input */}
       <div className="border-t border-amber-500/10 bg-slate-900/50 backdrop-blur-xl px-4 py-4">
         <div className="max-w-4xl mx-auto">
           {error && (
@@ -562,7 +525,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Block Modal */}
       <Dialog open={blockModal} onOpenChange={setBlockModal}>
         <DialogContent className="bg-slate-900 border-amber-500/20">
           <DialogHeader>
@@ -581,7 +543,6 @@ export default function Chat() {
         </DialogContent>
       </Dialog>
 
-      {/* Report Modal */}
       <Dialog open={reportModal} onOpenChange={setReportModal}>
         <DialogContent className="bg-slate-900 border-amber-500/20">
           <DialogHeader>

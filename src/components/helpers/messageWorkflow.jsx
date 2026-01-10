@@ -65,7 +65,6 @@ const applyModerationAction = async (userId, severity, flags) => {
         cooldown_until: banEnd.toISOString()
       });
       
-      // Auto-reports not allowed from client (admin-only via backend if needed)
       console.warn('[SECURITY] Auto-report blocked - requires backend function');
     }
     
@@ -83,20 +82,6 @@ const applyModerationAction = async (userId, severity, flags) => {
   }
 };
 
-/**
- * ⚠️ SECURE MESSAGE CREATION - ANTI-SPOOF WORKFLOW ⚠️
- * 
- * CLIENT MUST ONLY SEND:
- * - conversationId (required)
- * - body (required)
- * 
- * SERVER ENFORCES:
- * - from_user_id = {user.email} (FORCED)
- * - participant_a_id, participant_b_id = FROM CONVERSATION (DENORMALIZED)
- * - to_user_id = CALCULATED (other participant)
- * 
- * ANY CLIENT-PROVIDED participant fields or from_user_id ARE IGNORED
- */
 /**
  * SECURE: Open conversation via backend function
  * Returns conversationId if authorized
@@ -138,8 +123,6 @@ export const openConversationSecure = async (otherUserEmail) => {
 /**
  * SECURE: Send message via backend function
  * ONLY sends conversationId + body + clientMsgId (NO participant fields)
- * 
- * CRITICAL: clientMsgId is REQUIRED - no fallback generation here
  */
 export const sendMessageSecure = async ({ 
   conversationId, 
@@ -147,13 +130,11 @@ export const sendMessageSecure = async ({
   clientMsgId,
   lang 
 }) => {
-  // STRICT: clientMsgId must be provided by caller
   if (!clientMsgId) {
     throw new Error('clientMsgId required for idempotence');
   }
   
   try {
-    // Call backend function - ONLY conversationId + body + clientMsgId
     const result = await callFunctionRaw('chat_send_message', {
       conversationId,
       body: messageBody,
@@ -212,39 +193,40 @@ export const sendMessageSecure = async ({
 };
 
 /**
- * Block a user (SECURE: uses ProfilePublic.public_id — canonical ID for all blocks)
- * CRITICAL: Block entity expects blocker_profile_id / blocked_profile_id (NOT email)
- * This aligns with chat_open_conversation which checks blocks via public_id
+ * Block a user — STRICT ProfilePublic.public_id (NO bridge)
+ * 
+ * CRITICAL: Block entity requires blocker_profile_id / blocked_profile_id (ProfilePublic.public_id)
+ * This aligns with:
+ * - Block AccessRules: blocker_profile_id == {user.public_id}
+ * - chat_open_conversation block checks via public_id
+ * 
+ * SOURCE: ProfilePublic.filter({ user_id: email }, null, 1).public_id ONLY
  */
 export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'not_interested') => {
   try {
-    // STEP 1: Get current user's ProfilePublic.public_id
-    // ProfilePublic is linked 1:1 with UserProfile via user_id bridge
-    const blockerUserProfiles = await base44.entities.UserProfile.filter({ 
+    // STEP 1: Fetch blocker's ProfilePublic (unique source of public_id)
+    const blockerProfiles = await base44.entities.ProfilePublic.filter({ 
       user_id: blockerUserEmail 
     }, null, 1);
     
-    if (!blockerUserProfiles.length) {
-      return { success: false, error: 'Blocker profile not found' };
+    if (!blockerProfiles.length) {
+      return { success: false, error: 'Blocker onboarding incomplete (ProfilePublic missing)' };
     }
     
-    const blockerPublicId = blockerUserProfiles[0].public_id;
+    const blockerPublicId = blockerProfiles[0].public_id;
     
-    // STEP 2: Get target user's ProfilePublic.public_id
-    const blockedUserProfiles = await base44.entities.UserProfile.filter({ 
+    // STEP 2: Fetch blocked user's ProfilePublic
+    const blockedProfiles = await base44.entities.ProfilePublic.filter({ 
       user_id: blockedUserEmail 
     }, null, 1);
     
-    if (!blockedUserProfiles.length) {
-      return { success: false, error: 'Blocked user profile not found' };
+    if (!blockedProfiles.length) {
+      return { success: false, error: 'Blocked user onboarding incomplete (ProfilePublic missing)' };
     }
     
-    const blockedPublicId = blockedUserProfiles[0].public_id;
+    const blockedPublicId = blockedProfiles[0].public_id;
     
-    // STEP 3: Create Block with public_id fields (NOT email)
-    // This ensures Block entity aligns with:
-    // - AccessRules: blocker_profile_id == {user.public_id}
-    // - chat_open_conversation checks blocks via ProfilePublic.public_id
+    // STEP 3: Create Block with STRICT public_id fields (NEVER email)
     await base44.entities.Block.create({
       blocker_profile_id: blockerPublicId,
       blocked_profile_id: blockedPublicId,

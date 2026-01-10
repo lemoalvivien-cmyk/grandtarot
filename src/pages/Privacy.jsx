@@ -1,110 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
+import { createPageUrl } from '@/utils';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 export default function Privacy() {
   const [lang, setLang] = useState('fr');
 
-  useEffect(() => {
-    checkLang();
-  }, []);
-
-  const checkLang = async () => {
-    try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (isAuth) {
-        const user = await base44.auth.me();
-        const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
-        if (profiles.length > 0) {
-          setLang(profiles[0].language_pref || 'fr');
-        }
-      }
-    } catch (error) {
-      // Not logged in, use default
-    }
-  };
-
   const content = {
     fr: {
-      title: "Politique de Confidentialité",
-      updated: "Dernière mise à jour : 10 janvier 2026",
+      title: 'Politique de Confidentialité',
+      lastUpdated: 'Dernière mise à jour : 10 janvier 2026',
       sections: [
         {
-          title: "1. Collecte des Données",
-          content: "Nous collectons les données suivantes : email, prénom, date de naissance, ville, photo de profil, centres d'intérêt, informations professionnelles (mode Pro uniquement). Ces données sont nécessaires au fonctionnement du service."
+          title: '1. Collecte de Données',
+          text: 'GRANDTAROT collecte des données personnelles comme votre email, nom d\'affichage, et préférences de profil pour fournir le service.'
         },
         {
-          title: "2. Utilisation des Données",
-          content: "Vos données sont utilisées pour : créer votre profil, générer des affinités compatibles, proposer des tirages de tarot personnalisés, améliorer le service. Nous ne vendons jamais vos données à des tiers."
+          title: '2. Utilisation des Données',
+          text: 'Vos données sont utilisées pour personnaliser votre expérience, améliorer le service, et communiquer avec vous.'
         },
         {
-          title: "3. Protection des Données",
-          content: "Vos données sont stockées sur des serveurs sécurisés en Europe (conformité RGPD). Nous utilisons le chiffrement SSL/TLS. Votre email n'est JAMAIS exposé publiquement."
+          title: '3. Partage des Données',
+          text: 'Nous ne partageons pas vos données personnelles avec des tiers sans votre consentement, sauf si la loi l\'exige.'
         },
         {
-          title: "4. Cookies",
-          content: "Nous utilisons des cookies essentiels pour le fonctionnement du service (authentification, préférences). Consultez notre politique cookies pour plus d'informations."
+          title: '4. Sécurité des Données',
+          text: 'Nous utilisons le chiffrement SSL et des serveurs sécurisés pour protéger vos données personnelles.'
         },
         {
-          title: "5. Partage avec des Tiers",
-          content: "Nous partageons uniquement des données avec : Stripe (paiements sécurisés), nos fournisseurs d'IA pour les interprétations de tarot. Aucune donnée n'est vendue à des fins publicitaires."
+          title: '5. Vos Droits',
+          text: 'Vous avez le droit d\'accéder, corriger ou supprimer vos données personnelles à tout moment.'
         },
         {
-          title: "6. Vos Droits (RGPD)",
-          content: "Vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité de vos données. Vous pouvez supprimer votre compte à tout moment depuis les paramètres."
+          title: '6. Cookies',
+          text: 'GRANDTAROT utilise des cookies pour améliorer votre expérience. Consultez notre politique de cookies pour plus d\'informations.'
         },
         {
-          title: "7. Conservation des Données",
-          content: "Vos données sont conservées tant que votre compte est actif. En cas de suppression de compte, vos données sont effacées sous 30 jours, sauf obligations légales."
-        },
-        {
-          title: "8. Mineurs",
-          content: "GRANDTAROT est réservé aux personnes de 18 ans et plus. Nous ne collectons pas sciemment de données de mineurs."
-        },
-        {
-          title: "9. Contact",
-          content: "Pour toute question relative à vos données, contactez-nous à : privacy@grandtarot.com"
+          title: '7. Modifications de la Politique',
+          text: 'GRANDTAROT peut modifier cette politique à tout moment. Les modifications seront publiées sur cette page.'
         }
       ]
     },
     en: {
-      title: "Privacy Policy",
-      updated: "Last updated: January 10, 2026",
+      title: 'Privacy Policy',
+      lastUpdated: 'Last updated: January 10, 2026',
       sections: [
         {
-          title: "1. Data Collection",
-          content: "We collect the following data: email, first name, birth year, city, profile photo, interests, professional information (Pro mode only). This data is necessary for the service to function."
+          title: '1. Data Collection',
+          text: 'GRANDTAROT collects personal data such as your email, display name, and profile preferences to provide the service.'
         },
         {
-          title: "2. Data Usage",
-          content: "Your data is used to: create your profile, generate compatible affinities, offer personalized tarot readings, improve the service. We never sell your data to third parties."
+          title: '2. Data Usage',
+          text: 'Your data is used to personalize your experience, improve the service, and communicate with you.'
         },
         {
-          title: "3. Data Protection",
-          content: "Your data is stored on secure servers in Europe (GDPR compliant). We use SSL/TLS encryption. Your email is NEVER publicly exposed."
+          title: '3. Data Sharing',
+          text: 'We do not share your personal data with third parties without your consent, except as required by law.'
         },
         {
-          title: "4. Cookies",
-          content: "We use essential cookies for service operation (authentication, preferences). See our cookie policy for more information."
+          title: '4. Data Security',
+          text: 'We use SSL encryption and secure servers to protect your personal data.'
         },
         {
-          title: "5. Third-Party Sharing",
-          content: "We only share data with: Stripe (secure payments), our AI providers for tarot interpretations. No data is sold for advertising purposes."
+          title: '5. Your Rights',
+          text: 'You have the right to access, correct, or delete your personal data at any time.'
         },
         {
-          title: "6. Your Rights (GDPR)",
-          content: "You have the right to access, rectify, delete and port your data. You can delete your account at any time from settings."
+          title: '6. Cookies',
+          text: 'GRANDTAROT uses cookies to enhance your experience. See our cookie policy for more information.'
         },
         {
-          title: "7. Data Retention",
-          content: "Your data is kept as long as your account is active. In case of account deletion, your data is erased within 30 days, except legal obligations."
-        },
-        {
-          title: "8. Minors",
-          content: "GRANDTAROT is reserved for people 18 years and older. We do not knowingly collect data from minors."
-        },
-        {
-          title: "9. Contact",
-          content: "For any questions regarding your data, contact us at: privacy@grandtarot.com"
+          title: '7. Policy Changes',
+          text: 'GRANDTAROT may modify this policy at any time. Changes will be posted on this page.'
         }
       ]
     }
@@ -113,20 +80,49 @@ export default function Privacy() {
   const t = content[lang];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-          {t.title}
-        </h1>
-        <p className="text-sm text-slate-400 mb-12">{t.updated}</p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            {t.title}
+          </h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setLang('fr')}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                lang === 'fr' ? 'bg-amber-500/20 text-amber-200' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              FR
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                lang === 'en' ? 'bg-amber-500/20 text-amber-200' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
+
+        <p className="text-slate-400 mb-8">{t.lastUpdated}</p>
 
         <div className="space-y-8">
           {t.sections.map((section, i) => (
-            <div key={i}>
+            <div key={i} className="bg-slate-800/30 border border-slate-700 rounded-lg p-6">
               <h2 className="text-xl font-semibold text-amber-100 mb-3">{section.title}</h2>
-              <p className="text-slate-300 leading-relaxed">{section.content}</p>
+              <p className="text-slate-300 leading-relaxed">{section.text}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-slate-700">
+          <Link to="/">
+            <Button className="bg-amber-500 hover:bg-amber-600">
+              {lang === 'fr' ? 'Retour à l\'accueil' : 'Back to Home'}
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

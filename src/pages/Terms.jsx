@@ -1,126 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
+import { createPageUrl } from '@/utils';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 export default function Terms() {
   const [lang, setLang] = useState('fr');
 
-  useEffect(() => {
-    checkLang();
-  }, []);
-
-  const checkLang = async () => {
-    try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (isAuth) {
-        const user = await base44.auth.me();
-        const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
-        if (profiles.length > 0) {
-          setLang(profiles[0].language_pref || 'fr');
-        }
-      }
-    } catch (error) {
-      // Not logged in, use default
-    }
-  };
-
   const content = {
     fr: {
-      title: "Conditions Générales d'Utilisation",
-      updated: "Dernière mise à jour : 10 janvier 2026",
+      title: 'Conditions Générales d\'Utilisation',
+      lastUpdated: 'Dernière mise à jour : 10 janvier 2026',
       sections: [
         {
-          title: "1. Objet",
-          content: "Les présentes Conditions Générales d'Utilisation (CGU) régissent l'utilisation de la plateforme GRANDTAROT, un service de rencontres basé sur le tarot et l'astrologie."
+          title: '1. Acceptation des Conditions',
+          text: 'En utilisant GRANDTAROT, vous acceptez ces conditions d\'utilisation. Si vous n\'êtes pas d\'accord, veuillez ne pas utiliser le service.'
         },
         {
-          title: "2. Acceptation des CGU",
-          content: "En accédant et en utilisant GRANDTAROT, vous acceptez sans réserve les présentes CGU. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le service."
+          title: '2. Âge Minimum',
+          text: 'Vous confirmez que vous avez au moins 18 ans et que vous êtes légalement capable de conclure des contrats.'
         },
         {
-          title: "3. Inscription et Compte",
-          content: "L'inscription nécessite d'avoir au moins 18 ans. Vous êtes responsable de la confidentialité de votre compte et des activités qui s'y déroulent."
+          title: '3. Utilisation du Service',
+          text: 'Vous vous engagez à utiliser GRANDTAROT conformément aux lois applicables et à ne pas l\'utiliser à des fins illégales ou nuisibles.'
         },
         {
-          title: "4. Abonnement et Paiement",
-          content: "L'accès complet à GRANDTAROT nécessite un abonnement payant de 6,90€/mois. Le paiement est géré via Stripe. Vous pouvez annuler votre abonnement à tout moment."
+          title: '4. Contenu Utilisateur',
+          text: 'Vous êtes responsable du contenu que vous générez ou partagez. Vous garantissez que votre contenu ne viole pas les droits d\'autrui.'
         },
         {
-          title: "5. Comportement et Contenus",
-          content: "Vous vous engagez à utiliser le service de manière respectueuse. Tout contenu inapproprié, harcèlement, spam ou tentative d'arnaque entraînera la suspension immédiate du compte."
+          title: '5. Propriété Intellectuelle',
+          text: 'Tous les contenus, marques et designs de GRANDTAROT sont la propriété de GRANDTAROT ou de ses fournisseurs.'
         },
         {
-          title: "6. Modération",
-          content: "Nous nous réservons le droit de modérer, supprimer tout contenu ou suspendre tout compte en cas de violation des présentes CGU."
+          title: '6. Limitation de Responsabilité',
+          text: 'GRANDTAROT n\'est pas responsable des dommages indirects, accessoires ou consécutifs résultant de votre utilisation du service.'
         },
         {
-          title: "7. Propriété Intellectuelle",
-          content: "Tous les contenus de GRANDTAROT (textes, images, interprétations IA) sont protégés par le droit d'auteur. Toute reproduction est interdite sans autorisation."
-        },
-        {
-          title: "8. Responsabilité",
-          content: "GRANDTAROT est un service de divertissement. Les interprétations de tarot sont générées par IA à titre indicatif. Nous ne pouvons être tenus responsables des décisions prises suite à ces interprétations."
-        },
-        {
-          title: "9. Résiliation",
-          content: "Vous pouvez supprimer votre compte à tout moment. Nous pouvons également résilier votre accès en cas de violation des CGU."
-        },
-        {
-          title: "10. Modification des CGU",
-          content: "Nous nous réservons le droit de modifier ces CGU à tout moment. Les utilisateurs seront informés des changements majeurs."
-        },
-        {
-          title: "11. Loi Applicable",
-          content: "Les présentes CGU sont régies par le droit français. Tout litige sera soumis aux tribunaux compétents de Paris."
+          title: '7. Modifications des Conditions',
+          text: 'GRANDTAROT peut modifier ces conditions à tout moment. L\'utilisation continue du service implique l\'acceptation des modifications.'
         }
       ]
     },
     en: {
-      title: "Terms of Service",
-      updated: "Last updated: January 10, 2026",
+      title: 'Terms of Service',
+      lastUpdated: 'Last updated: January 10, 2026',
       sections: [
         {
-          title: "1. Purpose",
-          content: "These Terms of Service (ToS) govern the use of the GRANDTAROT platform, a dating service based on tarot and astrology."
+          title: '1. Acceptance of Terms',
+          text: 'By using GRANDTAROT, you accept these terms of service. If you disagree, please do not use the service.'
         },
         {
-          title: "2. Acceptance of Terms",
-          content: "By accessing and using GRANDTAROT, you unconditionally accept these ToS. If you do not accept these terms, please do not use the service."
+          title: '2. Minimum Age',
+          text: 'You confirm that you are at least 18 years old and legally capable of entering into contracts.'
         },
         {
-          title: "3. Registration and Account",
-          content: "Registration requires being at least 18 years old. You are responsible for the confidentiality of your account and activities that occur there."
+          title: '3. Service Usage',
+          text: 'You agree to use GRANDTAROT in compliance with applicable laws and not for illegal or harmful purposes.'
         },
         {
-          title: "4. Subscription and Payment",
-          content: "Full access to GRANDTAROT requires a paid subscription of €6.90/month. Payment is handled via Stripe. You can cancel your subscription at any time."
+          title: '4. User Content',
+          text: 'You are responsible for the content you generate or share. You guarantee that your content does not violate anyone\'s rights.'
         },
         {
-          title: "5. Behavior and Content",
-          content: "You agree to use the service respectfully. Any inappropriate content, harassment, spam or scam attempt will result in immediate account suspension."
+          title: '5. Intellectual Property',
+          text: 'All content, trademarks, and designs of GRANDTAROT are the property of GRANDTAROT or its suppliers.'
         },
         {
-          title: "6. Moderation",
-          content: "We reserve the right to moderate, delete any content or suspend any account in case of violation of these ToS."
+          title: '6. Limitation of Liability',
+          text: 'GRANDTAROT is not responsible for indirect, incidental, or consequential damages arising from your use of the service.'
         },
         {
-          title: "7. Intellectual Property",
-          content: "All GRANDTAROT content (texts, images, AI interpretations) are protected by copyright. Any reproduction is prohibited without authorization."
-        },
-        {
-          title: "8. Liability",
-          content: "GRANDTAROT is an entertainment service. Tarot interpretations are generated by AI for informational purposes. We cannot be held responsible for decisions made following these interpretations."
-        },
-        {
-          title: "9. Termination",
-          content: "You can delete your account at any time. We can also terminate your access in case of ToS violation."
-        },
-        {
-          title: "10. ToS Modification",
-          content: "We reserve the right to modify these ToS at any time. Users will be informed of major changes."
-        },
-        {
-          title: "11. Applicable Law",
-          content: "These ToS are governed by French law. Any dispute will be submitted to the competent courts of Paris."
+          title: '7. Changes to Terms',
+          text: 'GRANDTAROT may modify these terms at any time. Continued use of the service implies acceptance of changes.'
         }
       ]
     }
@@ -129,20 +80,49 @@ export default function Terms() {
   const t = content[lang];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-          {t.title}
-        </h1>
-        <p className="text-sm text-slate-400 mb-12">{t.updated}</p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            {t.title}
+          </h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setLang('fr')}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                lang === 'fr' ? 'bg-amber-500/20 text-amber-200' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              FR
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                lang === 'en' ? 'bg-amber-500/20 text-amber-200' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
+
+        <p className="text-slate-400 mb-8">{t.lastUpdated}</p>
 
         <div className="space-y-8">
           {t.sections.map((section, i) => (
-            <div key={i}>
+            <div key={i} className="bg-slate-800/30 border border-slate-700 rounded-lg p-6">
               <h2 className="text-xl font-semibold text-amber-100 mb-3">{section.title}</h2>
-              <p className="text-slate-300 leading-relaxed">{section.content}</p>
+              <p className="text-slate-300 leading-relaxed">{section.text}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-slate-700">
+          <Link to="/">
+            <Button className="bg-amber-500 hover:bg-amber-600">
+              {lang === 'fr' ? 'Retour à l\'accueil' : 'Back to Home'}
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

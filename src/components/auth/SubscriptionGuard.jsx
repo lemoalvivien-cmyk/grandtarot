@@ -5,10 +5,9 @@ import { Crown, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 /**
- * SubscriptionGuard - Protection paywall pour pages /app
- * Vérifie que l'utilisateur a un abonnement actif
- * Statuts autorisés: 'active', 'trialing'
- * Statuts bloqués: 'none', 'past_due', 'canceled'
+ * SubscriptionGuard - Paywall MVP
+ * Checks plan_status (primary) or subscription_status (legacy fallback)
+ * Allows admins to bypass
  */
 export default function SubscriptionGuard({ children, allowOnboarding = false }) {
   const [checking, setChecking] = useState(true);
@@ -30,7 +29,7 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
 
       const user = await base44.auth.me();
 
-      // Admin bypass (always authorized)
+      // Admin bypass
       if (user.role === 'admin') {
         setAuthorized(true);
         setChecking(false);
@@ -45,7 +44,7 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
       const paywallEnabled = settings.length > 0 && settings[0].value_boolean === true;
 
       if (paywallEnabled) {
-        // Check plan_status in AccountPrivate
+        // Check plan_status in AccountPrivate (primary)
         const accounts = await base44.entities.AccountPrivate.filter({
           user_email: user.email
         }, null, 1);
@@ -64,8 +63,10 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
           return;
         }
       } else {
-        // Fallback: check UserProfile.subscription_status
-        const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
+        // Fallback: check UserProfile.subscription_status (legacy)
+        const profiles = await base44.entities.UserProfile.filter({ 
+          user_id: user.email 
+        }, null, 1);
 
         if (profiles.length === 0) {
           window.location.href = createPageUrl('Subscribe');
@@ -98,7 +99,6 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
     }
   };
 
-  // Chargement
   if (checking) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
@@ -110,7 +110,6 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
     );
   }
 
-  // Abonnement requis
   if (needsSubscription) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
@@ -124,7 +123,7 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
                 Votre abonnement est inactif ou expiré. Veuillez vous réabonner pour accéder à GRANDTAROT.
               </p>
               <Button 
-                onClick={() => window.location.href = createPageUrl('Subscribe')}
+                onClick={() => window.location.href = createPageUrl('Billing')}
                 className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg mb-3"
               >
                 <Crown className="w-5 h-5 mr-2" />
@@ -143,7 +142,6 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
     );
   }
 
-  // Accès autorisé
   if (authorized) {
     return <>{children}</>;
   }
