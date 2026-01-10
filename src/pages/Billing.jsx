@@ -82,10 +82,17 @@ export default function Billing() {
       return;
     }
 
-    if (recentRequest) {
+    if (recentRequest && recentRequest.status === 'pending') {
       alert(lang === 'fr'
-        ? 'Vous avez déjà envoyé une demande. Veuillez attendre 24h.'
-        : 'You already submitted a request. Please wait 24 hours.');
+        ? t.alreadyPending
+        : t.alreadyPending);
+      return;
+    }
+
+    if (recentRequest && recentRequest.status === 'pending') {
+      alert(lang === 'fr'
+        ? 'Vous avez déjà envoyé une demande en attente. Veuillez attendre la vérification.'
+        : 'You already have a pending request. Please wait for verification.');
       return;
     }
 
@@ -160,7 +167,17 @@ export default function Billing() {
       proofSubmit: 'Send',
       proofCancel: 'Cancel',
       freeAccess: 'Free access (paywall disabled)',
-      pendingReview: 'Your request is pending review...'
+      pendingReview: 'Your request is pending review...',
+      manualPaymentTitle: 'Payment without webhook?',
+      manualPaymentSteps: [
+        '1️⃣ Click "Subscribe now" to pay via Stripe (€6.90)',
+        '2️⃣ After payment, click the confirmation link',
+        '3️⃣ Come back here and click "I already paid"',
+        '4️⃣ Briefly describe your transaction (order number)'
+      ],
+      manualPaymentNote: 'Verification delay: 2-4 hours on business days',
+      alreadyPending: 'You already have a pending request. Please wait for verification.',
+      statusStates: 'Status: FREE • UNDER REVIEW • SUBSCRIBED'
     },
     fr: {
       title: 'Facturation & Abonnement',
@@ -261,9 +278,22 @@ export default function Billing() {
           </div>
 
           {!isActive && paywallEnabled && (
-           <div className="relative mb-8">
-             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-2xl blur-2xl" />
-             <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-8">
+           <>
+             {/* Manuel Payment Guide */}
+             <div className="bg-blue-900/30 border border-blue-500/30 rounded-2xl p-6 mb-8">
+               <h3 className="text-lg font-semibold text-blue-200 mb-4">{t.manualPaymentTitle}</h3>
+               <div className="space-y-2 mb-4">
+                 {t.manualPaymentSteps.map((step, i) => (
+                   <p key={i} className="text-sm text-blue-100">{step}</p>
+                 ))}
+               </div>
+               <p className="text-xs text-blue-300 italic">{t.manualPaymentNote}</p>
+             </div>
+
+             {/* Pricing Card */}
+             <div className="relative mb-8">
+               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-2xl blur-2xl" />
+               <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-8">
                <div className="text-center mb-8">
                  <div className="text-5xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent mb-2">
                    {t.price}
@@ -293,11 +323,12 @@ export default function Billing() {
                    {t.noPaymentLink}
                  </div>
                )}
-             </div>
-           </div>
-          )}
+               </div>
+               </div>
+               </>
+               )}
 
-          {!isActive && paywallEnabled && !recentRequest && (
+          {!isActive && paywallEnabled && (!recentRequest || recentRequest.status === 'rejected') && (
             <div className="text-center">
               <p className="text-slate-400 mb-4">
                 {lang === 'fr' 
