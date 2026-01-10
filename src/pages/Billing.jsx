@@ -159,101 +159,6 @@ export default function Billing() {
   };
 
   const content = {
-    en: {
-      title: 'Billing & Subscription',
-      status: 'Subscription Status',
-      free: 'Free',
-      active: 'Active',
-      description: 'Welcome to GRANDTAROT. A subscription is required to access all features.',
-      cta: 'Subscribe now',
-      price: '€6.90/month',
-      features: [
-        'AI personalized daily reading',
-        '20 cosmic affinities per day',
-        '3 modes: Love, Friendship, Pro',
-        'Unlimited secure chat',
-        '78 cards encyclopedia'
-      ],
-      noPaymentLink: 'Payment link not configured. Contact admin.',
-      alreadySubscribed: 'You are subscribed ✅',
-      paymentSubmitted: 'I already paid',
-      proofTitle: 'Submit payment proof',
-      proofDesc: 'Describe your transaction (order number, amount, date, etc.)',
-      proofPlaceholder: 'Ex: Paid 6.90€ on 10/01 via Stripe order #...',
-      proofSubmit: 'Send',
-      proofCancel: 'Cancel',
-      freeAccess: 'Free access (paywall disabled)',
-      pendingReview: 'Your request is pending review...',
-      manualPaymentTitle: 'Payment without webhook?',
-      manualPaymentSteps: [
-        '1️⃣ Click "Subscribe now" to pay via Stripe (€6.90)',
-        '2️⃣ After payment, click the confirmation link',
-        '3️⃣ Come back here and click "I already paid"',
-        '4️⃣ Briefly describe your transaction (order number)'
-      ],
-      manualPaymentNote: (hours) => `Verification delay: ${hours}h max on business days`,
-      alreadyPending: 'You already have a pending request. Please wait for verification.'
-    },
-    fr: {
-      title: 'Facturation & Abonnement',
-      status: 'Statut de l\'abonnement',
-      free: 'Gratuit',
-      active: 'Actif',
-      description: 'Bienvenue sur GRANDTAROT. Pour accéder aux fonctionnalités complètes, un abonnement est requis.',
-      cta: 'S\'abonner maintenant',
-      price: '6,90€/mois',
-      features: [
-        'Tirage quotidien IA personnalisé',
-        '20 affinités cosmiques par jour',
-        '3 modes : Amour, Amitié, Pro',
-        'Chat sécurisé illimité',
-        'Encyclopédie 78 cartes'
-      ],
-      noPaymentLink: 'Lien de paiement non configuré. Contactez l\'admin.',
-      alreadySubscribed: 'Vous êtes abonné(e) ✅',
-      paymentSubmitted: 'J\'ai déjà payé',
-      proofTitle: 'Soumettre une preuve de paiement',
-      proofDesc: 'Décrivez votre transaction (numéro de commande, montant, date, etc.)',
-      proofPlaceholder: 'Ex: Payé 6.90€ le 10/01 via Stripe order #...',
-      proofSubmit: 'Envoyer',
-      proofCancel: 'Annuler'
-    },
-    en: {
-      title: 'Billing & Subscription',
-      status: 'Subscription Status',
-      free: 'Free',
-      active: 'Active',
-      description: 'Welcome to GRANDTAROT. A subscription is required to access all features.',
-      cta: 'Subscribe now',
-      price: '€6.90/month',
-      features: [
-        'AI personalized daily reading',
-        '20 cosmic affinities per day',
-        '3 modes: Love, Friendship, Pro',
-        'Unlimited secure chat',
-        '78 cards encyclopedia'
-      ],
-      noPaymentLink: 'Payment link not configured. Contact admin.',
-      alreadySubscribed: 'You are subscribed ✅',
-      paymentSubmitted: 'I already paid',
-      proofTitle: 'Submit payment proof',
-      proofDesc: 'Describe your transaction (order number, amount, date, etc.)',
-      proofPlaceholder: 'Ex: Paid 6.90€ on 10/01 via Stripe order #...',
-      proofSubmit: 'Send',
-      proofCancel: 'Cancel',
-      freeAccess: 'Free access (paywall disabled)',
-      pendingReview: 'Your request is pending review...',
-      manualPaymentTitle: 'Payment without webhook?',
-      manualPaymentSteps: [
-        '1️⃣ Click "Subscribe now" to pay via Stripe (€6.90)',
-        '2️⃣ After payment, click the confirmation link',
-        '3️⃣ Come back here and click "I already paid"',
-        '4️⃣ Briefly describe your transaction (order number)'
-      ],
-      manualPaymentNote: 'Verification delay: 2-4 hours on business days',
-      alreadyPending: 'You already have a pending request. Please wait for verification.',
-      statusStates: 'Status: FREE • UNDER REVIEW • SUBSCRIBED'
-    },
     fr: {
       title: 'Facturation & Abonnement',
       status: 'Statut de l\'abonnement',
@@ -278,7 +183,49 @@ export default function Billing() {
       proofSubmit: 'Envoyer',
       proofCancel: 'Annuler',
       freeAccess: 'Accès libre (paywall désactivé)',
-      pendingReview: 'Votre demande est en attente d\'examen...'
+      pendingReview: 'Votre demande est en attente d\'examen...',
+      manualPaymentTitle: 'Paiement sans webhook ?',
+      manualPaymentSteps: [
+        '1️⃣ Cliquez sur "S\'abonner maintenant" pour payer via Stripe (6.90€)',
+        '2️⃣ Après le paiement, cliquez sur le lien de confirmation',
+        '3️⃣ Revenez ici et cliquez sur "J\'ai déjà payé"',
+        '4️⃣ Décrivez brièvement votre transaction (numéro de commande)'
+      ],
+      manualPaymentNote: (hours) => `Délai de vérification : ${hours}h max en jours ouvrables`
+    },
+    en: {
+      title: 'Billing & Subscription',
+      status: 'Subscription Status',
+      free: 'Free',
+      active: 'Active',
+      description: 'Welcome to GRANDTAROT. A subscription is required to access all features.',
+      cta: 'Subscribe now',
+      price: '€6.90/month',
+      features: [
+        'AI personalized daily reading',
+        '20 cosmic affinities per day',
+        '3 modes: Love, Friendship, Pro',
+        'Unlimited secure chat',
+        '78 cards encyclopedia'
+      ],
+      noPaymentLink: 'Payment link not configured. Contact admin.',
+      alreadySubscribed: 'You are subscribed ✅',
+      paymentSubmitted: 'I already paid',
+      proofTitle: 'Submit payment proof',
+      proofDesc: 'Describe your transaction (order number, amount, date, etc.)',
+      proofPlaceholder: 'Ex: Paid 6.90€ on 10/01 via Stripe order #...',
+      proofSubmit: 'Send',
+      proofCancel: 'Cancel',
+      freeAccess: 'Free access (paywall disabled)',
+      pendingReview: 'Your request is pending review...',
+      manualPaymentTitle: 'Payment without webhook?',
+      manualPaymentSteps: [
+        '1️⃣ Click "Subscribe now" to pay via Stripe (€6.90)',
+        '2️⃣ After payment, click the confirmation link',
+        '3️⃣ Come back here and click "I already paid"',
+        '4️⃣ Briefly describe your transaction (order number)'
+      ],
+      manualPaymentNote: (hours) => `Verification delay: ${hours}h max on business days`
     }
   };
 
