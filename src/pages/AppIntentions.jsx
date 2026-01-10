@@ -76,15 +76,14 @@ export default function AppIntentions() {
         responded_at: new Date().toISOString()
       });
 
-      // Create conversation
-      const conversation = await base44.entities.Conversation.create({
-        user_a_id: intention.from_user_id,
-        user_b_id: intention.to_user_id,
-        mode: intention.mode,
-        origin_intention_id: intention.id,
-        status: 'active',
-        last_message_at: new Date().toISOString()
-      });
+      // Open conversation via BACKEND FUNCTION (NOT direct create)
+      const { openConversationSecure } = await import('@/components/helpers/messageWorkflow');
+      const result = await openConversationSecure(intention.from_user_id);
+      
+      if (!result.success) {
+        alert('Erreur: ' + result.error);
+        return;
+      }
 
       // Update local state
       setReceivedIntentions(prev => 
@@ -93,7 +92,7 @@ export default function AppIntentions() {
 
       // Redirect to chat
       setTimeout(() => {
-        window.location.href = createPageUrl('Chat') + `?conversation=${conversation.id}`;
+        window.location.href = createPageUrl('Chat') + `?conversation=${result.conversationId}`;
       }, 1000);
     } catch (error) {
       console.error('Error accepting intention:', error);

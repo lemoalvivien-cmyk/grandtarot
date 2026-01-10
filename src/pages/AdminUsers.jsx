@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Search, Ban, Eye, MoreVertical, Shield, Check } from 'lucide-react';
+import { ArrowLeft, Search, Ban, Check, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,29 +12,56 @@ import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [users, setUsers] = useState([]);
-  const [profiles, setProfiles] = useState([]);
-  const [search, setSearch] = useState('');
+  const [profiles, setProfiles] = useState({});
+  const [searchEmail, setSearchEmail] = useState('');
 
   useEffect(() => {
-    loadData();
+    loadUsers();
   }, []);
 
-  const loadData = async () => {
+  const loadUsers = async (loadMore = false) => {
     try {
-      // ADMIN-ONLY: Can use .list() on User (built-in entity)
-      // UserProfile: Use filter with limit for scalability
-      const [userList, profileList] = await Promise.all([
-        base44.entities.User.list(),
-        base44.entities.UserProfile.filter({}, '-created_date', 500)
-      ]);
-
-      setUsers(userList);
-      setProfiles(profileList);
+      if (!loadMore) setLoading(true);
+      setLoadingMore(loadMore);
+      
+      let query = {};
+      if (searchEmail) {
+        query.email = { $regex: searchEmail, $options: 'i' };
+      }
+      if (loadMore && users.length > 0) {
+        const lastUser = users[users.length - 1];
+        query.created_date = { $lt: lastUser.created_date };
+      }
+      
+      const fetchedUsers = await base44.entities.User.filter(query, '-created_date', 50);
+      
+      // Charger profiles pour chaque user
+      const profilesData = {};
+      await Promise.all(
+        fetchedUsers.map(async (user) => {
+          const profiles = await base44.entities.UserProfile.filter({ user_id: user.email }, null, 1);
+          if (profiles.length > 0) {
+            profilesData[user.email] = profiles[0];
+          }
+        })
+      );
+      
+      setProfiles(prev => ({ ...prev, ...profilesData }));
+      setHasMore(fetchedUsers.length === 50);
+      
+      if (loadMore) {
+        setUsers(prev => [...prev, ...fetchedUsers]);
+      } else {
+        setUsers(fetchedUsers);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error loading users:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -45,7 +72,6 @@ export default function AdminUsers() {
         ban_reason: !profile.is_banned ? 'Admin action' : null
       });
 
-      // Log action
       const admin = await base44.auth.me();
       await base44.entities.AuditLog.create({
         actor_user_id: admin.email,
@@ -58,18 +84,18 @@ export default function AdminUsers() {
         severity: 'warning'
       });
 
-      // Refresh
-      const updatedProfiles = await base44.entities.UserProfile.filter({}, '-created_date', 500);
-      setProfiles(updatedProfiles);
+      // Refresh profile
+      const refreshed = await base44.entities.UserProfile.filter({ user_id: profile.user_id }, null, 1);
+      if (refreshed.length > 0) {
+        setProfiles(prev => ({ ...prev, [profile.user_id]: refreshed[0] }));
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error toggling ban:', error);
     }
   };
 
   const resyncSubscription = async (profile) => {
     try {
-      // This would typically call a Stripe API to check subscription status
-      // For now, just update based on stripe_subscription_id presence
       const hasStripeSubscription = !!profile.stripe_subscription_id;
       
       await base44.entities.UserProfile.update(profile.id, {
@@ -89,19 +115,15 @@ export default function AdminUsers() {
       });
 
       alert('Subscription resynchronisée');
-      const updatedProfiles = await base44.entities.UserProfile.filter({}, '-created_date', 500);
-      setProfiles(updatedProfiles);
+      
+      const refreshed = await base44.entities.UserProfile.filter({ user_id: profile.user_id }, null, 1);
+      if (refreshed.length > 0) {
+        setProfiles(prev => ({ ...prev, [profile.user_id]: refreshed[0] }));
+      }
     } catch (error) {
       console.error('Error resyncing:', error);
     }
   };
-
-  const getProfile = (email) => profiles.find(p => p.user_id === email);
-
-  const filteredUsers = users.filter(u => 
-    u.email?.toLowerCase().includes(search.toLowerCase()) ||
-    u.full_name?.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -132,9 +154,16 @@ export default function AdminUsers() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
             <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un utilisateur..."
+              value={searchEmail}
+              onChange={(e) => {
+                setSearchEmail(e.target.value);
+                if (e.target.value.length === 0 || e.target.value.length > 2) {
+                  setUsers([]);
+                  setProfiles({});
+                  loadUsers(false);
+                }
+              }}
+              placeholder="Rechercher par email..."
               className="pl-10 bg-white/5 border-white/10 text-white"
             />
           </div>
@@ -154,8 +183,8 @@ export default function AdminUsers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => {
-                const profile = getProfile(user.email);
+              {users.map((user) => {
+                const profile = profiles[user.email];
                 return (
                   <TableRow key={user.id} className="border-white/10 hover:bg-white/5">
                     <TableCell className="font-mono text-sm">{user.email}</TableCell>
@@ -215,6 +244,27 @@ export default function AdminUsers() {
               })}
             </TableBody>
           </Table>
+          
+          {/* Load More */}
+          {hasMore && (
+            <div className="p-4 text-center border-t border-white/10">
+              <Button
+                onClick={() => loadUsers(true)}
+                disabled={loadingMore}
+                variant="outline"
+                className="border-slate-700"
+              >
+                {loadingMore ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                    Chargement...
+                  </>
+                ) : (
+                  'Charger plus (50)'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
