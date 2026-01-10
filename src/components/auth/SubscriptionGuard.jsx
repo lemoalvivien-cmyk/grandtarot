@@ -47,9 +47,10 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
 
       // Vérification statut abonnement
       const activeStatuses = ['active', 'trialing'];
+      const blockedStatuses = ['past_due', 'canceled', 'none'];
       const hasActiveSubscription = activeStatuses.includes(profile.subscription_status);
 
-      if (!hasActiveSubscription) {
+      if (!hasActiveSubscription || blockedStatuses.includes(profile.subscription_status)) {
         setNeedsSubscription(true);
         setChecking(false);
         return;
