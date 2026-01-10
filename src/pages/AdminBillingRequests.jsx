@@ -26,9 +26,10 @@ export default function AdminBillingRequests() {
       const data = await base44.entities.BillingRequest.filter({
         status: statusFilter
       }, '-created_date', 50);
-      setRequests(data);
+      setRequests(data || []);
     } catch (error) {
       console.error('Error loading requests:', error);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ export default function AdminBillingRequests() {
         await base44.entities.AuditLog.create({
           actor_user_id: adminUser.email,
           actor_role: 'admin',
-          action: 'subscription_started',
+          action: 'billing_approve',
           entity_name: 'BillingRequest',
           entity_id: request.id,
           target_user_id: request.requester_user_email,
@@ -105,7 +106,7 @@ export default function AdminBillingRequests() {
         await base44.entities.AuditLog.create({
           actor_user_id: adminUser.email,
           actor_role: 'admin',
-          action: 'subscription_cancelled',
+          action: 'billing_reject',
           entity_name: 'BillingRequest',
           entity_id: selectedRequest.id,
           target_user_id: selectedRequest.requester_user_email,

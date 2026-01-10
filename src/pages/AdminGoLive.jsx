@@ -1,0 +1,295 @@
+import React, { useEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Copy, Check, Edit2, Loader2, Power } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import AdminGuard from '@/components/auth/AdminGuard';
+
+export default function AdminGoLive() {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({
+    paywallEnabled: false,
+    stripeLink: '',
+    pendingRequests: 0,
+    activeUsers: 0,
+    recentLogs: []
+  });
+  const [copied, setCopied] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editLink, setEditLink] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [paySettings, stripeSettings, pending, users, logs] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1),
+        base44.entities.BillingRequest.filter({ status: 'pending' }, '-created_date', 1),
+        base44.entities.AccountPrivate.filter({ plan_status: 'active' }, null, 50),
+        base44.entities.AuditLog.list('-created_date', 20)
+      ]);
+
+      setData({
+        paywallEnabled: paySettings.length > 0 ? paySettings[0].value_boolean : false,
+        stripeLink: stripeSettings.length > 0 ? stripeSettings[0].value_string : '',
+        pendingRequests: pending.length,
+        activeUsers: users.length,
+        recentLogs: logs
+      });
+      setEditLink(stripeSettings.length > 0 ? stripeSettings[0].value_string : '');
+    } catch (error) {
+      console.error('Error loading go-live data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTogglePaywall = async () => {
+    setSaving(true);
+    try {
+      const settings = await base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1);
+      if (settings.length > 0) {
+        await base44.entities.AppSettings.update(settings[0].id, {
+          value_boolean: !data.paywallEnabled
+        });
+      } else {
+        await base44.entities.AppSettings.create({
+          setting_key: 'paywall_enabled',
+          value_boolean: !data.paywallEnabled,
+          category: 'system'
+        });
+      }
+      await loadData();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveLink = async () => {
+    if (!editLink.trim()) {
+      alert('Link cannot be empty');
+      return;
+    }
+    setSaving(true);
+    try {
+      const settings = await base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1);
+      if (settings.length > 0) {
+        await base44.entities.AppSettings.update(settings[0].id, {
+          value_string: editLink.trim()
+        });
+      } else {
+        await base44.entities.AppSettings.create({
+          setting_key: 'stripe_payment_link',
+          value_string: editLink.trim(),
+          category: 'payment'
+        });
+      }
+      setEditModal(false);
+      await loadData();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const generateSummary = () => {
+    const summary = `GO-LIVE STATUS — ${new Date().toISOString()}
+
+CONFIGURATION:
+- Paywall Enabled: ${data.paywallEnabled ? 'YES' : 'NO'}
+- Stripe Payment Link: ${data.stripeLink ? '✓ SET' : '✗ MISSING'}
+
+METRICS:
+- Pending Billing Requests: ${data.pendingRequests}
+- Active Subscribers: ${data.activeUsers}
+
+RECENT AUDIT LOGS (${data.recentLogs.length}):
+${data.recentLogs.map(log => `  [${new Date(log.created_date).toISOString()}] ${log.action} by ${log.actor_user_id}`).join('\n')}
+
+---
+Generated for launch verification.`;
+    return summary;
+  };
+
+  const copySummary = () => {
+    navigator.clipboard.writeText(generateSummary());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (loading) {
+    return (
+      <AdminGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        </div>
+      </AdminGuard>
+    );
+  }
+
+  return (
+    <AdminGuard>
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-8 flex items-center gap-3">
+            <Power className="w-8 h-8 text-green-500" />
+            <h1 className="text-4xl font-bold">GO-LIVE PANEL</h1>
+            <span className="text-sm text-green-400">Ready</span>
+          </div>
+
+          {/* Configuration Section */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Paywall Toggle */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-amber-100 mb-4 flex items-center gap-2">
+                <Power className="w-5 h-5" />
+                Paywall Status
+              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-slate-300">Paywall Enabled:</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  data.paywallEnabled 
+                    ? 'bg-green-500/20 text-green-300' 
+                    : 'bg-slate-500/20 text-slate-300'
+                }`}>
+                  {data.paywallEnabled ? 'ON' : 'OFF'}
+                </span>
+              </div>
+              <Button
+                onClick={handleTogglePaywall}
+                disabled={saving}
+                className={`w-full ${
+                  data.paywallEnabled
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Turn {data.paywallEnabled ? 'OFF' : 'ON'}
+              </Button>
+            </div>
+
+            {/* Stripe Link */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-amber-100 mb-4 flex items-center gap-2">
+                <Edit2 className="w-5 h-5" />
+                Stripe Payment Link
+              </h3>
+              <div className="mb-4">
+                <p className="text-sm text-slate-400 mb-2">Status:</p>
+                <span className={`px-3 py-1 rounded text-xs font-medium ${
+                  data.stripeLink ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                }`}>
+                  {data.stripeLink ? '✓ Configured' : '✗ Missing'}
+                </span>
+              </div>
+              <Button
+                onClick={() => setEditModal(true)}
+                variant="outline"
+                className="w-full border-slate-600"
+              >
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit Link
+              </Button>
+            </div>
+          </div>
+
+          {/* Metrics Section */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <p className="text-slate-400 text-sm mb-2">Pending Billing Requests</p>
+              <p className="text-4xl font-bold text-amber-200">{data.pendingRequests}</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <p className="text-slate-400 text-sm mb-2">Active Subscribers</p>
+              <p className="text-4xl font-bold text-green-200">{data.activeUsers}</p>
+            </div>
+          </div>
+
+          {/* Recent Audit Logs */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
+            <h3 className="text-lg font-semibold text-amber-100 mb-4">Recent Audit Logs ({data.recentLogs.length})</h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {data.recentLogs.length === 0 ? (
+                <p className="text-slate-500 text-sm">No logs yet</p>
+              ) : (
+                data.recentLogs.map((log, i) => (
+                  <div key={i} className="text-xs text-slate-400 border-b border-slate-700/50 pb-2">
+                    <p className="font-mono">
+                      {new Date(log.created_date).toISOString()} — 
+                      <span className="text-amber-300 ml-1">{log.action}</span>
+                      {log.actor_user_id && <span className="text-slate-500 ml-1">({log.actor_user_id})</span>}
+                    </p>
+                    {log.payload_summary && <p className="text-slate-500 mt-1">{log.payload_summary}</p>}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Copy Summary */}
+          <div className="text-center">
+            <Button
+              onClick={copySummary}
+              className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-8"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5 mr-2" />
+                  Copy Summary
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Edit Link Modal */}
+        <Dialog open={editModal} onOpenChange={setEditModal}>
+          <DialogContent className="bg-slate-900 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-amber-100">Edit Stripe Payment Link</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editLink}
+                onChange={(e) => setEditLink(e.target.value)}
+                placeholder="https://buy.stripe.com/..."
+                className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg px-4 py-2"
+              />
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setEditModal(false)}
+                  variant="outline"
+                  className="flex-1 border-slate-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveLink}
+                  disabled={saving}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AdminGuard>
+  );
+}

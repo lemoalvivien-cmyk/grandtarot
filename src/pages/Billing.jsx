@@ -27,44 +27,31 @@ export default function Billing() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const accounts = await base44.entities.AccountPrivate.filter({
-        user_email: currentUser.email
-      }, null, 1);
+      const [accounts, paySettings, stripeSettings, profiles, requests] = await Promise.all([
+        base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1),
+        base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1),
+        base44.entities.BillingRequest.filter({ requester_user_email: currentUser.email }, '-created_date', 1)
+      ]);
 
-      if (accounts.length > 0) {
+      if (accounts && accounts.length > 0) {
         setAccount(accounts[0]);
       }
 
-      const paySettings = await base44.entities.AppSettings.filter({
-        setting_key: 'paywall_enabled'
-      }, null, 1);
-
-      if (paySettings.length > 0) {
+      if (paySettings && paySettings.length > 0) {
         setPaywallEnabled(paySettings[0].value_boolean === true);
       }
 
-      const stripeSettings = await base44.entities.AppSettings.filter({
-        setting_key: 'stripe_payment_link'
-      }, null, 1);
-
-      if (stripeSettings.length > 0) {
-        setPaymentLink(stripeSettings[0].value_string);
+      if (stripeSettings && stripeSettings.length > 0) {
+        setPaymentLink(stripeSettings[0].value_string || '');
       }
 
-      const profiles = await base44.entities.UserProfile.filter({
-        user_id: currentUser.email
-      }, null, 1);
-
-      if (profiles.length > 0) {
+      if (profiles && profiles.length > 0) {
         setLang(profiles[0].language_pref || 'fr');
       }
 
-      // Check for recent billing request (last 24h)
-      const requests = await base44.entities.BillingRequest.filter({
-        requester_user_email: currentUser.email
-      }, '-created_date', 1);
-
-      if (requests.length > 0) {
+      if (requests && requests.length > 0) {
         const createdTime = new Date(requests[0].created_date).getTime();
         const nowTime = new Date().getTime();
         const diffHours = (nowTime - createdTime) / (1000 * 60 * 60);
@@ -80,9 +67,11 @@ export default function Billing() {
   };
 
   const handleSubscribe = () => {
-    if (paymentLink) {
-      window.open(paymentLink, '_blank');
+    if (!paymentLink) {
+      alert(lang === 'fr' ? 'Lien de paiement non disponible' : 'Payment link not available');
+      return;
     }
+    window.open(paymentLink, '_blank');
   };
 
   const handleSubmitProof = async () => {
