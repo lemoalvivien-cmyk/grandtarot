@@ -2,8 +2,12 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, Users, Briefcase, MapPin, Sparkles, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { sanitizeProfile } from '@/components/helpers/profileSanitizer';
 
 export default function ProfileCard({ match, profile, onSendIntention, lang }) {
+  // SECURITY: Sanitize profile to remove sensitive data (email, user_id)
+  const safeProfile = sanitizeProfile(profile);
+  
   const modeIcons = {
     love: Heart,
     friendship: Users,
@@ -18,8 +22,6 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
     return 'from-slate-400 to-slate-500';
   };
   
-  const age = profile.birth_year ? new Date().getFullYear() - profile.birth_year : null;
-  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -33,10 +35,10 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
           {/* Photo */}
           <div className="relative flex-shrink-0">
             <div className="w-24 h-24 rounded-xl overflow-hidden border border-amber-500/20">
-              {profile.photo_url ? (
+              {safeProfile.photo_url ? (
                 <img 
-                  src={profile.photo_url} 
-                  alt={profile.display_name}
+                  src={safeProfile.photo_url} 
+                  alt={safeProfile.display_name}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -56,15 +58,15 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
-                <h3 className="text-xl font-semibold text-amber-100 mb-1">{profile.display_name}</h3>
+                <h3 className="text-xl font-semibold text-amber-100 mb-1">{safeProfile.display_name}</h3>
                 <div className="flex items-center gap-2 text-sm text-slate-400">
-                  {age && <span>{age} {lang === 'fr' ? 'ans' : 'years'}</span>}
-                  {profile.city && (
+                  {safeProfile.age_range && <span>{safeProfile.age_range} {lang === 'fr' ? 'ans' : 'years'}</span>}
+                  {safeProfile.city && (
                     <>
                       <span>•</span>
                       <div className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        <span>{profile.city}</span>
+                        <span>{safeProfile.city}</span>
                       </div>
                     </>
                   )}

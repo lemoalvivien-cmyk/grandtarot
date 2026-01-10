@@ -1,8 +1,12 @@
 import React from 'react';
 import { Heart, Users, Briefcase, Clock, Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { sanitizeProfile } from '@/components/helpers/profileSanitizer';
 
 export default function SentIntentionCard({ intention, recipientProfile, lang }) {
+  // SECURITY: Sanitize recipient profile to remove sensitive data
+  const safeRecipient = sanitizeProfile(recipientProfile);
+  
   const modeIcons = {
     love: Heart,
     friendship: Users,
@@ -42,8 +46,6 @@ export default function SentIntentionCard({ intention, recipientProfile, lang })
     );
   };
 
-  const age = recipientProfile?.birth_year ? new Date().getFullYear() - recipientProfile.birth_year : null;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -55,10 +57,10 @@ export default function SentIntentionCard({ intention, recipientProfile, lang })
         <div className="flex gap-4">
           {/* Photo */}
           <div className="w-16 h-16 rounded-xl overflow-hidden border border-amber-500/20 flex-shrink-0">
-            {recipientProfile?.photo_url ? (
+            {safeRecipient?.photo_url ? (
               <img 
-                src={recipientProfile.photo_url} 
-                alt={recipientProfile.display_name}
+                src={safeRecipient.photo_url} 
+                alt={safeRecipient.display_name}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -72,9 +74,9 @@ export default function SentIntentionCard({ intention, recipientProfile, lang })
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
-                <h3 className="text-lg font-semibold text-amber-100">{recipientProfile?.display_name || 'Unknown'}</h3>
+                <h3 className="text-lg font-semibold text-amber-100">{safeRecipient?.display_name || 'Unknown'}</h3>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                  {age && <span>{age} {lang === 'fr' ? 'ans' : 'years'}</span>}
+                  {safeRecipient?.age_range && <span>{safeRecipient.age_range} {lang === 'fr' ? 'ans' : 'years'}</span>}
                   <span>•</span>
                   <div className="flex items-center gap-1">
                     <ModeIcon className="w-3 h-3" />
