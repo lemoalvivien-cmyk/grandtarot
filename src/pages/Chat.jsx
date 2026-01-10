@@ -255,7 +255,6 @@ export default function Chat() {
     try {
       const result = await sendMessageSecure({
         conversationId: conversation.id,
-        fromUserId: user.email,
         messageBody: messageText.trim(),
         lang
       });
