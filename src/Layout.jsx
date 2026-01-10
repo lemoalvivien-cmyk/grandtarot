@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, Menu, X, Globe, Crown, User, Shield, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import CookieBanner from '@/components/legal/CookieBanner';
+import CookieBanner from '@/components/CookieBanner';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 
 export default function Layout({ children, currentPageName }) {
@@ -292,8 +292,8 @@ export default function Layout({ children, currentPageName }) {
         {children}
       </main>
 
-      {/* Cookie Banner (public pages only) */}
-      {isPublicPage && <CookieBanner lang={lang} />}
+      {/* Cookie Banner (ALL pages - compliance) */}
+      <CookieBanner lang={lang} />
 
       {/* Footer (all pages — legal links visible everywhere) */}
       {showFooter && (
