@@ -137,10 +137,21 @@ export const sendMessageSecure = async ({
       // Fail open - don't block if AI fails
     }
     
-    // 3. Create message
+    // 3. Fetch conversation to denormalize participants
+    const conversations = await base44.entities.Conversation.filter({ id: conversationId });
+    if (conversations.length === 0) {
+      throw new Error('Conversation not found');
+    }
+    const conv = conversations[0];
+    const toUserId = conv.user_a_id === fromUserId ? conv.user_b_id : conv.user_a_id;
+
+    // 4. Create message with denormalized participants
     const message = await base44.entities.Message.create({
       conversation_id: conversationId,
+      participant_a_id: conv.user_a_id,
+      participant_b_id: conv.user_b_id,
       from_user_id: fromUserId,
+      to_user_id: toUserId,
       body: messageBody,
       flagged_scam: aiModeration.flags.includes('scam'),
       flagged_harassment: aiModeration.flags.includes('harassment'),
@@ -151,14 +162,14 @@ export const sendMessageSecure = async ({
       flag_details: aiModeration.details || {}
     });
     
-    // 4. Update conversation
+    // 5. Update conversation
     await base44.entities.Conversation.update(conversationId, {
       last_message_at: new Date().toISOString(),
       last_message_preview: messageBody.substring(0, 100),
       message_count: (await base44.entities.Message.filter({ conversation_id: conversationId })).length
     });
     
-    // 5. Apply moderation actions if needed
+    // 6. Apply moderation actions if needed
     if (!aiModeration.safe && aiModeration.flags.length > 0) {
       const hasCritical = aiModeration.flags.some(f => ['scam', 'harassment'].includes(f));
       await applyModerationAction(
