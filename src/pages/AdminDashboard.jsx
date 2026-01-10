@@ -105,6 +105,13 @@ export default function AdminDashboard() {
       color: "bg-green-500/20 text-green-400"
     },
     { 
+      title: "Security Fixtures", 
+      icon: Shield, 
+      subtitle: "Test Data Setup", 
+      page: "AdminSecurityFixtures",
+      color: "bg-violet-500/20 text-violet-400"
+    },
+    { 
       title: "Prompts IA", 
       icon: Settings, 
       subtitle: "Interprétations & Modération", 

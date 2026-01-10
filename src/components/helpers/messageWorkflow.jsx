@@ -123,19 +123,20 @@ export const openConversationSecure = async (otherUserEmail) => {
 
 /**
  * SECURE: Send message via backend function
- * ONLY sends conversationId + body (NO participant fields)
+ * ONLY sends conversationId + body + clientMsgId (NO participant fields)
  */
 export const sendMessageSecure = async ({ 
   conversationId, 
-  messageBody, 
+  messageBody,
+  clientMsgId,
   lang 
 }) => {
   try {
-    // Call backend function - ONLY conversationId + body
+    // Call backend function - ONLY conversationId + body + clientMsgId
     const response = await base44.functions.chat_send_message({
       conversationId,
       body: messageBody,
-      clientMsgId: `${Date.now()}-${Math.random()}`
+      clientMsgId: clientMsgId || `${Date.now()}-${Math.random()}`
     });
     
     if (!response.message) {

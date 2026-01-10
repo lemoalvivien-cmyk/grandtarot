@@ -21,6 +21,9 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   
+  // Idempotence - clientMsgId stable on retry
+  const [pendingClientMsgId, setPendingClientMsgId] = useState(null);
+  
   // Pagination
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -236,20 +239,30 @@ export default function Chat() {
     setSending(true);
     setError('');
     
+    // Generate stable clientMsgId ONCE (for retry idempotence)
+    const msgId = pendingClientMsgId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    if (!pendingClientMsgId) {
+      setPendingClientMsgId(msgId);
+    }
+    
     try {
       const result = await sendMessageSecure({
         conversationId: conversation.id,
         messageBody: messageText.trim(),
+        clientMsgId: msgId,
         lang
       });
 
       if (!result.success) {
         setError(result.error);
         setSending(false);
+        // Keep pendingClientMsgId for retry
         return;
       }
 
+      // Success: reset everything
       setMessageText('');
+      setPendingClientMsgId(null);
       setLastSendTime(now);
       setSendAttempts(prev => prev + 1);
       
@@ -258,6 +271,7 @@ export default function Chat() {
     } catch (error) {
       console.error('Error sending message:', error);
       setError(lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Error sending message');
+      // Keep pendingClientMsgId for retry
     } finally {
       setSending(false);
     }

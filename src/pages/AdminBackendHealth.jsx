@@ -69,17 +69,28 @@ export default function AdminBackendHealth() {
       addResult('4. open_conversation(no-auth)', status, statusCode, error.message, new Date().toISOString());
     }
 
-    // TEST 5: send_message(non-participant) - should fail 403/404
+    // TEST 5: send_message(non-participant on EXISTING fixture conv) - should fail 403
     try {
-      const res = await base44.functions.chat_send_message({ 
-        conversationId: 'non-existent-conv-id-12345',
-        body: 'test message',
-        clientMsgId: 'test-client-msg-1'
-      });
-      addResult('5. send_message(non-participant)', 'FAIL', 200, res, new Date().toISOString());
+      // Load fixture conversation ID
+      const fixtureSettings = await base44.entities.AppSettings.filter({
+        setting_key: 'security_fixture_conversation_id'
+      }, null, 1);
+      
+      if (fixtureSettings.length > 0 && fixtureSettings[0].value_string) {
+        const fixtureConvId = fixtureSettings[0].value_string;
+        
+        const res = await base44.functions.chat_send_message({ 
+          conversationId: fixtureConvId,
+          body: 'test non-participant',
+          clientMsgId: 'fixture-test-5'
+        });
+        addResult('5. send_message(non-participant)', 'FAIL', 200, res, new Date().toISOString());
+      } else {
+        addResult('5. send_message(non-participant)', 'SKIP', 'N/A', 'No fixture conversation (create in /admin/security-fixtures)', new Date().toISOString());
+      }
     } catch (error) {
       const statusCode = error.statusCode || error.message?.match(/(\d{3})/)?.[1] || 'UNKNOWN';
-      const status = (statusCode === '403' || statusCode === 403 || statusCode === '404' || statusCode === 404) ? 'PASS' : 'FAIL';
+      const status = statusCode === '403' || statusCode === 403 ? 'PASS' : 'FAIL';
       addResult('5. send_message(non-participant)', status, statusCode, error.message, new Date().toISOString());
     }
 
