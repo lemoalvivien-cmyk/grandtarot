@@ -89,13 +89,6 @@ export default function Billing() {
       return;
     }
 
-    if (recentRequest && recentRequest.status === 'pending') {
-      alert(lang === 'fr'
-        ? 'Vous avez déjà envoyé une demande en attente. Veuillez attendre la vérification.'
-        : 'You already have a pending request. Please wait for verification.');
-      return;
-    }
-
     setSubmittingProof(true);
     try {
       await base44.entities.BillingRequest.create({
