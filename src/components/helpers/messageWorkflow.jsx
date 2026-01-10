@@ -199,14 +199,17 @@ export const blockUser = async (blockerUserId, blockedUserId, reason = 'not_inte
       is_admin_enforced: false
     });
     
-    // Archive all conversations between them (FIXED: use filtered query)
-    const conversations = await base44.entities.Conversation.filter({
-      $or: [
-        { user_a_id: blockerUserId, user_b_id: blockedUserId },
-        { user_a_id: blockedUserId, user_b_id: blockerUserId }
-      ]
-    }, null, 10);
-    const userConversations = conversations;
+    // Archive all conversations between them
+    // Query both directions separately (Base44 may not support $or)
+    const convsA = await base44.entities.Conversation.filter({ 
+      user_a_id: blockerUserId, 
+      user_b_id: blockedUserId 
+    }, null, 5);
+    const convsB = await base44.entities.Conversation.filter({ 
+      user_a_id: blockedUserId, 
+      user_b_id: blockerUserId 
+    }, null, 5);
+    const userConversations = [...convsA, ...convsB];
     
     for (const conv of userConversations) {
       await base44.entities.Conversation.update(conv.id, {
