@@ -150,7 +150,7 @@ export default function Billing() {
         '3️⃣ Come back here and click "I already paid"',
         '4️⃣ Briefly describe your transaction (order number)'
       ],
-      manualPaymentNote: 'Verification delay: 2-4 hours on business days',
+      manualPaymentNote: (hours) => `Verification delay: ${hours}h max on business days`,
       alreadyPending: 'You already have a pending request. Please wait for verification.'
     },
     fr: {

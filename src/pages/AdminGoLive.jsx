@@ -295,7 +295,7 @@ Generated for launch verification.`;
                   className="flex-1 border-slate-600 h-8 text-xs"
                 >
                   <Edit2 className="w-4 h-4 mr-2" />
-                  Edit
+                  Edit Link
                 </Button>
                 <Button
                   onClick={copyServiceMessage}
@@ -345,19 +345,21 @@ Generated for launch verification.`;
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
             <h3 className="text-lg font-semibold text-amber-100 mb-4">Support Email</h3>
             <p className="text-sm text-slate-400 mb-4">
-              {supportEmail ? `Current: ${supportEmail}` : 'Not set'}
+              {supportEmail ? `${supportEmail}` : 'Not set'}
             </p>
+            <input
+              type="email"
+              value={editSupportEmail}
+              onChange={(e) => setEditSupportEmail(e.target.value)}
+              placeholder="support@example.com"
+              className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm mb-3"
+            />
             <Button
-              onClick={() => setEditSupportEmail(supportEmail)}
+              onClick={handleSaveSupportEmail}
               size="sm"
-              variant="outline"
-              className="border-slate-600 w-full text-xs"
-              onClick={() => {
-                setEditSupportEmail(supportEmail);
-                // Show inline edit for support email
-              }}
+              className="w-full border-slate-600 bg-blue-600 hover:bg-blue-700 h-8 text-xs"
             >
-              Edit Support Email
+              {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : 'Save Email'}
             </Button>
           </div>
 
