@@ -102,7 +102,7 @@ export default function AdminBillingRequests() {
         console.error('Audit log failed (non-blocking):', e);
       }
 
-      loadRequests();
+      loadRequests(true);
     } catch (error) {
       console.error('Error approving:', error);
       alert(`Error: ${error.message}`);
