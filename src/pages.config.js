@@ -71,6 +71,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import Demo from './pages/Demo';
+import DemoStart from './pages/DemoStart';
 import __Layout from './Layout.jsx';
 
 
@@ -148,6 +149,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "Demo": Demo,
+    "DemoStart": DemoStart,
 }
 
 export const pagesConfig = {

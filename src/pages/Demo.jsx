@@ -23,8 +23,14 @@ export default function Demo() {
   };
 
   const handleUnlock = () => {
-    // Redirect to signup (no network check needed)
-    window.location.href = createPageUrl('Subscribe');
+    // Store selected mode for conversion bridge (no network calls)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('demo_selected_mode', activeTab);
+      localStorage.setItem('demo_source', 'demo');
+      localStorage.setItem('demo_selected_at', new Date().toISOString());
+    }
+    // Redirect to conversion bridge
+    window.location.href = createPageUrl('DemoStart') + '?mode=' + activeTab;
   };
 
   const tabs = [
