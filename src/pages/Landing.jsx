@@ -448,7 +448,7 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="border-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10 text-amber-200 px-8 py-7 text-xl rounded-full"
+                className="bg-black/30 backdrop-blur border-2 border-amber-300/40 hover:bg-black/40 hover:border-amber-300/60 text-white font-semibold px-8 py-7 text-xl rounded-full transition-all"
               >
                 <Eye className="w-6 h-6 mr-3" />
                 {lang === 'fr' ? 'Voir la démo' : 'View demo'}

@@ -139,7 +139,7 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('Pricing')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
                   {t.pricing}
                 </Link>
-                <Link to={createPageUrl('Demo')} className="text-sm text-white font-medium bg-amber-500/10 px-3 py-1.5 rounded-lg hover:bg-amber-500/20 hover:text-amber-200 transition-all border border-amber-500/20">
+                <Link to={createPageUrl('Demo')} className="text-sm text-white font-semibold bg-gradient-to-r from-amber-500/90 via-orange-500/80 to-fuchsia-600/80 px-4 py-2 rounded-xl hover:brightness-110 focus:ring-2 focus:ring-amber-300/60 focus:outline-none transition-all border border-amber-300/40 shadow-md shadow-amber-500/20">
                   {lang === 'fr' ? 'Démo' : 'Demo'}
                 </Link>
               </>
@@ -281,7 +281,7 @@ export default function Layout({ children, currentPageName }) {
                   <Link to={createPageUrl('Pricing')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {t.pricing}
                   </Link>
-                  <Link to={createPageUrl('Demo')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-white font-semibold bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30 hover:text-amber-100 rounded-lg transition-all">
+                  <Link to={createPageUrl('Demo')} onClick={() => setMenuOpen(false)} className="px-4 py-3 text-sm text-white font-semibold bg-gradient-to-r from-amber-500/90 via-orange-500/80 to-fuchsia-600/80 border border-amber-300/40 hover:brightness-110 rounded-xl transition-all shadow-lg shadow-amber-500/30">
                     {lang === 'fr' ? '✨ Démo' : '✨ Demo'}
                   </Link>
                 </>

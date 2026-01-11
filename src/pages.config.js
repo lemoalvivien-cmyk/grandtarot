@@ -17,6 +17,7 @@ import AdminDeckCheck from './pages/AdminDeckCheck';
 import AdminDsarRequests from './pages/AdminDsarRequests';
 import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
 import AdminGoLive from './pages/AdminGoLive';
+import AdminGuidanceUsage from './pages/AdminGuidanceUsage';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import AdminMobileReadiness from './pages/AdminMobileReadiness';
 import AdminModeration from './pages/AdminModeration';
@@ -34,9 +35,11 @@ import AdminStripeConfig from './pages/AdminStripeConfig';
 import AdminSubscriptionManager from './pages/AdminSubscriptionManager';
 import AdminSubscriptionSync from './pages/AdminSubscriptionSync';
 import AdminTarotImport from './pages/AdminTarotImport';
+import AdminUiSmoke from './pages/AdminUiSmoke';
 import AdminUsers from './pages/AdminUsers';
 import Affinities from './pages/Affinities';
 import App from './pages/App';
+import AppGuidance from './pages/AppGuidance';
 import AppHome from './pages/AppHome';
 import AppIntentions from './pages/AppIntentions';
 import AppOnboarding from './pages/AppOnboarding';
@@ -74,9 +77,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AppGuidance from './pages/AppGuidance';
-import AdminGuidanceUsage from './pages/AdminGuidanceUsage';
-import AdminUiSmoke from './pages/AdminUiSmoke';
 import __Layout from './Layout.jsx';
 
 
@@ -100,6 +100,7 @@ export const PAGES = {
     "AdminDsarRequests": AdminDsarRequests,
     "AdminEvidenceRuns": AdminEvidenceRuns,
     "AdminGoLive": AdminGoLive,
+    "AdminGuidanceUsage": AdminGuidanceUsage,
     "AdminLaunchChecklist": AdminLaunchChecklist,
     "AdminMobileReadiness": AdminMobileReadiness,
     "AdminModeration": AdminModeration,
@@ -117,9 +118,11 @@ export const PAGES = {
     "AdminSubscriptionManager": AdminSubscriptionManager,
     "AdminSubscriptionSync": AdminSubscriptionSync,
     "AdminTarotImport": AdminTarotImport,
+    "AdminUiSmoke": AdminUiSmoke,
     "AdminUsers": AdminUsers,
     "Affinities": Affinities,
     "App": App,
+    "AppGuidance": AppGuidance,
     "AppHome": AppHome,
     "AppIntentions": AppIntentions,
     "AppOnboarding": AppOnboarding,
@@ -157,9 +160,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AppGuidance": AppGuidance,
-    "AdminGuidanceUsage": AdminGuidanceUsage,
-    "AdminUiSmoke": AdminUiSmoke,
 }
 
 export const pagesConfig = {
