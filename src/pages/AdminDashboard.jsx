@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { 
   Shield, Users, AlertTriangle, Settings, FileText, 
-  BarChart3, MessageSquare, Ban, Eye, ChevronRight, CreditCard, CheckCircle, Clock, Mail
+  BarChart3, MessageSquare, Ban, Eye, ChevronRight, CreditCard, CheckCircle, Clock, Mail, TrendingUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -180,6 +180,13 @@ export default function AdminDashboard() {
       subtitle: "RGPD - Droits personnes", 
       page: "AdminRgpdDsar",
       color: "bg-amber-500/20 text-amber-400"
+    },
+    { 
+      title: "Usage Guidance IA", 
+      icon: TrendingUp, 
+      subtitle: "Stats guidance quotidienne", 
+      page: "AdminGuidanceUsage",
+      color: "bg-violet-500/20 text-violet-400"
     }
   ];
 
