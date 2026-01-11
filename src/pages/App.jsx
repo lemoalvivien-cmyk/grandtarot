@@ -104,8 +104,8 @@ export default function App() {
     professional: { icon: Briefcase, label: lang === 'fr' ? 'Pro' : 'Pro', color: 'from-amber-500 to-orange-600' }
   };
 
-  const currentMode = modes[profile?.mode_active] || modes.love;
-  const ModeIcon = currentMode.icon;
+  const modeData = modes[currentMode] || modes.love;
+  const ModeIcon = modeData.icon;
 
   if (loading) {
     return (
