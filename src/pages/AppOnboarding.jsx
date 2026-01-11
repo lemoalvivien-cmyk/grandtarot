@@ -21,7 +21,6 @@ export default function AppOnboarding() {
   const [turnstileToken, setTurnstileToken] = useState(null);
   const [formData, setFormData] = useState({
     display_name: '',
-    birth_year: '',
     gender: '',
     photo_url: '',
     city: '',
@@ -31,9 +30,9 @@ export default function AppOnboarding() {
     pro_sector: '',
     pro_company_size: '',
     pro_current_challenge: '',
-    language_pref: 'fr'
+    language_pref: 'fr',
+    age_18_confirmed: false
   });
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
@@ -99,13 +98,8 @@ export default function AppOnboarding() {
   const handleNext = () => {
     // Validation
     if (step === 1) {
-      if (!formData.display_name || !formData.birth_year || !formData.gender || !formData.photo_url) {
-        alert(lang === 'fr' ? 'Veuillez remplir tous les champs et ajouter une photo' : 'Please fill all fields and add a photo');
-        return;
-      }
-      const age = new Date().getFullYear() - formData.birth_year;
-      if (age < 18 || age > 100) {
-        alert(lang === 'fr' ? 'Vous devez avoir entre 18 et 100 ans' : 'You must be between 18 and 100 years old');
+      if (!formData.display_name || !formData.gender || !formData.photo_url || !formData.age_18_confirmed) {
+        alert(lang === 'fr' ? 'Veuillez remplir tous les champs, ajouter une photo et confirmer votre âge' : 'Please fill all fields, add a photo and confirm your age');
         return;
       }
     }
@@ -136,11 +130,6 @@ export default function AppOnboarding() {
 
     if (!turnstileToken) {
       alert(lang === 'fr' ? 'Veuillez valider le captcha' : 'Please validate captcha');
-      return;
-    }
-
-    if (!ageConfirmed) {
-      alert(lang === 'fr' ? 'Veuillez confirmer que vous avez plus de 18 ans' : 'Please confirm you are 18 or older');
       return;
     }
 
@@ -330,21 +319,9 @@ export default function AppOnboarding() {
                   maxLength={50}
                 />
               </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-2">{t.birthYear} *</label>
-                <Input
-                  type="number"
-                  min="1924"
-                  max="2008"
-                  value={formData.birth_year}
-                  onChange={(e) => setFormData(prev => ({ ...prev, birth_year: parseInt(e.target.value) || '' }))}
-                  className="bg-slate-900/50 border-amber-500/10 text-white h-12"
-                  placeholder="1990"
-                />
               </div>
-            </div>
 
-            <div>
+              <div>
               <label className="block text-sm text-slate-400 mb-2">{t.gender} *</label>
               <Select value={formData.gender} onValueChange={(v) => setFormData(prev => ({ ...prev, gender: v }))}>
                 <SelectTrigger className="bg-slate-900/50 border-amber-500/10 text-white h-12">
@@ -434,6 +411,7 @@ export default function AppOnboarding() {
           <div className="space-y-8">
             <div>
               <label className="block text-sm text-slate-400 mb-4">{t.interests} *</label>
+              <p className="text-xs text-slate-500 mb-3">{t.interestsDesc}</p>
               <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6">
                 <InterestSelector
                   selectedIds={formData.interest_ids}
@@ -493,61 +471,59 @@ export default function AppOnboarding() {
         )}
 
         {/* Legal Checkboxes (Final Step) */}
-         {step === 3 && (
-           <div className="mt-8 space-y-3 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-             <label className="flex items-start gap-3 cursor-pointer">
-               <input
-                 type="checkbox"
-                 checked={ageConfirmed}
-                 onChange={(e) => setAgeConfirmed(e.target.checked)}
-                 className="w-5 h-5 mt-0.5 accent-amber-500"
-               />
-               <span className="text-sm text-amber-100">{t.ageConfirm}</span>
-             </label>
+        {step === 3 && (
+          <div className="mt-8 space-y-4">
+            {/* Turnstile (before legal) */}
+            <div className="bg-slate-900/50 border border-amber-500/10 rounded-xl p-6 flex justify-center">
+              <TurnstileWidget onVerify={setTurnstileToken} />
+            </div>
 
-             <label className="flex items-start gap-3 cursor-pointer">
-               <input
-                 type="checkbox"
-                 checked={termsAccepted}
-                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                 className="w-5 h-5 mt-0.5 accent-amber-500"
-               />
-               <div className="text-sm text-amber-100">
-                 {t.termsAccept}
-                 {' '}
-                 <a 
-                   href={createPageUrl('Terms')} 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="underline text-amber-300 hover:text-amber-200"
-                 >
-                   {lang === 'fr' ? 'Lire les CGU' : 'Read Terms'}
-                 </a>
-               </div>
-             </label>
+            {/* Legal Checkboxes */}
+            <div className="space-y-3 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 accent-amber-500"
+                />
+                <div className="text-sm text-amber-100">
+                  {t.termsAccept}
+                  {' '}
+                  <a 
+                    href={createPageUrl('Terms')} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline text-amber-300 hover:text-amber-200"
+                  >
+                    {lang === 'fr' ? 'Lire les CGU' : 'Read Terms'}
+                  </a>
+                </div>
+              </label>
 
-             <label className="flex items-start gap-3 cursor-pointer">
-               <input
-                 type="checkbox"
-                 checked={privacyAccepted}
-                 onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                 className="w-5 h-5 mt-0.5 accent-amber-500"
-               />
-               <div className="text-sm text-amber-100">
-                 {t.privacyAccept}
-                 {' '}
-                 <a 
-                   href={createPageUrl('Privacy')} 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="underline text-amber-300 hover:text-amber-200"
-                 >
-                   {lang === 'fr' ? 'Lire la politique' : 'Read Policy'}
-                 </a>
-               </div>
-             </label>
-           </div>
-         )}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={privacyAccepted}
+                  onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 accent-amber-500"
+                />
+                <div className="text-sm text-amber-100">
+                  {t.privacyAccept}
+                  {' '}
+                  <a 
+                    href={createPageUrl('Privacy')} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline text-amber-300 hover:text-amber-200"
+                  >
+                    {lang === 'fr' ? 'Lire la politique' : 'Read Policy'}
+                  </a>
+                </div>
+              </label>
+            </div>
+          </div>
+          )}
 
         {/* Navigation */}
         <div className="mt-12 space-y-4">
