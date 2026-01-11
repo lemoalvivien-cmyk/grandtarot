@@ -3,7 +3,7 @@
  * Imported from centralized deck
  */
 
-import tarotDeck from '@/data/tarotDeck.json';
+import tarotDeck from './tarotDeck.json';
 
 export const fallbackTarotDeck = tarotDeck;
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPageUrl } from '@/utils';
 import AdminGuard from '@/components/auth/AdminGuard';
-import tarotDeck from '@/data/tarotDeck.json';
+import tarotDeck from '@/components/helpers/tarotDeck.json';
 import { CheckCircle, XCircle, Copy, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

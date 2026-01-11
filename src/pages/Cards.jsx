@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPageUrl } from '@/utils';
-import tarotDeck from '@/data/tarotDeck.json';
+import tarotDeck from '@/components/helpers/tarotDeck.json';
 import { X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
