@@ -139,6 +139,9 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('Pricing')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
                   {t.pricing}
                 </Link>
+                <Link to={createPageUrl('Demo')} className="text-sm text-white font-medium bg-amber-500/10 px-3 py-1.5 rounded-lg hover:bg-amber-500/20 hover:text-amber-200 transition-all border border-amber-500/20">
+                  {lang === 'fr' ? 'Démo' : 'Demo'}
+                </Link>
               </>
             ) : (
               <>
@@ -277,6 +280,9 @@ export default function Layout({ children, currentPageName }) {
                   </Link>
                   <Link to={createPageUrl('Pricing')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {t.pricing}
+                  </Link>
+                  <Link to={createPageUrl('Demo')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-white font-semibold bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30 hover:text-amber-100 rounded-lg transition-all">
+                    {lang === 'fr' ? '✨ Démo' : '✨ Demo'}
                   </Link>
                 </>
               ) : (

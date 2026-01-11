@@ -89,11 +89,11 @@ export default function CookieBanner({ lang = 'fr' }) {
           <div className="flex items-end justify-between gap-6">
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-amber-100 mb-1">{t.title}</h3>
-              <p className="text-xs text-slate-400 mb-3">{t.desc}</p>
+              <h3 className="text-base font-semibold text-amber-100 mb-1">{t.title}</h3>
+              <p className="text-sm text-slate-300 mb-3">{t.desc}</p>
               <Link
                 to={createPageUrl('Cookies')}
-                className="inline-block text-xs text-amber-200 hover:text-amber-100 underline transition-colors"
+                className="inline-block text-sm text-amber-200 hover:text-amber-100 underline font-medium transition-colors"
               >
                 {t.cookieLink}
               </Link>
@@ -105,7 +105,7 @@ export default function CookieBanner({ lang = 'fr' }) {
                 onClick={handleRejectAll}
                 variant="outline"
                 size="sm"
-                className="border-slate-600 text-slate-300 hover:bg-slate-800 whitespace-nowrap"
+                className="border-slate-400 bg-slate-800/50 text-white font-semibold hover:bg-slate-700 hover:border-slate-300 whitespace-nowrap"
               >
                 {t.rejectAll}
               </Button>
@@ -113,22 +113,23 @@ export default function CookieBanner({ lang = 'fr' }) {
                 onClick={handleCustomize}
                 variant="outline"
                 size="sm"
-                className="border-slate-600 text-slate-300 hover:bg-slate-800 whitespace-nowrap px-2"
+                className="border-slate-400 bg-slate-800/50 text-white hover:bg-slate-700 hover:border-slate-300 whitespace-nowrap px-3"
               >
-                <Settings className="w-3 h-3" />
+                <Settings className="w-4 h-4" />
               </Button>
               <Button
                 onClick={handleAcceptAll}
                 size="sm"
-                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 whitespace-nowrap"
+                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-semibold whitespace-nowrap"
               >
                 {t.acceptAll}
               </Button>
               <button
                 onClick={handleClose}
                 className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
+                aria-label="Fermer"
               >
-                <X className="w-4 h-4 text-slate-400" />
+                <X className="w-5 h-5 text-slate-200 hover:text-white" />
               </button>
             </div>
           </div>

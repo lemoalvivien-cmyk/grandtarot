@@ -215,13 +215,13 @@ export default function CookiePreferencesModal({ lang = 'fr', onClose, onSave })
           <Button
             onClick={handleCancel}
             variant="outline"
-            className="border-slate-600 text-slate-300 hover:bg-slate-800"
+            className="border-slate-400 bg-slate-800/50 text-white font-semibold hover:bg-slate-700 hover:border-slate-300"
           >
             {t.cancel}
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500"
+            className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-semibold"
           >
             <Check className="w-4 h-4 mr-2" />
             {t.save}
