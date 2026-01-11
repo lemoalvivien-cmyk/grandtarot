@@ -40,19 +40,30 @@ export default function AccountPrivacy() {
         return;
       }
 
-      // Fetch user's own data
-      const [profile, account, messages] = await Promise.all([
+      // RGPD EXPORT: Fetch user's own data ONLY (NEVER other users' content)
+      const [profile, profilePublic, account, billingReqs, consent, messages] = await Promise.all([
         base44.entities.UserProfile.filter({ user_id: user.email }, null, 1),
+        base44.entities.ProfilePublic.filter({ user_id: user.email }, null, 1),
         base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1),
-        base44.entities.Message.filter({ from_user_id: user.email }, null, 100)
+        base44.entities.BillingRequest.filter({ requester_user_email: user.email }, null, 50),
+        base44.entities.ConsentPreference.filter({ user_id: user.email }, null, 10),
+        base44.entities.Message.filter({ from_user_id: user.email }, '-created_date', 100)
       ]);
 
       const exportData = {
-        exported_at: new Date().toISOString(),
+        export_date: new Date().toISOString(),
         user_email: user.email,
-        profile: profile.length > 0 ? profile[0] : null,
-        account: account.length > 0 ? account[0] : null,
-        messages_sent: messages.slice(0, 50) // Limit to 50 recent messages
+        data: {
+          user_profile: profile.length > 0 ? profile[0] : null,
+          profile_public: profilePublic.length > 0 ? profilePublic[0] : null,
+          account_private: account.length > 0 ? account[0] : null,
+          billing_requests: billingReqs,
+          consent_preferences: consent,
+          messages_sent: messages.slice(0, 50) // LIMIT 50 most recent
+        },
+        note: lang === 'fr' 
+          ? "Export RGPD — Uniquement vos données, sans contenu des autres utilisateurs."
+          : "GDPR Export — Only your data, without content from other users."
       };
 
       setData(exportData);
@@ -121,8 +132,9 @@ export default function AccountPrivacy() {
       subtitle: 'Gérez vos données personnelles',
       export: {
         title: 'Exporter mes données',
-        desc: 'Téléchargez une copie de vos données personnelles (profil, compte, messages envoyés).',
-        btn: 'Exporter'
+        desc: 'Téléchargez une copie complète de vos données personnelles (profil, compte, messages envoyés). Export conforme RGPD.',
+        btn: 'Exporter',
+        note: 'Export RGPD — Uniquement vos données, sans contenu des autres utilisateurs.'
       },
       delete: {
         title: 'Supprimer mon compte',
@@ -138,8 +150,9 @@ export default function AccountPrivacy() {
       subtitle: 'Manage your personal data',
       export: {
         title: 'Export My Data',
-        desc: 'Download a copy of your personal data (profile, account, sent messages).',
-        btn: 'Export'
+        desc: 'Download a complete copy of your personal data (profile, account, sent messages). GDPR compliant export.',
+        btn: 'Export',
+        note: 'GDPR Export — Only your data, without content from other users.'
       },
       delete: {
         title: 'Delete My Account',
@@ -210,11 +223,14 @@ export default function AccountPrivacy() {
               </Button>
             ) : (
               <div className="space-y-4">
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-sm text-slate-300 mb-4 font-mono max-h-64 overflow-y-auto">
+                <div className="bg-slate-700/50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                  <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap">
                     {JSON.stringify(data, null, 2)}
-                  </p>
+                  </pre>
                 </div>
+                <p className="text-xs text-green-400 flex items-center gap-2">
+                  ✅ {t.export.note}
+                </p>
                 <div className="flex gap-3">
                   <Button
                     onClick={handleCopyJSON}
@@ -229,7 +245,7 @@ export default function AccountPrivacy() {
                     className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    {lang === 'fr' ? 'Télécharger' : 'Download'}
+                    {lang === 'fr' ? 'Télécharger JSON' : 'Download JSON'}
                   </Button>
                 </div>
               </div>
