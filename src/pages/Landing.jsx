@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight, CheckCircle, Lock, Eye, MessageCircle, Zap, ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -391,16 +392,29 @@ export default function Landing() {
           <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
             {t.hero.desc}
           </p>
-          
-          <Button 
-            onClick={() => window.location.href = createPageUrl('Subscribe')}
-            size="lg" 
-            className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white px-12 py-7 text-xl rounded-full shadow-2xl shadow-amber-500/30 border-0 mb-6"
-          >
-            <Sparkles className="w-6 h-6 mr-3" />
-            {t.hero.cta}
-            <ArrowRight className="w-6 h-6 ml-3" />
-          </Button>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            <Button 
+              onClick={() => window.location.href = createPageUrl('Subscribe')}
+              size="lg" 
+              className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white px-12 py-7 text-xl rounded-full shadow-2xl shadow-amber-500/30 border-0"
+            >
+              <Sparkles className="w-6 h-6 mr-3" />
+              {t.hero.cta}
+              <ArrowRight className="w-6 h-6 ml-3" />
+            </Button>
+
+            <Link to={createPageUrl('Demo')}>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10 text-amber-200 px-8 py-7 text-xl rounded-full"
+              >
+                <Eye className="w-6 h-6 mr-3" />
+                {lang === 'fr' ? 'Voir la démo' : 'View demo'}
+              </Button>
+            </Link>
+          </div>
           
           <p className="text-amber-300 font-medium">
             <Crown className="w-4 h-4 inline mr-2" />

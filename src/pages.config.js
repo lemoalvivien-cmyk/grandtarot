@@ -1,3 +1,4 @@
+import AccountPrivacy from './pages/AccountPrivacy';
 import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
 import AdminAnalytics from './pages/AdminAnalytics';
@@ -12,13 +13,18 @@ import AdminCodeAudit from './pages/AdminCodeAudit';
 import AdminContent from './pages/AdminContent';
 import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDsarRequests from './pages/AdminDsarRequests';
 import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
 import AdminGoLive from './pages/AdminGoLive';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
+import AdminMobileReadiness from './pages/AdminMobileReadiness';
 import AdminModeration from './pages/AdminModeration';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
 import AdminReports from './pages/AdminReports';
+import AdminRgpdDsar from './pages/AdminRgpdDsar';
+import AdminRgpdRegister from './pages/AdminRgpdRegister';
+import AdminRgpdRetention from './pages/AdminRgpdRetention';
 import AdminSecurityFixtures from './pages/AdminSecurityFixtures';
 import AdminSecuritySelftest from './pages/AdminSecuritySelftest';
 import AdminSecurityWarning from './pages/AdminSecurityWarning';
@@ -47,11 +53,14 @@ import Cookies from './pages/Cookies';
 import CreateReport from './pages/CreateReport';
 import DailyReading from './pages/DailyReading';
 import Dashboard from './pages/Dashboard';
+import DataRights from './pages/DataRights';
 import Encyclopedia from './pages/Encyclopedia';
 import Landing from './pages/Landing';
 import Legal from './pages/Legal';
+import LegalNotice from './pages/LegalNotice';
 import ManageSubscription from './pages/ManageSubscription';
 import Messages from './pages/Messages';
+import Offline from './pages/Offline';
 import Onboarding from './pages/Onboarding';
 import Paywall from './pages/Paywall';
 import Pricing from './pages/Pricing';
@@ -61,19 +70,12 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminRgpdRegister from './pages/AdminRgpdRegister';
-import AdminRgpdRetention from './pages/AdminRgpdRetention';
-import AdminRgpdDsar from './pages/AdminRgpdDsar';
-import LegalNotice from './pages/LegalNotice';
-import DataRights from './pages/DataRights';
-import AccountPrivacy from './pages/AccountPrivacy';
-import AdminDsarRequests from './pages/AdminDsarRequests';
-import Offline from './pages/Offline';
-import AdminMobileReadiness from './pages/AdminMobileReadiness';
+import Demo from './pages/Demo';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AccountPrivacy": AccountPrivacy,
     "AdminAiPrompts": AdminAiPrompts,
     "AdminAiPromptsEditor": AdminAiPromptsEditor,
     "AdminAnalytics": AdminAnalytics,
@@ -88,13 +90,18 @@ export const PAGES = {
     "AdminContent": AdminContent,
     "AdminDailyCardManager": AdminDailyCardManager,
     "AdminDashboard": AdminDashboard,
+    "AdminDsarRequests": AdminDsarRequests,
     "AdminEvidenceRuns": AdminEvidenceRuns,
     "AdminGoLive": AdminGoLive,
     "AdminLaunchChecklist": AdminLaunchChecklist,
+    "AdminMobileReadiness": AdminMobileReadiness,
     "AdminModeration": AdminModeration,
     "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
     "AdminReports": AdminReports,
+    "AdminRgpdDsar": AdminRgpdDsar,
+    "AdminRgpdRegister": AdminRgpdRegister,
+    "AdminRgpdRetention": AdminRgpdRetention,
     "AdminSecurityFixtures": AdminSecurityFixtures,
     "AdminSecuritySelftest": AdminSecuritySelftest,
     "AdminSecurityWarning": AdminSecurityWarning,
@@ -123,11 +130,14 @@ export const PAGES = {
     "CreateReport": CreateReport,
     "DailyReading": DailyReading,
     "Dashboard": Dashboard,
+    "DataRights": DataRights,
     "Encyclopedia": Encyclopedia,
     "Landing": Landing,
     "Legal": Legal,
+    "LegalNotice": LegalNotice,
     "ManageSubscription": ManageSubscription,
     "Messages": Messages,
+    "Offline": Offline,
     "Onboarding": Onboarding,
     "Paywall": Paywall,
     "Pricing": Pricing,
@@ -137,15 +147,7 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminRgpdRegister": AdminRgpdRegister,
-    "AdminRgpdRetention": AdminRgpdRetention,
-    "AdminRgpdDsar": AdminRgpdDsar,
-    "LegalNotice": LegalNotice,
-    "DataRights": DataRights,
-    "AccountPrivacy": AccountPrivacy,
-    "AdminDsarRequests": AdminDsarRequests,
-    "Offline": Offline,
-    "AdminMobileReadiness": AdminMobileReadiness,
+    "Demo": Demo,
 }
 
 export const pagesConfig = {
