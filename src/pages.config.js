@@ -76,6 +76,7 @@ import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AppGuidance from './pages/AppGuidance';
 import AdminGuidanceUsage from './pages/AdminGuidanceUsage';
+import AdminUiSmoke from './pages/AdminUiSmoke';
 import __Layout from './Layout.jsx';
 
 
@@ -158,6 +159,7 @@ export const PAGES = {
     "Terms": Terms,
     "AppGuidance": AppGuidance,
     "AdminGuidanceUsage": AdminGuidanceUsage,
+    "AdminUiSmoke": AdminUiSmoke,
 }
 
 export const pagesConfig = {
