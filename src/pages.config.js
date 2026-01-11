@@ -54,6 +54,8 @@ import CreateReport from './pages/CreateReport';
 import DailyReading from './pages/DailyReading';
 import Dashboard from './pages/Dashboard';
 import DataRights from './pages/DataRights';
+import Demo from './pages/Demo';
+import DemoStart from './pages/DemoStart';
 import Encyclopedia from './pages/Encyclopedia';
 import Landing from './pages/Landing';
 import Legal from './pages/Legal';
@@ -70,8 +72,8 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import Demo from './pages/Demo';
-import DemoStart from './pages/DemoStart';
+import Cards from './pages/Cards';
+import AdminDeckCheck from './pages/AdminDeckCheck';
 import __Layout from './Layout.jsx';
 
 
@@ -132,6 +134,8 @@ export const PAGES = {
     "DailyReading": DailyReading,
     "Dashboard": Dashboard,
     "DataRights": DataRights,
+    "Demo": Demo,
+    "DemoStart": DemoStart,
     "Encyclopedia": Encyclopedia,
     "Landing": Landing,
     "Legal": Legal,
@@ -148,8 +152,8 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "Demo": Demo,
-    "DemoStart": DemoStart,
+    "Cards": Cards,
+    "AdminDeckCheck": AdminDeckCheck,
 }
 
 export const pagesConfig = {
