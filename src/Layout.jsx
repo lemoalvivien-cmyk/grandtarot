@@ -151,8 +151,11 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('AppSynchros')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
                   {t.synchros}
                 </Link>
-              </>
-            )}
+                <Link to={createPageUrl('AppGuidance')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'Guidance' : 'Guidance'}
+                </Link>
+                </>
+                )}
           </nav>
 
           {/* Actions */}
@@ -286,6 +289,9 @@ export default function Layout({ children, currentPageName }) {
                   </Link>
                   <Link to={createPageUrl('AppSynchros')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {t.synchros}
+                  </Link>
+                  <Link to={createPageUrl('AppGuidance')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
+                    {lang === 'fr' ? 'Guidance' : 'Guidance'}
                   </Link>
                   <Link to={createPageUrl('AppSettings')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {t.settings}

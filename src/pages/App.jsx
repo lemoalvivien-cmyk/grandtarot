@@ -218,6 +218,31 @@ export default function App() {
               </div>
             </div>
           </Link>
+
+          {/* Guidance */}
+          <Link to={createPageUrl('AppGuidance')}>
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all" />
+              <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6 hover:border-amber-500/30 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
+                      <Sparkles className="w-7 h-7 text-violet-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-amber-100 mb-1">
+                        {lang === 'fr' ? 'Guidance IA' : 'AI Guidance'}
+                      </h3>
+                      <p className="text-sm text-slate-400">
+                        {lang === 'fr' ? '1 guidance/jour/mode' : '1 guidance/day/mode'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-amber-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
       </div>
