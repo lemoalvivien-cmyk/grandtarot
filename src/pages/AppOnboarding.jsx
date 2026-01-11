@@ -52,7 +52,7 @@ export default function AppOnboarding() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
+      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
       
       const hasActiveSubscription = profiles.length > 0 && 
         (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
@@ -67,13 +67,26 @@ export default function AppOnboarding() {
         return;
       }
 
+      // Prefill mode from demo if available
+      const urlParams = new URLSearchParams(window.location.search);
+      const modeFromUrl = urlParams.get('from_demo');
+      const modeFromStorage = typeof window !== 'undefined' 
+        ? localStorage.getItem('demo_selected_mode') 
+        : null;
+      const demoMode = modeFromUrl || modeFromStorage;
+
+      let prefilledMode = profiles[0].mode_active || 'love';
+      if (demoMode && ['love', 'friendship', 'professional'].includes(demoMode)) {
+        prefilledMode = demoMode;
+      }
+
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
       setFormData(prev => ({
         ...prev,
         display_name: profiles[0].display_name || currentUser.full_name || '',
         photo_url: profiles[0].photo_url || '',
-        mode_active: profiles[0].mode_active || 'love',
+        mode_active: prefilledMode,
         language_pref: profiles[0].language_pref || 'fr'
       }));
     } catch (error) {
@@ -157,7 +170,7 @@ export default function AppOnboarding() {
         last_active: new Date().toISOString()
       });
 
-      // Store age confirmation in AccountPrivate
+      // Store age confirmation + preferred mode in AccountPrivate
       const accounts = await base44.entities.AccountPrivate.filter({
         user_email: user.email
       }, null, 1);
@@ -170,8 +183,16 @@ export default function AppOnboarding() {
           terms_accepted_at: new Date().toISOString(),
           terms_version_accepted: termsVersion,
           privacy_accepted_at: new Date().toISOString(),
-          privacy_version_accepted: privacyVersion
+          privacy_version_accepted: privacyVersion,
+          preferred_mode: formData.mode_active
         });
+      }
+
+      // Clear demo localStorage after successful onboarding
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('demo_selected_mode');
+        localStorage.removeItem('demo_source');
+        localStorage.removeItem('demo_selected_at');
       }
       
       window.location.href = createPageUrl('App');
