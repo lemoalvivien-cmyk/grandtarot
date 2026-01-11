@@ -4,12 +4,14 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, Star, MessageCircle, ChevronRight } from 'lucide-react';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
+import ModeSwitch from '@/components/ModeSwitch';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [lang, setLang] = useState('fr');
+  const [currentMode, setCurrentMode] = useState('love');
 
   useEffect(() => {
     checkAccess();
@@ -41,6 +43,15 @@ export default function App() {
       const userProfile = profiles[0];
       setProfile(userProfile);
       setLang(userProfile.language_pref || 'fr');
+
+      // Load mode from localStorage or AccountPrivate
+      const storedMode = localStorage.getItem('gt_mode');
+      const accounts = await base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1);
+      const preferredMode = accounts && accounts.length > 0 ? accounts[0].preferred_mode : null;
+      
+      const initialMode = storedMode || preferredMode || userProfile.mode_active || 'love';
+      setCurrentMode(initialMode);
+      localStorage.setItem('gt_mode', initialMode);
 
       // Check subscription status (admins bypass)
       if (currentUser.role !== 'admin') {
@@ -124,23 +135,24 @@ export default function App() {
           </p>
         </div>
 
-        {/* Current Mode */}
-        <Link to={createPageUrl('AppSettings')}>
-          <div className={`relative group mb-8 overflow-hidden rounded-2xl`}>
-            <div className={`absolute inset-0 bg-gradient-to-r ${currentMode.color} opacity-20 group-hover:opacity-30 transition-all`} />
-            <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6 group-hover:border-amber-500/30 transition-all">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${currentMode.color} flex items-center justify-center`}>
-                  <ModeIcon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">{lang === 'fr' ? 'Mode actif' : 'Active mode'}</p>
-                  <p className="text-lg font-semibold text-amber-100">{currentMode.label}</p>
-                </div>
-              </div>
-            </div>
+        {/* Mode Switch */}
+        <div className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-amber-100 mb-2">
+              {lang === 'fr' ? 'Votre mode' : 'Your mode'}
+            </h2>
+            <p className="text-sm text-slate-400">
+              {lang === 'fr' 
+                ? 'Changez de mode à tout moment (3 modes inclus dans votre abonnement)' 
+                : 'Switch mode anytime (3 modes included in your subscription)'}
+            </p>
           </div>
-        </Link>
+          <ModeSwitch 
+            initialMode={currentMode} 
+            onModeChange={setCurrentMode}
+            lang={lang}
+          />
+        </div>
 
         {/* Main Actions */}
         <div className="space-y-4">

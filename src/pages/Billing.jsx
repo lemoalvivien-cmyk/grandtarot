@@ -18,6 +18,8 @@ export default function Billing() {
   const [recentRequest, setRecentRequest] = useState(null);
   const [slaHours, setSlaHours] = useState(48);
   const [lang, setLang] = useState('fr');
+  const [price, setPrice] = useState('6,90');
+  const [currency, setCurrency] = useState('EUR');
 
   useEffect(() => {
     loadData();
@@ -28,13 +30,15 @@ export default function Billing() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const [accounts, paySettings, stripeSettings, profiles, requests, slaSetting] = await Promise.all([
+      const [accounts, paySettings, stripeSettings, profiles, requests, slaSetting, priceSetting, currencySetting] = await Promise.all([
         base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1),
         base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1),
         base44.entities.BillingRequest.filter({ requester_user_email: currentUser.email }, '-created_date', 1),
-        base44.entities.AppSettings.filter({ setting_key: 'billing_review_sla_hours' }, null, 1)
+        base44.entities.AppSettings.filter({ setting_key: 'billing_review_sla_hours' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'subscription_price_month_ttc' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'subscription_currency' }, null, 1)
       ]);
 
       if (accounts && accounts.length > 0) {
@@ -55,6 +59,15 @@ export default function Billing() {
 
       if (slaSetting && slaSetting.length > 0) {
         setSlaHours(slaSetting[0].value_number || 48);
+      }
+
+      if (priceSetting && priceSetting.length > 0) {
+        const priceVal = priceSetting[0].value_number || 6.90;
+        setPrice(priceVal.toFixed(2).replace('.', ','));
+      }
+
+      if (currencySetting && currencySetting.length > 0) {
+        setCurrency(currencySetting[0].value_string || 'EUR');
       }
 
       if (requests && requests.length > 0) {
@@ -164,15 +177,17 @@ export default function Billing() {
       status: 'Statut de l\'abonnement',
       free: 'Gratuit',
       active: 'Actif',
-      description: 'Bienvenue sur GRANDTAROT. Pour accéder aux fonctionnalités complètes, un abonnement est requis.',
-      cta: 'S\'abonner maintenant',
-      price: '6,90€/mois',
+      description: 'Un seul abonnement = accès simultané aux 3 modes (Amour, Amitié, Pro). Passez de l\'un à l\'autre quand vous voulez.',
+      cta: 'Débloquer les 3 modes',
+      price: (p, c) => `${p}${c === 'EUR' ? '€' : c}/mois`,
+      subtitle: '1 abonnement = 3 modes',
       features: [
+        '✨ 3 modes en 1 : Amour, Amitié, Pro',
         'Tirage quotidien IA personnalisé',
         '20 affinités cosmiques par jour',
-        '3 modes : Amour, Amitié, Pro',
+        'Switch de mode à volonté',
         'Chat sécurisé illimité',
-        'Encyclopédie 78 cartes'
+        'Encyclopédie 78 cartes complète'
       ],
       noPaymentLink: 'Lien de paiement non configuré. Contactez l\'admin.',
       alreadySubscribed: 'Vous êtes abonné(e) ✅',
@@ -198,15 +213,17 @@ export default function Billing() {
       status: 'Subscription Status',
       free: 'Free',
       active: 'Active',
-      description: 'Welcome to GRANDTAROT. A subscription is required to access all features.',
-      cta: 'Subscribe now',
-      price: '€6.90/month',
+      description: 'One subscription = simultaneous access to all 3 modes (Love, Friendship, Pro). Switch anytime.',
+      cta: 'Unlock all 3 modes',
+      price: (p, c) => `${c === 'EUR' ? '€' : c}${p}/month`,
+      subtitle: '1 subscription = 3 modes',
       features: [
+        '✨ 3 modes in 1: Love, Friendship, Pro',
         'AI personalized daily reading',
         '20 cosmic affinities per day',
-        '3 modes: Love, Friendship, Pro',
+        'Switch modes anytime',
         'Unlimited secure chat',
-        '78 cards encyclopedia'
+        'Complete 78 cards encyclopedia'
       ],
       noPaymentLink: 'Payment link not configured. Contact admin.',
       alreadySubscribed: 'You are subscribed ✅',
@@ -316,12 +333,15 @@ export default function Billing() {
              <div className="relative mb-8">
                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-2xl blur-2xl" />
                <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-8">
-               <div className="text-center mb-8">
-                 <div className="text-5xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent mb-2">
-                   {t.price}
+                 <div className="text-center mb-8">
+                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-4">
+                     <span className="text-amber-200 text-sm font-medium">{t.subtitle}</span>
+                   </div>
+                   <div className="text-5xl font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent mb-2">
+                     {typeof t.price === 'function' ? t.price(price, currency) : t.price}
+                   </div>
+                   <p className="text-slate-400">{lang === 'fr' ? 'Accès illimité' : 'Unlimited access'}</p>
                  </div>
-                 <p className="text-slate-400">{lang === 'fr' ? 'Accès illimité' : 'Unlimited access'}</p>
-               </div>
 
                <ul className="space-y-3 mb-8">
                  {t.features.map((feature, i) => (
