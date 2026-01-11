@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, ArrowLeft, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import TarotCardImage from '@/components/tarot/TarotCardImage';
 
 export default function CardOfDay() {
   const [lang, setLang] = useState('fr');
@@ -142,16 +143,12 @@ export default function CardOfDay() {
             {/* Card Image */}
             <div className="relative group mx-auto md:mx-0">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-violet-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all" />
-              <div className="relative w-72 h-[420px] bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 overflow-hidden flex items-center justify-center">
-                {card.image_url ? (
-                  <img src={card.image_url} alt={lang === 'fr' ? card.name_fr : card.name_en} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center p-8">
-                    <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-4" />
-                    <h3 className="text-2xl font-serif text-amber-100">{lang === 'fr' ? card.name_fr : card.name_en}</h3>
-                    <p className="text-slate-400 mt-2 capitalize">{card.arcana === 'major' ? 'Arcane Majeur' : card.suit}</p>
-                  </div>
-                )}
+              <div className="relative w-72 h-[420px] bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 overflow-hidden p-4">
+                <TarotCardImage
+                  src={card.image_url}
+                  alt={lang === 'fr' ? card.name_fr : card.name_en}
+                  className="w-full h-full"
+                />
               </div>
             </div>
 

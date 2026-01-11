@@ -6,6 +6,7 @@ import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight, Che
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getDailyCardFallback } from '@/components/helpers/fallbackTarotDeck';
+import TarotCardImage from '@/components/tarot/TarotCardImage';
 
 export default function Landing() {
   const [lang, setLang] = useState('fr');

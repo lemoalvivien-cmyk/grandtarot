@@ -4,6 +4,7 @@ import { tarotDeck } from '@/components/helpers/tarotDeck';
 import { X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import TarotCardImage from '@/components/tarot/TarotCardImage';
 
 export default function Cards() {
   const [lang, setLang] = useState('fr');
@@ -115,11 +116,10 @@ export default function Cards() {
                   onClick={() => setSelectedCard(card)}
                   className="group relative aspect-[2/3] rounded-xl overflow-hidden border border-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
                 >
-                  <img
+                  <TarotCardImage
                     src={card.imagePath}
                     alt={lang === 'fr' ? card.name_fr : card.name_en}
                     className="w-full h-full object-cover"
-                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -134,7 +134,7 @@ export default function Cards() {
                 {selectedCard?.id === card.id && (
                   <div className="flex flex-col md:flex-row gap-6 p-6">
                     <div className="flex-shrink-0 md:w-64">
-                      <img
+                      <TarotCardImage
                         src={selectedCard.imagePath}
                         alt={lang === 'fr' ? selectedCard.name_fr : selectedCard.name_en}
                         className="w-full rounded-xl border border-amber-500/20"
