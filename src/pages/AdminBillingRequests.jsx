@@ -9,6 +9,7 @@ import AdminGuard from '@/components/auth/AdminGuard';
 export default function AdminBillingRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [searchEmail, setSearchEmail] = useState('');
@@ -16,24 +17,48 @@ export default function AdminBillingRequests() {
   const [rejectReason, setRejectReason] = useState('');
   const [rejectModal, setRejectModal] = useState(false);
   const [templateCopied, setTemplateCopied] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [skip, setSkip] = useState(0);
+  const LIMIT = 50;
 
   useEffect(() => {
-    loadRequests();
+    loadRequests(true);
   }, [statusFilter]);
 
-  const loadRequests = async () => {
-    setLoading(true);
+  const loadRequests = async (reset = false) => {
+    if (reset) {
+      setLoading(true);
+      setSkip(0);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
+      // SECURED: Filter with explicit LIMIT + pagination via skip
+      const skipCount = reset ? 0 : skip;
       const data = await base44.entities.BillingRequest.filter({
         status: statusFilter
-      }, '-created_date', 50);
-      setRequests(data || []);
+      }, '-created_date', LIMIT);
+      
+      if (reset) {
+        setRequests(data || []);
+      } else {
+        setRequests(prev => [...prev, ...(data || [])]);
+      }
+      
+      setHasMore(data.length === LIMIT);
+      setSkip(skipCount + LIMIT);
     } catch (error) {
       console.error('Error loading requests:', error);
-      setRequests([]);
+      if (reset) setRequests([]);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMore = () => {
+    loadRequests(false);
   };
 
   const handleApprove = async (request) => {
@@ -120,7 +145,7 @@ export default function AdminBillingRequests() {
       setRejectModal(false);
       setRejectReason('');
       setSelectedRequest(null);
-      loadRequests();
+      loadRequests(true);
     } catch (error) {
       console.error('Error rejecting:', error);
       alert(`Error: ${error.message}`);
@@ -302,6 +327,28 @@ GRANDTAROT Support`
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Load More */}
+          {filteredRequests.length > 0 && hasMore && !loading && (
+            <div className="text-center mt-6">
+              <Button
+                onClick={loadMore}
+                disabled={loadingMore}
+                variant="outline"
+                className="border-slate-700"
+              >
+                {loadingMore ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {loadingMore ? 'Chargement...' : 'Charger plus'}
+              </Button>
+            </div>
+          )}
+
+          {/* Footer Count */}
+          {filteredRequests.length > 0 && (
+            <p className="text-xs text-slate-500 text-center mt-4">
+              {filteredRequests.length} requêtes affichées {hasMore ? '(plus disponibles)' : '(toutes)'}
+            </p>
           )}
 
           <Dialog open={rejectModal} onOpenChange={setRejectModal}>

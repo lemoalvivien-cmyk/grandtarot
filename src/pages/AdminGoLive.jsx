@@ -37,9 +37,9 @@ export default function AdminGoLive() {
       const [paySettings, stripeSettings, pending, users, logs, slaSetting, emailSetting] = await Promise.all([
         base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'stripe_payment_link' }, null, 1),
-        base44.entities.BillingRequest.filter({ status: 'pending' }, '-created_date', 1),
+        base44.entities.BillingRequest.filter({ status: 'pending' }, '-created_date', 50),
         base44.entities.AccountPrivate.filter({ plan_status: 'active' }, null, 50),
-        base44.entities.AuditLog.list('-created_date', 20),
+        base44.entities.AuditLog.filter({}, '-created_date', 20),
         base44.entities.AppSettings.filter({ setting_key: 'billing_review_sla_hours' }, null, 1),
         base44.entities.AppSettings.filter({ setting_key: 'support_email' }, null, 1)
       ]);
@@ -47,8 +47,8 @@ export default function AdminGoLive() {
       setData({
         paywallEnabled: paySettings.length > 0 ? paySettings[0].value_boolean : false,
         stripeLink: stripeSettings.length > 0 ? stripeSettings[0].value_string : '',
-        pendingRequests: pending.length,
-        activeUsers: users.length,
+        pendingRequests: pending.length >= 50 ? '50+' : pending.length,
+        activeUsers: users.length >= 50 ? '50+' : users.length,
         recentLogs: logs
       });
       setEditLink(stripeSettings.length > 0 ? stripeSettings[0].value_string : '');

@@ -8,22 +8,42 @@ import AdminGuard from '@/components/auth/AdminGuard';
 
 export default function AdminAuditLog() {
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [skip, setSkip] = useState(0);
+  const LIMIT = 50;
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (skipCount = 0) => {
+    if (skipCount === 0) setLoading(true);
+    else setLoadingMore(true);
+    
     try {
-      // ADMIN-ONLY: Use filter with limit
-      const logList = await base44.entities.AuditLog.filter({}, '-created_date', 100);
-      setLogs(logList);
+      // SECURED: Filter with explicit LIMIT + pagination
+      const logList = await base44.entities.AuditLog.filter({}, '-created_date', LIMIT);
+      
+      if (skipCount === 0) {
+        setLogs(logList);
+      } else {
+        setLogs(prev => [...prev, ...logList]);
+      }
+      
+      setHasMore(logList.length === LIMIT);
+      setSkip(skipCount + LIMIT);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMore = () => {
+    loadData(skip);
   };
 
   const actionConfig = {
@@ -103,6 +123,26 @@ export default function AdminAuditLog() {
               );
             })}
           </div>
+        )}
+
+        {/* Load More */}
+        {logs.length > 0 && hasMore && !loading && (
+          <div className="text-center mt-6">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-6 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-slate-300 disabled:opacity-50"
+            >
+              {loadingMore ? 'Chargement...' : 'Charger plus'}
+            </button>
+          </div>
+        )}
+
+        {/* Footer Info */}
+        {logs.length > 0 && (
+          <p className="text-xs text-slate-500 text-center mt-4">
+            {logs.length} événements chargés {hasMore ? '(plus disponibles)' : '(tous)'}
+          </p>
         )}
       </div>
     </div>
