@@ -97,9 +97,9 @@ export default function Demo() {
       },
       pricing: {
         title: 'Accès Premium',
-        desc: 'Débloque l\'app complète + guidance + chat + mises en relation',
-        price: '6,90€/mois',
-        cta: 'Créer mon compte'
+        desc: '1 abonnement = 3 modes (Amour, Amitié, Pro) + guidance + chat + mises en relation',
+        price: '6,90€ TTC/mois',
+        cta: 'Débloquer les 3 modes'
       }
     },
     en: {
@@ -121,9 +121,9 @@ export default function Demo() {
       },
       pricing: {
         title: 'Premium Access',
-        desc: 'Unlock complete app + guidance + chat + connections',
+        desc: '1 subscription = 3 modes (Love, Friendship, Pro) + guidance + chat + connections',
         price: '€6.90/month',
-        cta: 'Create my account'
+        cta: 'Unlock all 3 modes'
       }
     }
   };
@@ -380,6 +380,11 @@ export default function Demo() {
                 <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-3xl p-6">
                   <div className="text-center mb-4">
                     <Crown className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full mb-3">
+                      <span className="text-xs text-amber-200 font-medium">
+                        {lang === 'fr' ? '✨ 1 abonnement = 3 modes' : '✨ 1 subscription = 3 modes'}
+                      </span>
+                    </div>
                     <h3 className="text-xl font-bold text-amber-100 mb-2">{t.pricing.title}</h3>
                     <p className="text-sm text-slate-400 mb-3">{t.pricing.desc}</p>
                     <p className="text-2xl font-bold text-amber-300 mb-4">{t.pricing.price}</p>
