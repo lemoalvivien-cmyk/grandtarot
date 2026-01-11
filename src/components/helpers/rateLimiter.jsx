@@ -50,7 +50,7 @@ export const canCreateReport = async (userEmail) => {
  */
 export const canSendIntention = async (userEmail) => {
   try {
-    const profiles = await base44.entities.UserProfile.filter({ user_id: userEmail });
+    const profiles = await base44.entities.UserProfile.filter({ user_id: userEmail }, null, 1);
     if (profiles.length === 0) {
       return { allowed: false, reason: 'no_profile' };
     }

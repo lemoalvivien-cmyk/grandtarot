@@ -26,7 +26,7 @@ export default function AppIntentions() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const userProfiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
+      const userProfiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
       setProfile(userProfiles[0]);
       setLang(userProfiles[0].language_pref || 'fr');
       await loadIntentions(currentUser.email);
@@ -57,7 +57,7 @@ export default function AppIntentions() {
       
       const profileMap = {};
       for (const uid of uniqueUserIds) {
-        const profiles = await base44.entities.UserProfile.filter({ user_id: uid });
+        const profiles = await base44.entities.UserProfile.filter({ user_id: uid }, null, 1);
         if (profiles.length > 0) {
           profileMap[uid] = profiles[0];
         }

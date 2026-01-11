@@ -64,12 +64,12 @@ export default function CardOfDay() {
       const adminCards = await base44.entities.AdminDailyCard.filter({ 
         publish_date: today,
         is_published: true 
-      });
+      }, null, 1);
       
       if (adminCards.length > 0) {
         // Admin card exists for today
         const adminCard = adminCards[0];
-        const tarotCards = await base44.entities.TarotCard.filter({ id: adminCard.tarot_card_id });
+        const tarotCards = await base44.entities.TarotCard.filter({ id: adminCard.tarot_card_id }, null, 1);
         
         if (tarotCards.length > 0) {
           setCard({ 

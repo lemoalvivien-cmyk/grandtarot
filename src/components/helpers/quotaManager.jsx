@@ -142,7 +142,7 @@ export const canSendIntention = async (profile, lang = 'fr') => {
 export const trackIntentionRefusal = async (refusedUserId) => {
   try {
     // Get refuser's profile
-    const profiles = await base44.entities.UserProfile.filter({ user_id: refusedUserId });
+    const profiles = await base44.entities.UserProfile.filter({ user_id: refusedUserId }, null, 1);
     if (profiles.length === 0) return { cooldownApplied: false, consecutiveRefusals: 0 };
     
     const profile = profiles[0];
@@ -155,7 +155,7 @@ export const trackIntentionRefusal = async (refusedUserId) => {
       from_user_id: refusedUserId,
       status: 'refused',
       responded_at: { $gte: oneDayAgo.toISOString() }
-    });
+    }, '-responded_at', 10);
     
     const consecutiveRefusals = recentRefusals.length;
     

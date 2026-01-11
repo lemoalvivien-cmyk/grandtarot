@@ -32,7 +32,7 @@ export default function AppRitual() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
+      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
       
       const hasActiveSubscription = profiles.length > 0 && 
         (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
@@ -74,7 +74,7 @@ export default function AppRitual() {
         setDailyDraw(draw);
         
         // Load card details
-        const cards = await base44.entities.TarotCard.filter({ id: draw.tarot_card_id });
+        const cards = await base44.entities.TarotCard.filter({ id: draw.tarot_card_id }, null, 1);
         if (cards.length > 0) {
           setCard(cards[0]);
           setShowCard(true);
