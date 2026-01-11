@@ -13,6 +13,7 @@ import AdminCodeAudit from './pages/AdminCodeAudit';
 import AdminContent from './pages/AdminContent';
 import AdminDailyCardManager from './pages/AdminDailyCardManager';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDeckCheck from './pages/AdminDeckCheck';
 import AdminDsarRequests from './pages/AdminDsarRequests';
 import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
 import AdminGoLive from './pages/AdminGoLive';
@@ -47,6 +48,7 @@ import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import CardDetail from './pages/CardDetail';
 import CardOfDay from './pages/CardOfDay';
+import Cards from './pages/Cards';
 import Chat from './pages/Chat';
 import ChatDisabled from './pages/ChatDisabled';
 import Cookies from './pages/Cookies';
@@ -72,8 +74,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import Cards from './pages/Cards';
-import AdminDeckCheck from './pages/AdminDeckCheck';
 import __Layout from './Layout.jsx';
 
 
@@ -93,6 +93,7 @@ export const PAGES = {
     "AdminContent": AdminContent,
     "AdminDailyCardManager": AdminDailyCardManager,
     "AdminDashboard": AdminDashboard,
+    "AdminDeckCheck": AdminDeckCheck,
     "AdminDsarRequests": AdminDsarRequests,
     "AdminEvidenceRuns": AdminEvidenceRuns,
     "AdminGoLive": AdminGoLive,
@@ -127,6 +128,7 @@ export const PAGES = {
     "BlogPost": BlogPost,
     "CardDetail": CardDetail,
     "CardOfDay": CardOfDay,
+    "Cards": Cards,
     "Chat": Chat,
     "ChatDisabled": ChatDisabled,
     "Cookies": Cookies,
@@ -152,8 +154,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "Cards": Cards,
-    "AdminDeckCheck": AdminDeckCheck,
 }
 
 export const pagesConfig = {
