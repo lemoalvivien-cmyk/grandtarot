@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight, CheckCircle, Lock, Eye, MessageCircle, Zap, ChevronDown } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight, CheckCircle, Lock, Eye, MessageCircle, Zap, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { getDailyCardFallback } from '@/components/helpers/fallbackTarotDeck';
 
 export default function Landing() {
   const [lang, setLang] = useState('fr');
   const [dailyCard, setDailyCard] = useState(null);
   const [cardData, setCardData] = useState(null);
+  const [cardLoading, setCardLoading] = useState(true);
+  const [cardError, setCardError] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
   
   useEffect(() => {
     loadDailyCard();
@@ -129,23 +133,59 @@ export default function Landing() {
     };
 
   const loadDailyCard = async () => {
+    // Timeout guard: 6 seconds max
+    const timeoutId = setTimeout(() => {
+      if (cardLoading) {
+        setCardError(true);
+        setUsingFallback(true);
+        loadFallbackCard();
+      }
+    }, 6000);
+
     try {
       const today = new Date().toISOString().split('T')[0];
       const cards = await base44.entities.AdminDailyCard.filter({ 
         publish_date: today,
         is_published: true 
-      });
+      }, null, 1);
       
       if (cards.length > 0) {
-        setDailyCard(cards[0]);
-        const tarotCard = await base44.entities.TarotCard.filter({ id: cards[0].tarot_card_id });
+        const tarotCard = await base44.entities.TarotCard.filter({ id: cards[0].tarot_card_id }, null, 1);
         if (tarotCard.length > 0) {
+          setDailyCard(cards[0]);
           setCardData(tarotCard[0]);
+          setCardLoading(false);
+          clearTimeout(timeoutId);
+          return;
         }
       }
+      
+      // No card found in backend -> use fallback
+      setUsingFallback(true);
+      loadFallbackCard();
+      clearTimeout(timeoutId);
     } catch (error) {
-      console.error('Error loading daily card:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading daily card:', error);
+      }
+      setCardError(true);
+      setUsingFallback(true);
+      loadFallbackCard();
+      clearTimeout(timeoutId);
     }
+  };
+
+  const loadFallbackCard = () => {
+    const fallbackCard = getDailyCardFallback();
+    setCardData(fallbackCard);
+    
+    // Create a minimal daily card structure for display
+    setDailyCard({
+      interpretation_fr: fallbackCard.meaning_upright_fr,
+      interpretation_en: fallbackCard.meaning_upright_en
+    });
+    
+    setCardLoading(false);
   };
   
   const content = {
@@ -431,10 +471,21 @@ export default function Landing() {
           <p className="text-lg text-slate-400">{t.proof.subtitle}</p>
         </div>
 
-        {dailyCard && cardData ? (
+        {cardLoading ? (
+          <div className="text-center py-12">
+            <Star className="w-16 h-16 text-amber-400 mx-auto mb-4 animate-pulse" />
+            <p className="text-slate-400">{lang === 'fr' ? 'Chargement de la carte du jour...' : 'Loading today\'s card...'}</p>
+          </div>
+        ) : cardData ? (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-violet-500/20 rounded-3xl blur-2xl" />
             <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/20 rounded-3xl p-8 md:p-12">
+              {usingFallback && (
+                <div className="mb-4 flex items-center justify-center gap-2 text-xs text-amber-300/60">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>{lang === 'fr' ? 'Mode hors ligne' : 'Offline mode'}</span>
+                </div>
+              )}
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 {/* Card Image */}
                 <div className="mx-auto">
@@ -469,12 +520,7 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <Star className="w-16 h-16 text-amber-400 mx-auto mb-4 animate-pulse" />
-            <p className="text-slate-400">{lang === 'fr' ? 'Chargement de la carte du jour...' : 'Loading today\'s card...'}</p>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* 3. MÉCANISME */}
