@@ -317,63 +317,9 @@ export default function AppSynchros() {
 
         {/* Header */}
         {!personalModeOnly && (
+        <>
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
-            <ModeIcon className="w-4 h-4 text-amber-400" />
-            <span className="text-amber-200 text-sm">
-              {new Date().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </span>
-          </div>
-          
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-            {t.title}
-          </h1>
-          <p className="text-lg text-slate-400 mb-6">{t.subtitle}</p>
-          
-          {/* Cooldown Alert */}
-          {(() => {
-            const cooldownStatus = checkCooldown(profile, lang);
-            if (cooldownStatus.inCooldown) {
-              return (
-                <div className="max-w-2xl mx-auto mb-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-left">
-                    <p className="text-orange-300 font-medium">
-                      {lang === 'fr' ? 'Cooldown actif' : 'Cooldown active'}
-                    </p>
-                    <p className="text-orange-200/70 text-sm">
-                      {lang === 'fr' 
-                        ? `Suite à plusieurs refus consécutifs, vous ne pouvez pas envoyer d'intentions. ${cooldownStatus.remainingTime}` 
-                        : `After consecutive refusals, you cannot send intentions. ${cooldownStatus.remainingTime}`}
-                    </p>
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
-          
-          {/* Quota Counter */}
-          {!checkCooldown(profile, lang).inCooldown && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-amber-500/10 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-slate-300 text-sm">
-                {lang === 'fr' ? 'Intentions restantes' : 'Remaining intentions'}: {5 - (profile.intentions_sent_today || 0)}/5
-              </span>
-            </div>
-          )}
-
-          {matches.length > 0 && user?.role === 'admin' && (
-            <Button
-              onClick={regenerateMatches}
-              disabled={generating}
-              variant="outline"
-              className="border-amber-500/20 text-amber-200 hover:bg-amber-500/10"
-            >
-              {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-              {t.regenerate}
-            </Button>
-          )}
+...
         </div>
 
         {/* Generating State */}
@@ -417,8 +363,8 @@ export default function AppSynchros() {
             })}
           </div>
         )}
-      </div>
-      )}
+        </>
+        )}
       </div>
 
       {/* Intention Modal */}
