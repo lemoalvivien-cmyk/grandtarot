@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, Heart, Users, Briefcase, Star, MessageCircle, ChevronRight } from 'lucide-react';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 import ModeSwitch from '@/components/ModeSwitch';
+import { loadFeatureFlags } from '@/components/helpers/featureFlagsLoader';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -74,15 +75,8 @@ export default function App() {
       }
 
       // Load feature flags
-      const [numFlag, astroFlag] = await Promise.all([
-        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
-        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1)
-      ]);
-      
-      setFeatureFlags({
-        numerology: numFlag.length > 0 ? numFlag[0].value_boolean : true,
-        astrology: astroFlag.length > 0 ? astroFlag[0].value_boolean : true
-      });
+      const flags = await loadFeatureFlags();
+      setFeatureFlags(flags);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -258,6 +252,60 @@ export default function App() {
               </div>
             </div>
           </Link>
+
+          {/* Numerology (conditional) */}
+          {featureFlags.numerology && (
+            <Link to={createPageUrl('AppNumerology')}>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all" />
+                <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6 hover:border-amber-500/30 transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 flex items-center justify-center">
+                        <span className="text-2xl">🔢</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-amber-100 mb-1">
+                          {lang === 'fr' ? 'Numérologie' : 'Numerology'}
+                        </h3>
+                        <p className="text-sm text-slate-400">
+                          {lang === 'fr' ? 'Chemin de vie' : 'Life path'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
+
+          {/* Astrology (conditional) */}
+          {featureFlags.astrology && (
+            <Link to={createPageUrl('AppAstrology')}>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all" />
+                <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6 hover:border-amber-500/30 transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                        <span className="text-2xl">🌙</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-amber-100 mb-1">
+                          {lang === 'fr' ? 'Astrologie' : 'Astrology'}
+                        </h3>
+                        <p className="text-sm text-slate-400">
+                          {lang === 'fr' ? 'Signes & compatibilité' : 'Signs & compatibility'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
       </div>
