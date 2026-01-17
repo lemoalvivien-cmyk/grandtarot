@@ -329,15 +329,17 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
 const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 50) => {
   try {
     // STEP 1: Get exclusion lists (SECURED with limits)
-    const [blocks, blockedBy, intentions] = await Promise.all([
+    const [blocks, blockedBy, intentions, personalOnlyAccounts] = await Promise.all([
       base44.entities.Block.filter({ blocker_profile_id: userProfile.public_id }, null, 100),
       base44.entities.Block.filter({ blocked_profile_id: userProfile.public_id }, null, 100),
-      base44.entities.Intention.filter({ from_user_id: userProfile.user_id }, null, 100)
+      base44.entities.Intention.filter({ from_user_id: userProfile.user_id }, null, 100),
+      base44.entities.AccountPrivate.filter({ personal_use_only: true }, null, 100)
     ]);
     
     const blockedIds = new Set(blocks.map(b => b.blocked_profile_id));
     const blockerIds = new Set(blockedBy.map(b => b.blocker_profile_id));
     const intentionSentTo = new Set(intentions.map(i => i.to_user_id));
+    const personalOnlyPublicIds = new Set(personalOnlyAccounts.map(a => a.public_profile_id).filter(Boolean));
     
     // STEP 2: Fetch candidates with FILTERS (use ProfilePublic for matching)
     // Query only profiles that meet basic criteria
@@ -350,6 +352,9 @@ const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 
     const filtered = candidates.filter(p => {
       // Not self
       if (p.public_id === userProfile.public_id) return false;
+      
+      // EXCLUDE personal_use_only users (CRITICAL - privacy enforcement)
+      if (personalOnlyPublicIds.has(p.public_id)) return false;
       
       // Must have same mode in looking_for
       if (!p.looking_for?.includes(userProfile.mode_active)) return false;

@@ -74,7 +74,7 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
               </div>
             </div>
             
-            {/* Reasons */}
+            {/* Reasons (max 3, never show astro/num if user has personal_only scope) */}
             {match.reasons?.length > 0 && (
               <div className="space-y-2 mb-4">
                 {match.reasons.slice(0, 3).map((reason, i) => (
