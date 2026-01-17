@@ -118,36 +118,181 @@ export default function AdminAstroNumerologyCheck() {
   };
 
   const testPersonalUseExclusion = async () => {
-    const test = { name: 'Personal Use Only - Matching Exclusion', passed: true, details: [], warnings: [] };
+    const test = { name: 'Personal Use Only - Matching Exclusion (FULL TEST)', passed: true, details: [], warnings: [] };
+    
+    const createdRecords = {
+      userProfiles: [],
+      profilePublics: [],
+      accountPrivates: [],
+      dailyMatches: []
+    };
 
     try {
-      // Check if personal_use_only field exists in AccountPrivate
-      const accounts = await base44.entities.AccountPrivate.list(1);
+      const testTimestamp = Date.now();
+      const testEmailA = `test_userA_${testTimestamp}@test.local`;
+      const testEmailB = `test_userB_${testTimestamp}@test.local`;
+      const testPublicIdA = `public_${testTimestamp}_A`;
+      const testPublicIdB = `public_${testTimestamp}_B`;
       
-      if (accounts.length > 0) {
-        const hasField = accounts[0].hasOwnProperty('personal_use_only');
-        if (hasField) {
-          test.details.push('✓ personal_use_only field exists in AccountPrivate');
-          
-          // Count personal_use_only users
-          const allAccounts = await base44.entities.AccountPrivate.list();
-          const personalOnlyCount = allAccounts.filter(a => a.personal_use_only === true).length;
-          test.details.push(`✓ ${personalOnlyCount} users in personal_use_only mode`);
-          
-        } else {
-          test.passed = false;
-          test.details.push('❌ personal_use_only field missing from AccountPrivate');
-        }
+      test.details.push('⏳ Creating test users...');
+
+      // CREATE UserA (normal user who will receive matches)
+      const userProfileA = await base44.entities.UserProfile.create({
+        user_id: testEmailA,
+        display_name: 'TestUserA',
+        birth_year: 1990,
+        birth_month: 6,
+        birth_day: 15,
+        gender: 'male',
+        city: 'Paris',
+        country: 'France',
+        radius_km: 50,
+        mode_active: 'love',
+        interest_ids: ['yoga', 'travel', 'art'],
+        is_visible: true,
+        onboarding_completed: true,
+        photo_url: 'https://via.placeholder.com/150',
+        language_pref: 'fr'
+      });
+      createdRecords.userProfiles.push(userProfileA.id);
+
+      const profilePublicA = await base44.entities.ProfilePublic.create({
+        public_id: testPublicIdA,
+        display_name: 'TestUserA',
+        age_range: '25-29',
+        gender: 'male',
+        city: 'Paris',
+        country: 'France',
+        interest_ids: ['yoga', 'travel', 'art'],
+        looking_for: ['love'],
+        mode_active: 'love',
+        is_visible: true,
+        photo_url: 'https://via.placeholder.com/150'
+      });
+      createdRecords.profilePublics.push(profilePublicA.id);
+
+      const accountA = await base44.entities.AccountPrivate.create({
+        user_email: testEmailA,
+        public_profile_id: testPublicIdA,
+        personal_use_only: false,
+        plan_status: 'active',
+        onboarding_completed: true
+      });
+      createdRecords.accountPrivates.push(accountA.id);
+
+      // CREATE UserB (personal_use_only = TRUE - should be EXCLUDED from A's matches)
+      const userProfileB = await base44.entities.UserProfile.create({
+        user_id: testEmailB,
+        display_name: 'TestUserB',
+        birth_year: 1992,
+        birth_month: 8,
+        birth_day: 20,
+        gender: 'female',
+        city: 'Paris', // SAME CITY as userA (to ensure would match if not excluded)
+        country: 'France',
+        radius_km: 50,
+        mode_active: 'love',
+        interest_ids: ['yoga', 'travel'], // SHARED INTERESTS (high match potential)
+        is_visible: true,
+        onboarding_completed: true,
+        photo_url: 'https://via.placeholder.com/150',
+        language_pref: 'fr'
+      });
+      createdRecords.userProfiles.push(userProfileB.id);
+
+      const profilePublicB = await base44.entities.ProfilePublic.create({
+        public_id: testPublicIdB,
+        display_name: 'TestUserB',
+        age_range: '25-29',
+        gender: 'female',
+        city: 'Paris',
+        country: 'France',
+        interest_ids: ['yoga', 'travel'],
+        looking_for: ['love'],
+        mode_active: 'love',
+        is_visible: true,
+        photo_url: 'https://via.placeholder.com/150'
+      });
+      createdRecords.profilePublics.push(profilePublicB.id);
+
+      const accountB = await base44.entities.AccountPrivate.create({
+        user_email: testEmailB,
+        public_profile_id: testPublicIdB,
+        personal_use_only: true, // ⚠️ CRITICAL FLAG
+        plan_status: 'active',
+        onboarding_completed: true
+      });
+      createdRecords.accountPrivates.push(accountB.id);
+
+      test.details.push('✓ Test users created (A=normal, B=personal_only)');
+
+      // RUN MATCHING for UserA (should NOT include UserB)
+      test.details.push('⏳ Running matching engine for UserA...');
+      
+      // Get candidates (mimics matchingEngine.getEligibleCandidates)
+      const candidatesRaw = await base44.entities.ProfilePublic.filter({
+        is_visible: true,
+        photo_url: { $exists: true, $ne: null }
+      }, '-last_active', 50);
+      
+      // Filter personal_use_only (CRITICAL CHECK)
+      const personalOnlyAccounts = await base44.entities.AccountPrivate.filter({
+        personal_use_only: true
+      }, null, 50);
+      const personalOnlyEmails = new Set(personalOnlyAccounts.map(a => a.user_email));
+      const personalOnlyPublicIds = new Set(personalOnlyAccounts.map(a => a.public_profile_id).filter(Boolean));
+      
+      test.details.push(`✓ Found ${personalOnlyEmails.size} personal_use_only users to exclude`);
+      
+      const candidatesFiltered = candidatesRaw.filter(p => 
+        !personalOnlyPublicIds.has(p.public_id) && p.public_id !== testPublicIdA
+      );
+      
+      test.details.push(`✓ Candidates after filtering: ${candidatesFiltered.length}`);
+      
+      // CHECK: UserB should NOT be in candidates
+      const userBFound = candidatesFiltered.some(c => c.public_id === testPublicIdB);
+      
+      if (userBFound) {
+        test.passed = false;
+        test.details.push(`❌ FAIL: UserB (personal_use_only=true) was NOT excluded from candidates`);
       } else {
-        test.warnings.push('No accounts to check');
+        test.details.push('✅ PASS: UserB correctly excluded from matching candidates');
+      }
+      
+      // Additional check: verify UserB is in exclusion set
+      if (personalOnlyPublicIds.has(testPublicIdB)) {
+        test.details.push('✓ UserB public_id present in exclusion set');
+      } else {
+        test.passed = false;
+        test.details.push('❌ UserB public_id MISSING from exclusion set (logic bug)');
       }
 
-      // Verify matching exclusion (check matchingEngine code)
-      test.details.push('⚠️ Manual verification: matchingEngine.js should filter personalOnlyEmails');
-      
     } catch (error) {
       test.passed = false;
       test.details.push(`❌ Error: ${error.message}`);
+    }
+
+    // CLEANUP: Delete ALL test records (mandatory)
+    test.details.push('⏳ Cleaning up test data...');
+    try {
+      // Delete in reverse order (to avoid foreign key issues)
+      for (const id of createdRecords.dailyMatches) {
+        await base44.entities.DailyMatch.delete(id).catch(() => {});
+      }
+      for (const id of createdRecords.accountPrivates) {
+        await base44.entities.AccountPrivate.delete(id).catch(() => {});
+      }
+      for (const id of createdRecords.profilePublics) {
+        await base44.entities.ProfilePublic.delete(id).catch(() => {});
+      }
+      for (const id of createdRecords.userProfiles) {
+        await base44.entities.UserProfile.delete(id).catch(() => {});
+      }
+      
+      test.details.push(`✓ Cleanup complete (deleted ${createdRecords.userProfiles.length} profiles, ${createdRecords.accountPrivates.length} accounts)`);
+    } catch (cleanupError) {
+      test.warnings.push(`⚠️ Cleanup error: ${cleanupError.message}`);
     }
 
     return test;
