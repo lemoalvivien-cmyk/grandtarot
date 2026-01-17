@@ -417,7 +417,8 @@ export default function AppSynchros() {
             })}
           </div>
         )}
-        )}
+      </div>
+      )}
       </div>
 
       {/* Intention Modal */}
