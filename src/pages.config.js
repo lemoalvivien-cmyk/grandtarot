@@ -80,6 +80,7 @@ import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
 import AppNumerology from './pages/AppNumerology';
+import AppAstrology from './pages/AppAstrology';
 import __Layout from './Layout.jsx';
 
 
@@ -166,6 +167,7 @@ export const PAGES = {
     "Terms": Terms,
     "AdminNumerologySelftest": AdminNumerologySelftest,
     "AppNumerology": AppNumerology,
+    "AppAstrology": AppAstrology,
 }
 
 export const pagesConfig = {
