@@ -20,6 +20,7 @@ export default function AppSynchros() {
   const [matches, setMatches] = useState([]);
   const [matchProfiles, setMatchProfiles] = useState({});
   const [lang, setLang] = useState('fr');
+  const [personalModeOnly, setPersonalModeOnly] = useState(false);
   
   // Intention modal
   const [intentionModal, setIntentionModal] = useState(false);
@@ -42,6 +43,15 @@ export default function AppSynchros() {
       const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
+      
+      // Check if user is in personal_use_only mode
+      const accounts = await base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1);
+      if (accounts.length > 0 && accounts[0].personal_use_only) {
+        setPersonalModeOnly(true);
+        setLoading(false);
+        return; // Don't load matches for personal_use_only users
+      }
+      
       await loadMatches(profiles[0]);
     } catch (error) {
       console.error('Error:', error);
@@ -226,7 +236,12 @@ export default function AppSynchros() {
       intentionPlaceholder: "Présentez-vous de manière authentique et respectueuse (20-500 caractères)...",
       cancel: "Annuler",
       send: "Envoyer",
-      minChars: "Minimum 20 caractères"
+      minChars: "Minimum 20 caractères",
+      personalModeTitle: "Mode Guidance Personnelle",
+      personalModeDesc: "Vous utilisez GrandTarot uniquement pour la guidance quotidienne.",
+      personalModeInfo: "Les fonctionnalités de rencontres et affinités sont désactivées car vous avez activé le mode \"Usage personnel uniquement\" dans vos paramètres.",
+      enableMatching: "Activer le mode rencontres",
+      goToSettings: "Aller aux paramètres"
     },
     en: {
       title: "Your Daily Synchros",
@@ -240,7 +255,12 @@ export default function AppSynchros() {
       intentionPlaceholder: "Introduce yourself authentically and respectfully (20-500 characters)...",
       cancel: "Cancel",
       send: "Send",
-      minChars: "Minimum 20 characters"
+      minChars: "Minimum 20 characters",
+      personalModeTitle: "Personal Guidance Mode",
+      personalModeDesc: "You use GrandTarot only for daily guidance.",
+      personalModeInfo: "Encounter and affinity features are disabled because you activated \"Personal use only\" mode in your settings.",
+      enableMatching: "Enable encounter mode",
+      goToSettings: "Go to settings"
     }
   };
 
@@ -267,7 +287,36 @@ export default function AppSynchros() {
     <SubscriptionGuard>
       <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-4 py-12">
+        {/* Personal Mode Only Message */}
+        {personalModeOnly && (
+          <div className="max-w-2xl mx-auto text-center py-24">
+            <div className="relative inline-block mb-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-3xl blur-2xl" />
+              <div className="relative w-32 h-32 bg-gradient-to-br from-slate-900 to-slate-800 rounded-full border-4 border-violet-500/20 flex items-center justify-center">
+                <Sparkles className="w-16 h-16 text-violet-400" />
+              </div>
+            </div>
+            
+            <h2 className="text-3xl font-serif font-bold mb-4 bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent">
+              {t.personalModeTitle}
+            </h2>
+            <p className="text-lg text-slate-300 mb-6">{t.personalModeDesc}</p>
+            
+            <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-6 mb-8 text-left">
+              <p className="text-slate-300">{t.personalModeInfo}</p>
+            </div>
+
+            <Button
+              onClick={() => window.location.href = createPageUrl('AppSettings')}
+              className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-8 py-6 text-lg"
+            >
+              {t.goToSettings}
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
+        {!personalModeOnly && (
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
             <ModeIcon className="w-4 h-4 text-amber-400" />
@@ -367,6 +416,7 @@ export default function AppSynchros() {
               );
             })}
           </div>
+        )}
         )}
       </div>
 
