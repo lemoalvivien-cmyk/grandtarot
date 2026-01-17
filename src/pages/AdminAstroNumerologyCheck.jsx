@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Shield, CheckCircle, XCircle, AlertTriangle, Download, Copy, Loader2, Star } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, AlertTriangle, Download, Copy, Loader2, Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AdminGuard from '@/components/auth/AdminGuard';
 
@@ -643,6 +643,31 @@ export default function AdminAstroNumerologyCheck() {
     alert('Report copied to clipboard');
   };
 
+  const saveToEvidenceRun = async () => {
+    if (!results) return;
+    
+    const report = generateReport();
+    const passed = results.filter(r => r.passed).length;
+    const failed = results.filter(r => !r.passed).length;
+    const warnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
+    const timeElapsed = endTime && startTime ? (endTime - startTime) : 0;
+    
+    try {
+      await base44.entities.EvidenceRun.create({
+        run_type: 'security_selftest',
+        results_json: report,
+        summary: `Astro/Num Audit: ${passed} passed, ${failed} failed, ${warnings} warnings`,
+        tests_passed: passed,
+        tests_failed: failed,
+        run_duration_ms: timeElapsed,
+        raw_output: report
+      });
+      alert('✅ Report saved to EvidenceRun');
+    } catch (error) {
+      alert(`❌ Export error: ${error.message}`);
+    }
+  };
+
   const generateReport = () => {
     const duration = endTime && startTime ? ((endTime - startTime) / 1000).toFixed(2) : 'N/A';
     
@@ -733,6 +758,13 @@ export default function AdminAstroNumerologyCheck() {
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Export Report
+                </Button>
+
+                <Button
+                  onClick={saveToEvidenceRun}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Save to EvidenceRun
                 </Button>
               </>
             )}
