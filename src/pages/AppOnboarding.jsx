@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Heart, Users, Briefcase, ChevronRight, MapPin } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, ChevronRight, MapPin, Star, Hash, Lock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,7 +31,15 @@ export default function AppOnboarding() {
     pro_company_size: '',
     pro_current_challenge: '',
     language_pref: 'fr',
-    age_18_confirmed: false
+    age_18_confirmed: false,
+    // Astro/Num fields
+    astrology_enabled: false,
+    astrology_scope: 'personal_only',
+    birth_time: '',
+    birth_place: '',
+    numerology_enabled: false,
+    numerology_scope: 'personal_only',
+    numerology_name: ''
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -111,23 +119,24 @@ export default function AppOnboarding() {
       }
     }
 
+    if (step === 3) {
+      if (formData.interest_ids.length < 5) {
+        alert(lang === 'fr' ? 'Sélectionnez au moins 5 centres d\'intérêt' : 'Select at least 5 interests');
+        return;
+      }
+      if (formData.mode_active === 'professional') {
+        if (!formData.pro_sector || !formData.pro_company_size) {
+          alert(lang === 'fr' ? 'Complétez les informations professionnelles' : 'Complete professional information');
+          return;
+        }
+      }
+    }
+
     setStep(step + 1);
   };
 
   const handleComplete = async () => {
-    // Step 3 validation
-    if (formData.interest_ids.length < 5) {
-      alert(lang === 'fr' ? 'Sélectionnez au moins 5 centres d\'intérêt' : 'Select at least 5 interests');
-      return;
-    }
-
-    if (formData.mode_active === 'professional') {
-      if (!formData.pro_sector || !formData.pro_company_size) {
-        alert(lang === 'fr' ? 'Complétez les informations professionnelles' : 'Complete professional information');
-        return;
-      }
-    }
-
+    // Step 4 validation
     if (!turnstileToken) {
       alert(lang === 'fr' ? 'Veuillez valider le captcha' : 'Please validate captcha');
       return;
@@ -153,13 +162,23 @@ export default function AppOnboarding() {
       if (formData.mode_active === 'professional' && formData.pro_sector) completion += 10;
 
       await base44.entities.UserProfile.update(profile.id, {
-        ...formData,
+        display_name: formData.display_name,
+        gender: formData.gender,
+        photo_url: formData.photo_url,
+        city: formData.city,
+        radius_km: formData.radius_km,
+        mode_active: formData.mode_active,
+        interest_ids: formData.interest_ids,
+        pro_sector: formData.pro_sector,
+        pro_company_size: formData.pro_company_size,
+        pro_current_challenge: formData.pro_current_challenge,
+        language_pref: formData.language_pref,
         onboarding_completed: true,
         profile_completion: completion,
         last_active: new Date().toISOString()
       });
 
-      // Store age confirmation + preferred mode in AccountPrivate
+      // Store age confirmation + preferred mode + astro/num settings in AccountPrivate
       const accounts = await base44.entities.AccountPrivate.filter({
         user_email: user.email
       }, null, 1);
@@ -167,14 +186,25 @@ export default function AppOnboarding() {
       if (accounts.length > 0) {
         const termsVersion = '1.0';
         const privacyVersion = '1.0';
-        await base44.entities.AccountPrivate.update(accounts[0].id, {
+        const accountUpdate = {
           age_confirmed_at: new Date().toISOString(),
           terms_accepted_at: new Date().toISOString(),
           terms_version_accepted: termsVersion,
           privacy_accepted_at: new Date().toISOString(),
           privacy_version_accepted: privacyVersion,
-          preferred_mode: formData.mode_active
-        });
+          preferred_mode: formData.mode_active,
+          // Astrology settings
+          astrology_enabled: formData.astrology_enabled,
+          astrology_scope: formData.astrology_scope,
+          birth_time: formData.birth_time || null,
+          birth_place: formData.birth_place || null,
+          // Numerology settings
+          numerology_enabled: formData.numerology_enabled,
+          numerology_scope: formData.numerology_scope,
+          numerology_name: formData.numerology_name || null
+        };
+        
+        await base44.entities.AccountPrivate.update(accounts[0].id, accountUpdate);
       }
 
       // Clear demo localStorage after successful onboarding
@@ -197,7 +227,8 @@ export default function AppOnboarding() {
       steps: {
         1: { title: "Qui êtes-vous ?", subtitle: "Créons votre profil GRANDTAROT" },
         2: { title: "Votre quête", subtitle: "Comment souhaitez-vous utiliser l'app ?" },
-        3: { title: "Vos affinités", subtitle: "Pour mieux vous connecter" }
+        3: { title: "Vos affinités", subtitle: "Pour mieux vous connecter" },
+        4: { title: "Guidance personnelle", subtitle: "Astrologie & Numérologie (optionnel)" }
       },
       modes: [
         { value: 'love', icon: Heart, title: "Amour", desc: "Trouvez votre âme sœur", color: "from-rose-500 to-pink-600" },
@@ -226,13 +257,26 @@ export default function AppOnboarding() {
       ageConfirm: "J'ai plus de 18 ans",
       ageMustConfirm: "Vous devez confirmer que vous avez plus de 18 ans",
       termsAccept: "J'accepte les Conditions d'utilisation",
-      privacyAccept: "J'ai lu la Politique de confidentialité"
+      privacyAccept: "J'ai lu la Politique de confidentialité",
+      astroTitle: "Astrologie",
+      astroDesc: "Recevez vos prévisions quotidiennes personnalisées",
+      numTitle: "Numérologie",
+      numDesc: "Découvrez votre chemin de vie et énergies",
+      scopePersonalOnly: "Pour moi uniquement",
+      scopePersonalOnlyDesc: "Guidance privée, pas visible dans le matching",
+      scopeMatching: "Pour moi + compatibilité",
+      scopeMatchingDesc: "Visible dans votre profil et utilisé pour le matching",
+      birthTime: "Heure de naissance (optionnel)",
+      birthPlace: "Lieu de naissance (optionnel)",
+      numName: "Nom complet pour numérologie (optionnel)",
+      privacyNote: "🔒 Mode 'Pour moi uniquement' recommandé : rien n'apparaît dans vos profils de matching"
     },
     en: {
       steps: {
         1: { title: "Who are you?", subtitle: "Let's create your GRANDTAROT profile" },
         2: { title: "Your quest", subtitle: "How do you want to use the app?" },
-        3: { title: "Your affinities", subtitle: "To better connect you" }
+        3: { title: "Your affinities", subtitle: "To better connect you" },
+        4: { title: "Personal guidance", subtitle: "Astrology & Numerology (optional)" }
       },
       modes: [
         { value: 'love', icon: Heart, title: "Love", desc: "Find your soulmate", color: "from-rose-500 to-pink-600" },
@@ -261,7 +305,19 @@ export default function AppOnboarding() {
       ageConfirm: "I am 18 years or older",
       ageMustConfirm: "You must confirm that you are 18 years or older",
       termsAccept: "I accept the Terms of Service",
-      privacyAccept: "I have read the Privacy Policy"
+      privacyAccept: "I have read the Privacy Policy",
+      astroTitle: "Astrology",
+      astroDesc: "Receive personalized daily forecasts",
+      numTitle: "Numerology",
+      numDesc: "Discover your life path and energies",
+      scopePersonalOnly: "For me only",
+      scopePersonalOnlyDesc: "Private guidance, not visible in matching",
+      scopeMatching: "For me + compatibility",
+      scopeMatchingDesc: "Visible in your profile and used for matching",
+      birthTime: "Birth time (optional)",
+      birthPlace: "Birth place (optional)",
+      numName: "Full name for numerology (optional)",
+      privacyNote: "🔒 'For me only' mode recommended: nothing appears in your matching profiles"
     }
   };
 
@@ -283,7 +339,7 @@ export default function AppOnboarding() {
       <div className="w-full max-w-2xl">
         {/* Progress */}
         <div className="flex items-center gap-2 mb-12">
-          {[1, 2, 3].map(s => (
+          {[1, 2, 3, 4].map(s => (
             <div key={s} className={`flex-1 h-1 rounded-full transition-all ${
               s <= step 
                 ? 'bg-gradient-to-r from-amber-500 to-violet-500' 
@@ -470,8 +526,183 @@ export default function AppOnboarding() {
           </div>
         )}
 
+        {/* Step 4: Astrology & Numerology */}
+        {step === 4 && (
+          <div className="space-y-8">
+            {/* Privacy Notice */}
+            <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4 flex items-start gap-3">
+              <Lock className="w-5 h-5 text-violet-300 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-violet-200">{t.privacyNote}</p>
+            </div>
+
+            {/* Astrology Section */}
+            <div className="bg-slate-900/50 border border-amber-500/10 rounded-2xl p-6 space-y-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                    <Star className="w-5 h-5 text-violet-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-100 mb-1">{t.astroTitle}</h3>
+                    <p className="text-sm text-slate-400">{t.astroDesc}</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.astrology_enabled}
+                    onChange={(e) => setFormData(prev => ({ ...prev, astrology_enabled: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
+                </label>
+              </div>
+
+              {formData.astrology_enabled && (
+                <div className="space-y-4 pl-13">
+                  {/* Scope Selection */}
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-slate-700 hover:border-amber-500/30 transition-all">
+                      <input
+                        type="radio"
+                        name="astrology_scope"
+                        checked={formData.astrology_scope === 'personal_only'}
+                        onChange={() => setFormData(prev => ({ ...prev, astrology_scope: 'personal_only' }))}
+                        className="w-4 h-4 mt-1 accent-violet-500"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Eye className="w-4 h-4 text-violet-300" />
+                          <span className="text-sm font-medium text-amber-100">{t.scopePersonalOnly}</span>
+                        </div>
+                        <p className="text-xs text-slate-400">{t.scopePersonalOnlyDesc}</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-slate-700 hover:border-amber-500/30 transition-all">
+                      <input
+                        type="radio"
+                        name="astrology_scope"
+                        checked={formData.astrology_scope === 'personal_and_matching'}
+                        onChange={() => setFormData(prev => ({ ...prev, astrology_scope: 'personal_and_matching' }))}
+                        className="w-4 h-4 mt-1 accent-violet-500"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users className="w-4 h-4 text-amber-300" />
+                          <span className="text-sm font-medium text-amber-100">{t.scopeMatching}</span>
+                        </div>
+                        <p className="text-xs text-slate-400">{t.scopeMatchingDesc}</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Optional Fields */}
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-2">{t.birthTime}</label>
+                      <Input
+                        type="time"
+                        value={formData.birth_time}
+                        onChange={(e) => setFormData(prev => ({ ...prev, birth_time: e.target.value }))}
+                        className="bg-slate-800/50 border-slate-700 text-white h-10 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-2">{t.birthPlace}</label>
+                      <Input
+                        value={formData.birth_place}
+                        onChange={(e) => setFormData(prev => ({ ...prev, birth_place: e.target.value }))}
+                        className="bg-slate-800/50 border-slate-700 text-white h-10 text-sm"
+                        placeholder="Paris, France"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Numerology Section */}
+            <div className="bg-slate-900/50 border border-amber-500/10 rounded-2xl p-6 space-y-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <Hash className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-100 mb-1">{t.numTitle}</h3>
+                    <p className="text-sm text-slate-400">{t.numDesc}</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.numerology_enabled}
+                    onChange={(e) => setFormData(prev => ({ ...prev, numerology_enabled: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+              </div>
+
+              {formData.numerology_enabled && (
+                <div className="space-y-4 pl-13">
+                  {/* Scope Selection */}
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-slate-700 hover:border-amber-500/30 transition-all">
+                      <input
+                        type="radio"
+                        name="numerology_scope"
+                        checked={formData.numerology_scope === 'personal_only'}
+                        onChange={() => setFormData(prev => ({ ...prev, numerology_scope: 'personal_only' }))}
+                        className="w-4 h-4 mt-1 accent-amber-500"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Eye className="w-4 h-4 text-violet-300" />
+                          <span className="text-sm font-medium text-amber-100">{t.scopePersonalOnly}</span>
+                        </div>
+                        <p className="text-xs text-slate-400">{t.scopePersonalOnlyDesc}</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-slate-700 hover:border-amber-500/30 transition-all">
+                      <input
+                        type="radio"
+                        name="numerology_scope"
+                        checked={formData.numerology_scope === 'personal_and_matching'}
+                        onChange={() => setFormData(prev => ({ ...prev, numerology_scope: 'personal_and_matching' }))}
+                        className="w-4 h-4 mt-1 accent-amber-500"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users className="w-4 h-4 text-amber-300" />
+                          <span className="text-sm font-medium text-amber-100">{t.scopeMatching}</span>
+                        </div>
+                        <p className="text-xs text-slate-400">{t.scopeMatchingDesc}</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Optional Name */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-2">{t.numName}</label>
+                    <Input
+                      value={formData.numerology_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, numerology_name: e.target.value }))}
+                      className="bg-slate-800/50 border-slate-700 text-white h-10 text-sm"
+                      placeholder="Jean Dupont"
+                      maxLength={100}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Legal Checkboxes (Final Step) */}
-        {step === 3 && (
+        {step === 4 && (
           <div className="mt-8 space-y-4">
             {/* Turnstile (before legal) */}
             <div className="bg-slate-900/50 border border-amber-500/10 rounded-xl p-6 flex justify-center">
@@ -527,7 +758,7 @@ export default function AppOnboarding() {
 
         {/* Navigation */}
         <div className="mt-12 space-y-4">
-          {step < 3 ? (
+          {step < 4 ? (
             <Button 
               onClick={handleNext}
               className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg rounded-xl shadow-xl shadow-amber-500/20"
