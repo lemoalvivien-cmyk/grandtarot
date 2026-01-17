@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { lifePathNumber, compatibilitySignal } from './numerologyEngine';
+import { getSunSign, compatibilityHeuristic } from './astrologyEngine';
 
 /**
  * Matching Engine for GRANDTAROT
@@ -175,6 +176,57 @@ const calculateNumerologyScore = async (userProfile, targetProfile) => {
 };
 
 /**
+ * Calculate astrology compatibility (0-10 points)
+ * ONLY if both users have astrology enabled + scope = personal_and_matching
+ */
+const calculateAstrologyScore = async (userProfile, targetProfile) => {
+  try {
+    // Fetch AccountPrivate for both users
+    const [userAccounts, targetAccounts] = await Promise.all([
+      base44.entities.AccountPrivate.filter({ user_email: userProfile.user_id }, null, 1),
+      base44.entities.AccountPrivate.filter({ user_email: targetProfile.user_id }, null, 1)
+    ]);
+
+    const userAccount = userAccounts[0];
+    const targetAccount = targetAccounts[0];
+
+    // STRICT CHECK: both must have astrology enabled + scope = personal_and_matching
+    if (!userAccount?.astrology_enabled || userAccount.astrology_scope !== 'personal_and_matching') {
+      return 0;
+    }
+    if (!targetAccount?.astrology_enabled || targetAccount.astrology_scope !== 'personal_and_matching') {
+      return 0;
+    }
+
+    // Calculate sun signs
+    const userBirthDate = {
+      year: userProfile.birth_year,
+      month: userProfile.birth_month,
+      day: userProfile.birth_day
+    };
+    const targetBirthDate = {
+      year: targetProfile.birth_year,
+      month: targetProfile.birth_month,
+      day: targetProfile.birth_day
+    };
+
+    if (!userBirthDate.month || !userBirthDate.day) return 0;
+    if (!targetBirthDate.month || !targetBirthDate.day) return 0;
+
+    const userSunSign = getSunSign(userBirthDate);
+    const targetSunSign = getSunSign(targetBirthDate);
+
+    if (!userSunSign || !targetSunSign) return 0;
+
+    // Get compatibility heuristic (scoreLite: 0-10)
+    const compat = compatibilityHeuristic(userSunSign, targetSunSign, userProfile.language_pref || 'fr');
+    return compat.scoreLite; // 0-10
+  } catch (error) {
+    return 0;
+  }
+};
+
+/**
  * Generate match reasons (max 3)
  * Priority: 1 geo/interests + 1 pro/mode + 1 guidance signal (numerology OR tarot)
  */
@@ -224,11 +276,20 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
     });
   }
   
-  // PRIORITY 4: Guidance signal (NUMEROLOGY preferred, fallback to tarot)
+  // PRIORITY 4: Guidance signal (ASTROLOGY > NUMEROLOGY > TAROT)
   // ONLY add if we have room (max 3 reasons total)
   if (reasons.length < 3) {
-    // Try numerology first (if available)
-    if (scoreBreakdown.numerology >= 7) {
+    // Try astrology first (if available)
+    if (scoreBreakdown.astrology >= 7) {
+      reasons.push({
+        reason_fr: 'Signal astrologique favorable',
+        reason_en: 'Favorable astrological signal',
+        weight: scoreBreakdown.astrology,
+        category: 'guidance'
+      });
+    }
+    // Fallback to numerology
+    else if (scoreBreakdown.numerology >= 7) {
       reasons.push({
         reason_fr: 'Compatibilité numérologique',
         reason_en: 'Numerological compatibility',
@@ -236,7 +297,7 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
         category: 'guidance'
       });
     }
-    // Fallback to tarot synergy if no numerology
+    // Last fallback: tarot synergy
     else if (scoreBreakdown.tarot_synergy >= 6) {
       reasons.push({
         reason_fr: 'Énergies astrologiques compatibles',
@@ -366,13 +427,14 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
           const location = calculateDistanceScore(userProfile, candidate);
           const interests = calculateInterestsScore(userProfile, candidate);
           const tarot_synergy = await calculateTarotSynergy(userProfile.public_id, candidate.public_id);
+          const astrology = await calculateAstrologyScore(userProfile, candidate);
           const numerology = await calculateNumerologyScore(userProfile, candidate);
           const pro_bonus = calculateProBonus(userProfile, candidate);
           const age = calculateAgeScore(userProfile, candidate);
           const activity = calculateActivityScore(candidate);
           
-          const scoreBreakdown = { location, interests, tarot_synergy, numerology, pro_bonus, age, activity };
-          const totalScore = location + interests + tarot_synergy + numerology + pro_bonus + age + activity;
+          const scoreBreakdown = { location, interests, tarot_synergy, astrology, numerology, pro_bonus, age, activity };
+          const totalScore = location + interests + tarot_synergy + astrology + numerology + pro_bonus + age + activity;
           
           const reasons = await generateReasons(userProfile, candidate, scoreBreakdown, userProfile.language_pref || 'fr');
           
