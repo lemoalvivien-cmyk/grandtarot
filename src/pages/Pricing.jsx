@@ -17,6 +17,7 @@ export default function Pricing() {
       guarantee: "Sans engagement • Résiliation à tout moment",
       features: [
         "Tirage quotidien personnalisé par IA",
+        "Astrologie & numérologie (optionnel, scope privé par défaut)",
         "20 affinités par jour",
         "3 modes : Amour, Amitié, Pro",
         "Chat sécurisé après acceptation",
@@ -43,6 +44,7 @@ export default function Pricing() {
       guarantee: "No commitment • Cancel anytime",
       features: [
         "AI personalized daily reading",
+        "Astrology & numerology (optional, private scope by default)",
         "20 daily affinities",
         "3 modes: Love, Friendship, Pro",
         "Secure chat after acceptance",

@@ -184,6 +184,7 @@ export default function Billing() {
       features: [
         '✨ 3 modes en 1 : Amour, Amitié, Pro',
         'Tirage quotidien IA personnalisé',
+        'Astrologie & numérologie (optionnel, privé par défaut)',
         '20 affinités cosmiques par jour',
         'Switch de mode à volonté',
         'Chat sécurisé illimité',
@@ -220,6 +221,7 @@ export default function Billing() {
       features: [
         '✨ 3 modes in 1: Love, Friendship, Pro',
         'AI personalized daily reading',
+        'Astrology & numerology (optional, private by default)',
         '20 cosmic affinities per day',
         'Switch modes anytime',
         'Unlimited secure chat',

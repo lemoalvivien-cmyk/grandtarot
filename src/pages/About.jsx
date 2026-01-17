@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Heart, Users, Briefcase, Shield, Check, Eye, MessageCircle, Target, Zap, Crown, ChevronDown } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, Shield, Check, Eye, MessageCircle, Target, Zap, Crown, ChevronDown, Star, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function About() {
@@ -98,6 +98,25 @@ export default function About() {
           "Guidance orientée action (clarté, communication, choix)"
         ]
       },
+      astroNum: {
+        title: "Astrologie & Numérologie",
+        subtitle: "Déterministe, optionnel, respectueux de votre vie privée",
+        astro: {
+          title: "Astrologie",
+          desc: "Calcul automatique du signe solaire (basé sur date de naissance). Compatibilité entre signes utilisée uniquement si vous activez le mode 'compatibilité'."
+        },
+        num: {
+          title: "Numérologie",
+          desc: "Calcul du chemin de vie (réduction de votre date de naissance). Nom complet optionnel pour calcul d'expression. Utilisé dans le matching uniquement si vous activez le mode 'compatibilité'."
+        },
+        privacy: [
+          "Par défaut: mode 'personnel uniquement' (privé, guidance pour vous)",
+          "Option: mode 'compatibilité' (visible, influence le matching)",
+          "Changement instantané et réversible depuis vos paramètres",
+          "Suppression complète de vos données à tout moment"
+        ],
+        noAi: "Calculs déterministes locaux. Zéro appel IA. Zéro coût externe."
+      },
       security: {
         title: "Sécurité & Confiance",
         subtitle: "Votre tranquillité d'esprit est notre priorité",
@@ -126,6 +145,18 @@ export default function About() {
           {
             q: "Est-ce que je dois croire au Tarot ?",
             a: "Pas du tout. Beaucoup d'utilisateurs voient ça comme un rituel de morning routine, une façon structurée de réfléchir à leur journée. Croyance optionnelle."
+          },
+          {
+            q: "Comment fonctionne l'astrologie ici ?",
+            a: "Calcul déterministe du signe solaire (date de naissance). Par défaut, c'est privé (guidance pour vous). Si vous activez le mode 'compatibilité', votre signe devient visible et influence le matching. Changeable à tout moment."
+          },
+          {
+            q: "Et la numérologie ?",
+            a: "Calcul du chemin de vie (réduction de votre date). Nom complet optionnel. Par défaut, c'est privé (guidance perso). Si vous activez le mode 'compatibilité', votre nombre devient visible et influence le matching. Aucune obligation."
+          },
+          {
+            q: "Mes données astro/num sont-elles visibles publiquement ?",
+            a: "Non, par défaut. Vous choisissez: 'Pour moi uniquement' (privé) ou 'Pour moi + compatibilité' (visible). Vous pouvez aussi supprimer complètement vos données astro/num depuis les paramètres."
           },
           {
             q: "Je veux juste des rencontres simples, ça marche ?",
@@ -219,6 +250,25 @@ export default function About() {
           "Action-oriented guidance (clarity, communication, choices)"
         ]
       },
+      astroNum: {
+        title: "Astrology & Numerology",
+        subtitle: "Deterministic, optional, respectful of your privacy",
+        astro: {
+          title: "Astrology",
+          desc: "Automatic calculation of sun sign (based on birth date). Sign compatibility used only if you enable 'compatibility' mode."
+        },
+        num: {
+          title: "Numerology",
+          desc: "Life path calculation (reduction of your birth date). Optional full name for expression calculation. Used in matching only if you enable 'compatibility' mode."
+        },
+        privacy: [
+          "By default: 'personal only' mode (private, guidance for you)",
+          "Option: 'compatibility' mode (visible, influences matching)",
+          "Instant and reversible change from your settings",
+          "Complete deletion of your data anytime"
+        ],
+        noAi: "Deterministic local calculations. Zero AI calls. Zero external costs."
+      },
       security: {
         title: "Security & Trust",
         subtitle: "Your peace of mind is our priority",
@@ -247,6 +297,18 @@ export default function About() {
           {
             q: "Do I need to believe in Tarot?",
             a: "Not at all. Many users see it as a morning routine ritual, a structured way to reflect on their day. Belief optional."
+          },
+          {
+            q: "How does astrology work here?",
+            a: "Deterministic calculation of sun sign (birth date). By default, it's private (guidance for you). If you enable 'compatibility' mode, your sign becomes visible and influences matching. Changeable anytime."
+          },
+          {
+            q: "And numerology?",
+            a: "Life path calculation (reduction of your birth date). Full name optional. By default, it's private (personal guidance). If you enable 'compatibility' mode, your number becomes visible and influences matching. No obligation."
+          },
+          {
+            q: "Is my astro/numerology data publicly visible?",
+            a: "No, by default. You choose: 'For me only' (private) or 'For me + compatibility' (visible). You can also completely delete your astro/numerology data from settings."
           },
           {
             q: "I just want simple encounters, does it work?",
@@ -459,6 +521,45 @@ export default function About() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ASTRO/NUM SECTION */}
+      <div className="max-w-6xl mx-auto px-4 py-24 border-t border-amber-500/10">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            {t.astroNum.title}
+          </h2>
+          <p className="text-lg text-slate-400">{t.astroNum.subtitle}</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-violet-500/10 rounded-2xl p-8">
+            <Star className="w-12 h-12 text-violet-400 mb-4" />
+            <h3 className="text-2xl font-semibold mb-3 text-violet-100">{t.astroNum.astro.title}</h3>
+            <p className="text-slate-300 leading-relaxed">{t.astroNum.astro.desc}</p>
+          </div>
+
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-8">
+            <Hash className="w-12 h-12 text-amber-400 mb-4" />
+            <h3 className="text-2xl font-semibold mb-3 text-amber-100">{t.astroNum.num.title}</h3>
+            <p className="text-slate-300 leading-relaxed">{t.astroNum.num.desc}</p>
+          </div>
+        </div>
+
+        <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-8">
+          <h3 className="text-xl font-semibold mb-6 text-amber-100">
+            {lang === 'fr' ? '🔒 Confidentialité & Contrôle' : '🔒 Privacy & Control'}
+          </h3>
+          <div className="space-y-3 mb-6">
+            {t.astroNum.privacy.map((item, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-400 mt-1 flex-shrink-0" />
+                <p className="text-slate-300">{item}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-violet-300 italic">{t.astroNum.noAi}</p>
         </div>
       </div>
 

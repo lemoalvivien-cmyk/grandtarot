@@ -26,8 +26,10 @@ export const demoLove = {
       { from: "Lucas", preview: "Salut Marie ! Quelle belle énergie sur tes photos. Tu pratiques le yoga depuis longtemps ?", time: "Hier", unread: false }
     ],
     benefits: [
-      "Matching basé sur compatibilité astrale + centres d'intérêt",
+      "Matching basé sur compatibilité astrale + numérologie + centres d'intérêt",
       "Tirage quotidien personnalisé pour guider vos intentions",
+      "Astrologie: signe solaire + compatibilité (optionnel, scope privé par défaut)",
+      "Numérologie: chemin de vie + compatibilité (optionnel, scope privé par défaut)",
       "Chat sécurisé avec validation mutuelle (zéro ghosting)",
       "Blocage instantané et signalement rapide",
       "20 profils compatibles par jour (pas de swipe infini)",
@@ -59,8 +61,10 @@ export const demoLove = {
       { from: "Lucas", preview: "Hi Marie! Such beautiful energy in your photos. Have you been practicing yoga long?", time: "Yesterday", unread: false }
     ],
     benefits: [
-      "Matching based on astral compatibility + shared interests",
+      "Matching based on astral compatibility + numerology + shared interests",
       "Personalized daily reading to guide your intentions",
+      "Astrology: sun sign + compatibility (optional, private scope by default)",
+      "Numerology: life path + compatibility (optional, private scope by default)",
       "Secure chat with mutual validation (zero ghosting)",
       "Instant blocking and quick reporting",
       "20 compatible profiles per day (no infinite swipe)",
@@ -95,7 +99,7 @@ export const demoFriend = {
       { from: "Emma", preview: "J'adore ta bio ! Je cherche aussi des amitiés authentiques. Tu as lu quoi récemment ?", time: "Hier", unread: false }
     ],
     benefits: [
-      "Matching basé sur centres d'intérêt + proximité géographique",
+      "Matching basé sur centres d'intérêt + synergies astro/num (optionnel) + proximité",
       "Guidance quotidienne pour oser sortir de l'isolement",
       "Suggestions d'activités de groupe (brunch, rando, ciné)",
       "Chat sécurisé pour organiser vos sorties",
@@ -128,7 +132,7 @@ export const demoFriend = {
       { from: "Emma", preview: "Love your bio! I'm also looking for authentic friendships. What have you been reading lately?", time: "Yesterday", unread: false }
     ],
     benefits: [
-      "Matching based on shared interests + geographic proximity",
+      "Matching based on shared interests + astro/numerology synergies (optional) + proximity",
       "Daily guidance to dare stepping out of isolation",
       "Group activity suggestions (brunch, hike, movies)",
       "Secure chat to organize your outings",
@@ -164,7 +168,7 @@ export const demoPro = {
       { from: "Pierre M.", preview: "Salut Marc ! J'ai vu ton profil. Je cherche justement un projet EdTech à rejoindre en tant que CTO. On échange ?", time: "Hier", unread: false }
     ],
     benefits: [
-      "Matching basé sur secteur d'activité + objectifs business",
+      "Matching basé sur secteur d'activité + synergies astro/num (optionnel) + objectifs",
       "Guidance quotidienne pour passer à l'action (pas de procrastination)",
       "Accès à investisseurs, mentors, co-fondateurs",
       "Chat sécurisé pour qualifier rapidement les opportunités",
@@ -197,7 +201,7 @@ export const demoPro = {
       { from: "Pierre M.", preview: "Hey Marc! Saw your profile. I'm actually looking for an EdTech project to join as CTO. Let's connect?", time: "Yesterday", unread: false }
     ],
     benefits: [
-      "Matching based on industry sector + business objectives",
+      "Matching based on industry sector + astro/numerology synergies (optional) + objectives",
       "Daily guidance to take action (no procrastination)",
       "Access to investors, mentors, co-founders",
       "Secure chat to quickly qualify opportunities",

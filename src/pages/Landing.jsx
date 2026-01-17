@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight, CheckCircle, Lock, Eye, MessageCircle, Zap, ChevronDown, AlertCircle } from 'lucide-react';
+import { Sparkles, Heart, Users, Briefcase, Star, Shield, Crown, ArrowRight, CheckCircle, Lock, Eye, MessageCircle, Zap, ChevronDown, AlertCircle, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getDailyCardFallback } from '@/components/helpers/fallbackTarotDeck';
@@ -264,6 +264,22 @@ export default function Landing() {
             a: "Vous envoyez une Intention (message de 20-500 caractères) à un profil qui vous attire. Si la personne accepte, un chat privé s'ouvre. Sinon, rien ne se passe. Zéro harcèlement possible."
           },
           {
+            q: "Comment fonctionne l'astrologie ?",
+            a: "Nous calculons votre signe solaire à partir de votre date de naissance (déterministe, pas de prédiction). Par défaut, c'est privé (guidance personnelle). Si vous choisissez 'compatibilité', votre signe influence le matching."
+          },
+          {
+            q: "Et la numérologie ?",
+            a: "Nous calculons votre chemin de vie (réduction de votre date de naissance). Optionnel: ajoutez votre nom complet pour un calcul plus précis. Par défaut, c'est privé. Si vous choisissez 'compatibilité', votre nombre influence le matching."
+          },
+          {
+            q: "Mes données astro/num sont-elles visibles ?",
+            a: "Non, par défaut. Vous choisissez: 'Pour moi uniquement' (privé, guidance perso) ou 'Pour moi + compatibilité' (visible, utilisé dans le matching). Vous changez quand vous voulez."
+          },
+          {
+            q: "Puis-je utiliser l'app UNIQUEMENT pour la guidance (sans rencontres) ?",
+            a: "Oui. Activez 'Guidance personnelle uniquement' dans vos paramètres. Vous gardez accès au tarot, astro, numéro, mais n'apparaissez plus dans le matching. Réversible à tout moment."
+          },
+          {
             q: "Puis-je annuler mon abonnement facilement ?",
             a: "Oui, résiliation en 1 clic depuis vos paramètres. Aucun engagement, aucune question posée. Votre abonnement reste actif jusqu'à la fin de la période payée."
           },
@@ -284,8 +300,24 @@ export default function Landing() {
             a: "Oui ! Le site est 100% responsive et optimisé pour mobile. Une version app iOS/Android est prévue en 2026."
           },
           {
+            q: "How does astrology work?",
+            a: "We calculate your sun sign from your birth date (deterministic, not prediction). By default, it's private (personal guidance). If you choose 'compatibility', your sign influences matching."
+          },
+          {
+            q: "And numerology?",
+            a: "We calculate your life path (reduction of your birth date). Optional: add your full name for a more precise calculation. By default, it's private. If you choose 'compatibility', your number influences matching."
+          },
+          {
+            q: "Is my astro/numerology data visible?",
+            a: "No, by default. You choose: 'For me only' (private, personal guidance) or 'For me + compatibility' (visible, used in matching). You can change anytime."
+          },
+          {
+            q: "Can I use the app ONLY for guidance (no encounters)?",
+            a: "Yes. Enable 'Personal guidance only' in your settings. You keep access to tarot, astro, numerology, but no longer appear in matching. Reversible anytime."
+          },
+          {
             q: "Quelle est la différence avec Tinder/Bumble ?",
-            a: "GRANDTAROT ne se limite pas à l'amour : 3 modes (Amour/Amitié/Pro). Les affinités sont calculées via astrologie et tarot, pas juste des photos. Et le système d'Intention élimine le ghosting et le harcèlement."
+            a: "GRANDTAROT ne se limite pas à l'amour : 3 modes (Amour/Amitié/Pro). Les affinités sont calculées via astrologie, numérologie et tarot, pas juste des photos. Et le système d'Intention élimine le ghosting et le harcèlement."
           }
         ]
       },
@@ -422,15 +454,15 @@ export default function Landing() {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent leading-tight">
-            {lang === 'fr' ? 'Rencontres Tarot & Astrologie - Trouvez Votre Âme Sœur' : 'Tarot & Astrology Dating - Find Your Soulmate'}
+            {lang === 'fr' ? 'Rencontres Tarot, Astrologie & Numérologie' : 'Tarot, Astrology & Numerology Dating'}
           </h1>
-          
+
           <p className="text-2xl md:text-3xl font-serif text-violet-200 mb-4">
             {t.hero.subtitle}
           </p>
-          
+
           <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-            {t.hero.desc}
+            {lang === 'fr' ? 'Tirage quotidien + Astrologie + Numérologie • 20 affinités cosmiques • Connexions authentiques' : 'Daily reading + Astrology + Numerology • 20 cosmic affinities • Authentic connections'}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
@@ -521,7 +553,7 @@ export default function Landing() {
         ) : null}
       </div>
 
-      {/* 3. MÉCANISME */}
+      {/* 3. MÉCANISME + ASTRO/NUM */}
       <div className="max-w-6xl mx-auto px-4 py-24 border-t border-amber-500/10">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
@@ -547,6 +579,43 @@ export default function Landing() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Astro/Num Explanation */}
+        <div className="mt-16 grid md:grid-cols-2 gap-8">
+          <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <Star className="w-8 h-8 text-violet-400" />
+              <h3 className="text-xl font-semibold text-violet-100">
+                {lang === 'fr' ? 'Astrologie déterministe' : 'Deterministic Astrology'}
+              </h3>
+            </div>
+            <p className="text-slate-300 text-sm leading-relaxed mb-4">
+              {lang === 'fr' 
+                ? 'Calcul automatique du signe solaire (date de naissance). Si vous activez le mode compatibilité, votre signe devient visible et influence le matching.'
+                : 'Automatic calculation of sun sign (birth date). If you enable compatibility mode, your sign becomes visible and influences matching.'}
+            </p>
+            <p className="text-xs text-violet-300">
+              {lang === 'fr' ? '🔒 Par défaut: personnel uniquement (privé)' : '🔒 Default: personal only (private)'}
+            </p>
+          </div>
+
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <Hash className="w-8 h-8 text-amber-400" />
+              <h3 className="text-xl font-semibold text-amber-100">
+                {lang === 'fr' ? 'Numérologie déterministe' : 'Deterministic Numerology'}
+              </h3>
+            </div>
+            <p className="text-slate-300 text-sm leading-relaxed mb-4">
+              {lang === 'fr' 
+                ? 'Calcul du chemin de vie (date complète) + nom optionnel. Si vous activez le mode compatibilité, votre nombre devient visible et influence le matching.'
+                : 'Life path calculation (full date) + optional name. If you enable compatibility mode, your number becomes visible and influences matching.'}
+            </p>
+            <p className="text-xs text-amber-300">
+              {lang === 'fr' ? '🔒 Par défaut: personnel uniquement (privé)' : '🔒 Default: personal only (private)'}
+            </p>
+          </div>
         </div>
       </div>
 

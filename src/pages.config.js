@@ -3,6 +3,7 @@ import AccountPrivacy from './pages/AccountPrivacy';
 import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
 import AdminAnalytics from './pages/AdminAnalytics';
+import AdminAstroNumerologyCheck from './pages/AdminAstroNumerologyCheck';
 import AdminAuditLog from './pages/AdminAuditLog';
 import AdminBackendHealth from './pages/AdminBackendHealth';
 import AdminBackendSetup from './pages/AdminBackendSetup';
@@ -22,6 +23,7 @@ import AdminGuidanceUsage from './pages/AdminGuidanceUsage';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import AdminMobileReadiness from './pages/AdminMobileReadiness';
 import AdminModeration from './pages/AdminModeration';
+import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
 import AdminReports from './pages/AdminReports';
@@ -40,9 +42,11 @@ import AdminUiSmoke from './pages/AdminUiSmoke';
 import AdminUsers from './pages/AdminUsers';
 import Affinities from './pages/Affinities';
 import App from './pages/App';
+import AppAstrology from './pages/AppAstrology';
 import AppGuidance from './pages/AppGuidance';
 import AppHome from './pages/AppHome';
 import AppIntentions from './pages/AppIntentions';
+import AppNumerology from './pages/AppNumerology';
 import AppOnboarding from './pages/AppOnboarding';
 import AppRitual from './pages/AppRitual';
 import AppSettings from './pages/AppSettings';
@@ -78,10 +82,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
-import AppNumerology from './pages/AppNumerology';
-import AppAstrology from './pages/AppAstrology';
-import AdminAstroNumerologyCheck from './pages/AdminAstroNumerologyCheck';
 import __Layout from './Layout.jsx';
 
 
@@ -91,6 +91,7 @@ export const PAGES = {
     "AdminAiPrompts": AdminAiPrompts,
     "AdminAiPromptsEditor": AdminAiPromptsEditor,
     "AdminAnalytics": AdminAnalytics,
+    "AdminAstroNumerologyCheck": AdminAstroNumerologyCheck,
     "AdminAuditLog": AdminAuditLog,
     "AdminBackendHealth": AdminBackendHealth,
     "AdminBackendSetup": AdminBackendSetup,
@@ -110,6 +111,7 @@ export const PAGES = {
     "AdminLaunchChecklist": AdminLaunchChecklist,
     "AdminMobileReadiness": AdminMobileReadiness,
     "AdminModeration": AdminModeration,
+    "AdminNumerologySelftest": AdminNumerologySelftest,
     "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
     "AdminReports": AdminReports,
@@ -128,9 +130,11 @@ export const PAGES = {
     "AdminUsers": AdminUsers,
     "Affinities": Affinities,
     "App": App,
+    "AppAstrology": AppAstrology,
     "AppGuidance": AppGuidance,
     "AppHome": AppHome,
     "AppIntentions": AppIntentions,
+    "AppNumerology": AppNumerology,
     "AppOnboarding": AppOnboarding,
     "AppRitual": AppRitual,
     "AppSettings": AppSettings,
@@ -166,10 +170,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminNumerologySelftest": AdminNumerologySelftest,
-    "AppNumerology": AppNumerology,
-    "AppAstrology": AppAstrology,
-    "AdminAstroNumerologyCheck": AdminAstroNumerologyCheck,
 }
 
 export const pagesConfig = {
