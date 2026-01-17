@@ -7,16 +7,24 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 import TarotCardImage from '@/components/tarot/TarotCardImage';
+import DailySynthesis from '@/components/guidance/DailySynthesis';
+import AstroWidget from '@/components/guidance/AstroWidget';
+import NumerologyWidget from '@/components/guidance/NumerologyWidget';
+import { getSunSign } from '@/components/helpers/astrologyEngine';
+import { personalDayNumber } from '@/components/helpers/numerologyEngine';
 
 export default function AppRitual() {
   const [loading, setLoading] = useState(true);
   const [drawing, setDrawing] = useState(false);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [account, setAccount] = useState(null);
   const [dailyDraw, setDailyDraw] = useState(null);
   const [card, setCard] = useState(null);
   const [lang, setLang] = useState('fr');
   const [showCard, setShowCard] = useState(false);
+  const [astroData, setAstroData] = useState(null);
+  const [numeroData, setNumeroData] = useState(null);
 
   useEffect(() => {
     checkAccess();
@@ -50,11 +58,64 @@ export default function AppRitual() {
 
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
+      
+      // Load account for guidance features
+      const accounts = await base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1);
+      if (accounts.length > 0) {
+        setAccount(accounts[0]);
+        await loadGuidanceSignals(profiles[0], accounts[0]);
+      }
+      
       await loadDailyDraw(currentUser.email, profiles[0].mode_active);
       setLoading(false);
     } catch (error) {
       console.error('Error:', error);
       window.location.href = createPageUrl('Landing');
+    }
+  };
+
+  const loadGuidanceSignals = async (userProfile, userAccount) => {
+    try {
+      // Astrology signal (if enabled)
+      if (userAccount.astrology_enabled) {
+        const birthDate = {
+          year: userProfile.birth_year,
+          month: userProfile.birth_month,
+          day: userProfile.birth_day
+        };
+        
+        if (birthDate.month && birthDate.day) {
+          const sunSign = getSunSign(birthDate);
+          if (sunSign) {
+            setAstroData({ sunSign });
+          }
+        }
+      }
+
+      // Numerology signal (if enabled)
+      if (userAccount.numerology_enabled) {
+        const birthDate = {
+          year: userProfile.birth_year,
+          month: userProfile.birth_month,
+          day: userProfile.birth_day
+        };
+        
+        if (birthDate.year && birthDate.month && birthDate.day) {
+          const today = new Date();
+          const targetDate = {
+            year: today.getFullYear(),
+            month: today.getMonth() + 1,
+            day: today.getDate()
+          };
+          
+          const dailyNum = personalDayNumber(birthDate, targetDate);
+          if (dailyNum) {
+            setNumeroData({ dailyNumber: dailyNum });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading guidance signals:', error);
     }
   };
 
@@ -409,18 +470,46 @@ export default function AppRitual() {
                         </p>
                       </div>
                     )}
-                  </motion.div>
-                </div>
+                    </motion.div>
+                    </div>
 
-                {/* CTA */}
-                <div className="text-center pt-8">
-                  <Link to={createPageUrl('AppSynchros')}>
+                    {/* Guidance Signals */}
+                    {(astroData || numeroData) && (
+                    <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
+                    className="grid md:grid-cols-2 gap-6 mt-8"
+                    >
+                    {astroData && <AstroWidget sunSign={astroData.sunSign} lang={lang} />}
+                    {numeroData && <NumerologyWidget dailyNumber={numeroData.dailyNumber} lang={lang} />}
+                    </motion.div>
+                    )}
+
+                    {/* Daily Synthesis */}
+                    <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.8 }}
+                    className="mt-8"
+                    >
+                    <DailySynthesis
+                    tarot={dailyDraw}
+                    astro={astroData}
+                    numerology={numeroData}
+                    lang={lang}
+                    />
+                    </motion.div>
+
+                    {/* CTA */}
+                    <div className="text-center pt-8">
+                    <Link to={createPageUrl('AppSynchros')}>
                     <Button className="bg-gradient-to-r from-violet-500 to-pink-600 hover:from-violet-400 hover:to-pink-500 px-8 py-6 text-lg rounded-xl shadow-xl shadow-violet-500/20">
-                      {t.viewSynchros}
-                      <ArrowRight className="w-5 h-5 ml-2" />
+                     {t.viewSynchros}
+                     <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
-                  </Link>
-                </div>
+                    </Link>
+                    </div>
               </motion.div>
             )}
           </AnimatePresence>
