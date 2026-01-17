@@ -160,6 +160,9 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('AppGuidance')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
                   {lang === 'fr' ? 'Guidance' : 'Guidance'}
                 </Link>
+                <Link to={createPageUrl('AppNumerology')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
+                  {lang === 'fr' ? 'Numérologie' : 'Numerology'}
+                </Link>
                 </>
                 )}
           </nav>
