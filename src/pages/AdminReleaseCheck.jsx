@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Play, Copy, Download, Save, AlertCircle, CheckCircle, Loader2, Star } from 'lucide-react';
+import { Play, Copy, Download, Save, AlertCircle, CheckCircle, Loader2, Star, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AdminGuard from '@/components/auth/AdminGuard';
 
@@ -198,6 +198,239 @@ export default function AdminReleaseCheck() {
             payload: {},
             body: error.message,
             msg: `FAIL: DsarRequest missing`,
+            duration: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      name: 'Feature Flags: Astro/Num Exist',
+      fn: async () => {
+        const startTime = Date.now();
+        try {
+          const [astroFlag, numFlag] = await Promise.all([
+            base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1),
+            base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1)
+          ]);
+          
+          const astroOk = astroFlag.length > 0 && typeof astroFlag[0].value_boolean === 'boolean';
+          const numOk = numFlag.length > 0 && typeof numFlag[0].value_boolean === 'boolean';
+          
+          return {
+            success: astroOk && numOk,
+            status: 200,
+            payload: {},
+            body: { astrology: astroOk, numerology: numOk },
+            msg: astroOk && numOk ? 'PASS: Feature flags initialized' : 'FAIL: Missing or invalid flags',
+            duration: Date.now() - startTime
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 500,
+            payload: {},
+            body: error.message,
+            msg: `FAIL: ${error.message}`,
+            duration: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      name: 'Privacy: personal_only Scope Respected',
+      fn: async () => {
+        const startTime = Date.now();
+        try {
+          const profiles = await base44.entities.ProfilePublic.filter({}, null, 20);
+          const accounts = await base44.entities.AccountPrivate.filter({}, null, 50);
+          
+          const emailToPublicId = {};
+          profiles.forEach(p => {
+            const acc = accounts.find(a => a.public_profile_id === p.public_id);
+            if (acc) emailToPublicId[acc.user_email] = p;
+          });
+          
+          let violations = [];
+          accounts.forEach(acc => {
+            const pub = emailToPublicId[acc.user_email];
+            if (!pub) return;
+            
+            // Check astrology: if personal_only, sun_sign/moon_sign/rising_sign must be null
+            if (acc.astrology_enabled && acc.astrology_scope === 'personal_only') {
+              if (pub.sun_sign || pub.moon_sign || pub.rising_sign) {
+                violations.push(`${acc.user_email}: astrology personal_only but signs visible`);
+              }
+            }
+            
+            // Check numerology: if personal_only, life_path_number must be null
+            if (acc.numerology_enabled && acc.numerology_scope === 'personal_only') {
+              if (pub.life_path_number) {
+                violations.push(`${acc.user_email}: numerology personal_only but life_path visible`);
+              }
+            }
+          });
+          
+          return {
+            success: violations.length === 0,
+            status: 200,
+            payload: { checked: accounts.length },
+            body: { violations },
+            msg: violations.length === 0 ? 'PASS: Privacy scopes respected' : `FAIL: ${violations.length} violations found`,
+            duration: Date.now() - startTime
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 500,
+            payload: {},
+            body: error.message,
+            msg: `FAIL: ${error.message}`,
+            duration: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      name: 'Privacy: personal_and_matching Scope Active',
+      fn: async () => {
+        const startTime = Date.now();
+        try {
+          const profiles = await base44.entities.ProfilePublic.filter({}, null, 20);
+          const accounts = await base44.entities.AccountPrivate.filter({}, null, 50);
+          
+          const emailToPublicId = {};
+          profiles.forEach(p => {
+            const acc = accounts.find(a => a.public_profile_id === p.public_id);
+            if (acc) emailToPublicId[acc.user_email] = p;
+          });
+          
+          let missing = [];
+          accounts.forEach(acc => {
+            const pub = emailToPublicId[acc.user_email];
+            if (!pub) return;
+            
+            // Check astrology: if personal_and_matching, sun_sign should be non-null (if birth data exists)
+            if (acc.astrology_enabled && acc.astrology_scope === 'personal_and_matching') {
+              if (!pub.sun_sign) {
+                missing.push(`${acc.user_email}: astrology matching but sun_sign null`);
+              }
+            }
+            
+            // Check numerology: if personal_and_matching, life_path should be non-null
+            if (acc.numerology_enabled && acc.numerology_scope === 'personal_and_matching') {
+              if (!pub.life_path_number) {
+                missing.push(`${acc.user_email}: numerology matching but life_path null`);
+              }
+            }
+          });
+          
+          return {
+            success: missing.length === 0,
+            status: 200,
+            payload: { checked: accounts.length },
+            body: { missing },
+            msg: missing.length === 0 ? 'PASS: Matching scope properly set' : `WARN: ${missing.length} users missing data`,
+            duration: Date.now() - startTime
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 500,
+            payload: {},
+            body: error.message,
+            msg: `FAIL: ${error.message}`,
+            duration: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      name: 'Matching: Reasons Limit ≤ 3',
+      fn: async () => {
+        const startTime = Date.now();
+        try {
+          const matches = await base44.entities.DailyMatch.filter({}, null, 50);
+          
+          const violations = matches.filter(m => {
+            if (!m.reasons || !Array.isArray(m.reasons)) return false;
+            return m.reasons.length > 3;
+          });
+          
+          return {
+            success: violations.length === 0,
+            status: 200,
+            payload: { checked: matches.length },
+            body: { violations_count: violations.length },
+            msg: violations.length === 0 ? 'PASS: All matches have ≤3 reasons' : `FAIL: ${violations.length} matches exceed limit`,
+            duration: Date.now() - startTime
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 500,
+            payload: {},
+            body: error.message,
+            msg: `FAIL: ${error.message}`,
+            duration: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      name: 'Cache: No Duplicate DailyDraw',
+      fn: async () => {
+        const startTime = Date.now();
+        try {
+          const draws = await base44.entities.DailyDraw.filter({}, null, 100);
+          
+          const keys = draws.map(d => `${d.profile_id}_${d.draw_date}_${d.mode}`);
+          const duplicates = keys.filter((k, i) => keys.indexOf(k) !== i);
+          
+          return {
+            success: duplicates.length === 0,
+            status: 200,
+            payload: { checked: draws.length },
+            body: { duplicates_count: duplicates.length },
+            msg: duplicates.length === 0 ? 'PASS: No duplicate draws' : `FAIL: ${duplicates.length} duplicates found`,
+            duration: Date.now() - startTime
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 500,
+            payload: {},
+            body: error.message,
+            msg: `FAIL: ${error.message}`,
+            duration: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      name: 'Cache: No Duplicate GuidanceAnswer',
+      fn: async () => {
+        const startTime = Date.now();
+        try {
+          const answers = await base44.entities.GuidanceAnswer.filter({}, null, 100);
+          
+          const keys = answers.map(a => `${a.user_id}_${a.day_key}_${a.mode}`);
+          const duplicates = keys.filter((k, i) => keys.indexOf(k) !== i);
+          
+          return {
+            success: duplicates.length === 0,
+            status: 200,
+            payload: { checked: answers.length },
+            body: { duplicates_count: duplicates.length },
+            msg: duplicates.length === 0 ? 'PASS: No duplicate guidance' : `FAIL: ${duplicates.length} duplicates found`,
+            duration: Date.now() - startTime
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 500,
+            payload: {},
+            body: error.message,
+            msg: `FAIL: ${error.message}`,
             duration: Date.now() - startTime
           };
         }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Copy, Check, Edit2, Loader2, Power, Star } from 'lucide-react';
+import { Copy, Check, Edit2, Loader2, Power, Star, Hash, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -15,6 +15,13 @@ export default function AdminGoLive() {
     pendingRequests: 0,
     activeUsers: 0,
     recentLogs: []
+  });
+  const [astroNumHealth, setAstroNumHealth] = useState({
+    astroFlag: false,
+    numFlag: false,
+    personalOnlyCount: 0,
+    duplicateDraws: 0,
+    duplicateGuidance: 0
   });
   const [copied, setCopied] = useState(false);
   const [editModal, setEditModal] = useState(false);
@@ -76,6 +83,29 @@ export default function AdminGoLive() {
       setPendingOver48h(over48h);
 
       setRecentLogs(logs);
+
+      // Load Astro/Num Health
+      const [astroFlag, numFlag, personalOnlyAccounts, draws, guidance] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
+        base44.entities.AccountPrivate.filter({ personal_use_only: true }, null, 50),
+        base44.entities.DailyDraw.filter({}, null, 100),
+        base44.entities.GuidanceAnswer.filter({}, null, 100)
+      ]);
+
+      const drawKeys = draws.map(d => `${d.profile_id}_${d.draw_date}_${d.mode}`);
+      const dupDraws = drawKeys.filter((k, i) => drawKeys.indexOf(k) !== i).length;
+
+      const guidanceKeys = guidance.map(g => `${g.user_id}_${g.day_key}_${g.mode}`);
+      const dupGuidance = guidanceKeys.filter((k, i) => guidanceKeys.indexOf(k) !== i).length;
+
+      setAstroNumHealth({
+        astroFlag: astroFlag.length > 0 ? astroFlag[0].value_boolean : false,
+        numFlag: numFlag.length > 0 ? numFlag[0].value_boolean : false,
+        personalOnlyCount: personalOnlyAccounts.length >= 50 ? '50+' : personalOnlyAccounts.length,
+        duplicateDraws: dupDraws,
+        duplicateGuidance: dupGuidance
+      });
     } catch (error) {
       console.error('Error loading go-live data:', error);
     } finally {
@@ -396,6 +426,65 @@ Payment issues? Contact support with your order details.`;
               <p className="text-xs text-slate-500 mb-1">Recent Audit Actions</p>
               <p className="text-4xl font-bold text-green-100">{recentLogs.length}</p>
               <p className="text-xs text-slate-400 mt-2">Last 20</p>
+            </div>
+          </div>
+
+          {/* Astro/Num Health Widget */}
+          <div className="bg-gradient-to-br from-violet-500/5 to-amber-500/5 border border-violet-500/20 rounded-xl p-6 mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Star className="w-6 h-6 text-violet-400" />
+              <h3 className="text-lg font-semibold text-violet-100">Astro/Num Health</h3>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 mb-1">Feature: Astrology</p>
+                <p className={`text-2xl font-bold ${astroNumHealth.astroFlag ? 'text-green-300' : 'text-slate-400'}`}>
+                  {astroNumHealth.astroFlag ? 'ON' : 'OFF'}
+                </p>
+              </div>
+              
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 mb-1">Feature: Numerology</p>
+                <p className={`text-2xl font-bold ${astroNumHealth.numFlag ? 'text-green-300' : 'text-slate-400'}`}>
+                  {astroNumHealth.numFlag ? 'ON' : 'OFF'}
+                </p>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 mb-1">Users: personal_use_only</p>
+                <p className="text-2xl font-bold text-violet-300">{astroNumHealth.personalOnlyCount}</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className={`rounded-lg p-4 ${astroNumHealth.duplicateDraws > 0 ? 'bg-red-500/10 border border-red-500/30' : 'bg-green-500/10 border border-green-500/30'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  {astroNumHealth.duplicateDraws > 0 ? (
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                  ) : (
+                    <Check className="w-4 h-4 text-green-400" />
+                  )}
+                  <p className="text-xs text-slate-400">Cache: DailyDraw</p>
+                </div>
+                <p className={`text-xl font-bold ${astroNumHealth.duplicateDraws > 0 ? 'text-red-300' : 'text-green-300'}`}>
+                  {astroNumHealth.duplicateDraws === 0 ? 'OK' : `${astroNumHealth.duplicateDraws} dups`}
+                </p>
+              </div>
+
+              <div className={`rounded-lg p-4 ${astroNumHealth.duplicateGuidance > 0 ? 'bg-red-500/10 border border-red-500/30' : 'bg-green-500/10 border border-green-500/30'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  {astroNumHealth.duplicateGuidance > 0 ? (
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                  ) : (
+                    <Check className="w-4 h-4 text-green-400" />
+                  )}
+                  <p className="text-xs text-slate-400">Cache: GuidanceAnswer</p>
+                </div>
+                <p className={`text-xl font-bold ${astroNumHealth.duplicateGuidance > 0 ? 'text-red-300' : 'text-green-300'}`}>
+                  {astroNumHealth.duplicateGuidance === 0 ? 'OK' : `${astroNumHealth.duplicateGuidance} dups`}
+                </p>
+              </div>
             </div>
           </div>
 
