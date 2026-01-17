@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Copy, Check, Edit2, Loader2, Power } from 'lucide-react';
+import { Copy, Check, Edit2, Loader2, Power, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -232,10 +234,19 @@ Payment issues? Contact support with your order details.`;
     <AdminGuard>
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-8 flex items-center gap-3">
-            <Power className="w-8 h-8 text-green-500" />
-            <h1 className="text-4xl font-bold">GO-LIVE PANEL</h1>
-            <span className="text-sm text-green-400">Ready</span>
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <Power className="w-8 h-8 text-green-500" />
+              <h1 className="text-4xl font-bold">GO-LIVE PANEL</h1>
+              <span className="text-sm text-green-400">Ready</span>
+            </div>
+            
+            <Link to={createPageUrl('AdminAstroNumerologyCheck')}>
+              <Button variant="outline" className="border-violet-500/20 text-violet-200 hover:bg-violet-500/10">
+                <Star className="w-4 h-4 mr-2" />
+                Astro/Numero Audit
+              </Button>
+            </Link>
           </div>
 
           {/* Configuration Section */}

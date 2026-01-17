@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Play, Copy, Download, Save, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Play, Copy, Download, Save, AlertCircle, CheckCircle, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AdminGuard from '@/components/auth/AdminGuard';
 
@@ -290,11 +292,21 @@ Body: ${typeof r.body === 'string' ? r.body : JSON.stringify(r.body, null, 2)}
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-amber-300">Release Check</h1>
 
-          <div className="flex gap-2 mb-6 flex-wrap">
-            <Button onClick={runTests} disabled={running} className="bg-amber-600 hover:bg-amber-700">
-              <Play className="w-4 h-4 mr-2" />
-              {running ? 'Running...' : 'RUN'}
-            </Button>
+          <div className="mb-6">
+            <div className="flex gap-2 mb-4">
+              <Link to={createPageUrl('AdminAstroNumerologyCheck')}>
+                <Button variant="outline" className="border-violet-500/20 text-violet-200 hover:bg-violet-500/10">
+                  <Star className="w-4 h-4 mr-2" />
+                  Astro/Numero Audit
+                </Button>
+              </Link>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={runTests} disabled={running} className="bg-amber-600 hover:bg-amber-700">
+                <Play className="w-4 h-4 mr-2" />
+                {running ? 'Running...' : 'RUN'}
+              </Button>
 
             {results.length > 0 && (
               <>
@@ -312,6 +324,7 @@ Body: ${typeof r.body === 'string' ? r.body : JSON.stringify(r.body, null, 2)}
                 </Button>
               </>
             )}
+            </div>
           </div>
 
           {results.length > 0 && (
