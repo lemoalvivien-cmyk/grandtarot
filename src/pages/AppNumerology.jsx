@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Hash, AlertCircle, Sparkles } from 'lucide-react';
+import { Hash, AlertCircle, Sparkles, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createPageUrl } from '@/utils';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 import NumerologyProfileCard from '@/components/numerology/NumerologyProfileCard';
 import NumerologyDailyCard from '@/components/numerology/NumerologyDailyCard';
@@ -11,6 +12,7 @@ import {
   personalDayNumber,
   nameExpressionNumber
 } from '@/components/helpers/numerologyEngine';
+import { loadFeatureFlags } from '@/components/helpers/featureFlagsLoader';
 
 export default function AppNumerology() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,7 @@ export default function AppNumerology() {
   const [account, setAccount] = useState(null);
   const [lang, setLang] = useState('fr');
   const [numerologyData, setNumerologyData] = useState(null);
+  const [featureDisabled, setFeatureDisabled] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -26,6 +29,14 @@ export default function AppNumerology() {
 
   const loadData = async () => {
     try {
+      // Check global feature flag FIRST
+      const flags = await loadFeatureFlags();
+      if (!flags.numerology) {
+        setFeatureDisabled(true);
+        setLoading(false);
+        return;
+      }
+
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
@@ -126,8 +137,35 @@ export default function AppNumerology() {
     );
   }
 
-  // Check if feature is enabled globally (optional check)
-  // For now, we allow access if user has subscription
+  // Feature disabled fallback
+  if (featureDisabled) {
+    return (
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="max-w-md text-center">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-3xl p-8">
+              <AlertCircle className="w-16 h-16 text-amber-400 mx-auto mb-6" />
+              <h2 className="text-2xl font-serif font-bold mb-4 text-amber-100">
+                {lang === 'fr' ? 'Fonctionnalité désactivée' : 'Feature disabled'}
+              </h2>
+              <p className="text-slate-300 mb-8">
+                {lang === 'fr' 
+                  ? 'La numérologie a été temporairement désactivée par les administrateurs.' 
+                  : 'Numerology has been temporarily disabled by administrators.'}
+              </p>
+              <Button
+                onClick={() => window.location.href = createPageUrl('App')}
+                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {lang === 'fr' ? 'Retour au dashboard' : 'Back to dashboard'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SubscriptionGuard>
+    );
+  }
 
   return (
     <SubscriptionGuard>

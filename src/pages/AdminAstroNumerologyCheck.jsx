@@ -47,29 +47,66 @@ export default function AdminAstroNumerologyCheck() {
     setRunning(false);
   };
 
+  const initializeFeatureFlags = async () => {
+    try {
+      const admin = await base44.auth.me();
+      
+      const [numFlag, astroFlag] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1)
+      ]);
+      
+      if (numFlag.length === 0) {
+        await base44.entities.AppSettings.create({
+          setting_key: 'feature_numerology',
+          value_boolean: true,
+          category: 'features',
+          description_fr: 'Activer la numérologie',
+          description_en: 'Enable numerology',
+          is_public: false
+        });
+      }
+      
+      if (astroFlag.length === 0) {
+        await base44.entities.AppSettings.create({
+          setting_key: 'feature_astrology',
+          value_boolean: true,
+          category: 'features',
+          description_fr: 'Activer l\'astrologie',
+          description_en: 'Enable astrology',
+          is_public: false
+        });
+      }
+      
+      alert('✅ Feature flags initialisés');
+    } catch (error) {
+      alert(`❌ Erreur: ${error.message}`);
+    }
+  };
+
   const testFeatureFlags = async () => {
     const test = { name: 'Feature Flags Configuration', passed: true, details: [], warnings: [] };
 
     try {
-      const settings = await base44.entities.AppSettings.filter({
-        setting_key: { $in: ['feature_numerology', 'feature_astrology'] }
-      });
+      const [numFlag, astroFlag] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1)
+      ]);
 
-      const numSetting = settings.find(s => s.setting_key === 'feature_numerology');
-      const astroSetting = settings.find(s => s.setting_key === 'feature_astrology');
-
-      if (!numSetting) {
-        test.details.push('⚠️ feature_numerology setting missing');
-        test.warnings.push('Create feature_numerology flag in AppSettings');
+      if (numFlag.length === 0) {
+        test.passed = false;
+        test.details.push('❌ feature_numerology setting missing');
+        test.warnings.push('Click "Initialize Feature Flags" button below');
       } else {
-        test.details.push(`✓ feature_numerology = ${numSetting.value_boolean}`);
+        test.details.push(`✓ feature_numerology = ${numFlag[0].value_boolean}`);
       }
 
-      if (!astroSetting) {
-        test.details.push('⚠️ feature_astrology setting missing');
-        test.warnings.push('Create feature_astrology flag in AppSettings');
+      if (astroFlag.length === 0) {
+        test.passed = false;
+        test.details.push('❌ feature_astrology setting missing');
+        test.warnings.push('Click "Initialize Feature Flags" button below');
       } else {
-        test.details.push(`✓ feature_astrology = ${astroSetting.value_boolean}`);
+        test.details.push(`✓ feature_astrology = ${astroFlag[0].value_boolean}`);
       }
 
     } catch (error) {
@@ -408,7 +445,7 @@ export default function AdminAstroNumerologyCheck() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mb-8">
+          <div className="flex gap-3 mb-8 flex-wrap">
             <Button
               onClick={runChecks}
               disabled={running}
@@ -416,6 +453,15 @@ export default function AdminAstroNumerologyCheck() {
             >
               {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Shield className="w-4 h-4 mr-2" />}
               {running ? 'Running Checks...' : 'Run All Checks'}
+            </Button>
+
+            <Button
+              onClick={initializeFeatureFlags}
+              variant="outline"
+              className="border-green-500/20 text-green-200 hover:bg-green-500/10"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Initialize Feature Flags
             </Button>
 
             {results && (

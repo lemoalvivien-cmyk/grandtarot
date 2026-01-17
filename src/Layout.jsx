@@ -23,6 +23,10 @@ export default function Layout({ children, currentPageName }) {
   const [profile, setProfile] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [lang, setLang] = useState('fr');
+  const [featureFlags, setFeatureFlags] = useState({
+    numerology: true,
+    astrology: true
+  });
 
   useEffect(() => {
     loadUser();
@@ -41,6 +45,17 @@ export default function Layout({ children, currentPageName }) {
         setProfile(profiles[0]);
         setLang(profiles[0].language_pref || 'fr');
       }
+
+      // Load feature flags
+      const [numFlag, astroFlag] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1)
+      ]);
+      
+      setFeatureFlags({
+        numerology: numFlag.length > 0 ? numFlag[0].value_boolean : true,
+        astrology: astroFlag.length > 0 ? astroFlag[0].value_boolean : true
+      });
     } catch (error) {
       console.error('Error loading user:', error);
     }
@@ -160,12 +175,16 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('AppGuidance')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
                   {lang === 'fr' ? 'Guidance' : 'Guidance'}
                 </Link>
-                <Link to={createPageUrl('AppNumerology')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
-                  {lang === 'fr' ? 'Numérologie' : 'Numerology'}
-                </Link>
-                <Link to={createPageUrl('AppAstrology')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
-                  {lang === 'fr' ? 'Astrologie' : 'Astrology'}
-                </Link>
+                {featureFlags.numerology && (
+                  <Link to={createPageUrl('AppNumerology')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
+                    {lang === 'fr' ? 'Numérologie' : 'Numerology'}
+                  </Link>
+                )}
+                {featureFlags.astrology && (
+                  <Link to={createPageUrl('AppAstrology')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
+                    {lang === 'fr' ? 'Astrologie' : 'Astrology'}
+                  </Link>
+                )}
                 </>
                 )}
           </nav>
@@ -311,12 +330,16 @@ export default function Layout({ children, currentPageName }) {
                   <Link to={createPageUrl('AppGuidance')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {lang === 'fr' ? 'Guidance' : 'Guidance'}
                   </Link>
-                  <Link to={createPageUrl('AppNumerology')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
-                    {lang === 'fr' ? 'Numérologie' : 'Numerology'}
-                  </Link>
-                  <Link to={createPageUrl('AppAstrology')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
-                    {lang === 'fr' ? 'Astrologie' : 'Astrology'}
-                  </Link>
+                  {featureFlags.numerology && (
+                    <Link to={createPageUrl('AppNumerology')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
+                      {lang === 'fr' ? 'Numérologie' : 'Numerology'}
+                    </Link>
+                  )}
+                  {featureFlags.astrology && (
+                    <Link to={createPageUrl('AppAstrology')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
+                      {lang === 'fr' ? 'Astrologie' : 'Astrology'}
+                    </Link>
+                  )}
                   <Link to={createPageUrl('AppSettings')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {t.settings}
                   </Link>
