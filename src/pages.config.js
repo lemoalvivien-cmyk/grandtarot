@@ -1,3 +1,4 @@
+import About from './pages/About';
 import AccountPrivacy from './pages/AccountPrivacy';
 import AdminAiPrompts from './pages/AdminAiPrompts';
 import AdminAiPromptsEditor from './pages/AdminAiPromptsEditor';
@@ -77,11 +78,12 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import About from './pages/About';
+import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "About": About,
     "AccountPrivacy": AccountPrivacy,
     "AdminAiPrompts": AdminAiPrompts,
     "AdminAiPromptsEditor": AdminAiPromptsEditor,
@@ -161,7 +163,7 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "About": About,
+    "AdminNumerologySelftest": AdminNumerologySelftest,
 }
 
 export const pagesConfig = {
