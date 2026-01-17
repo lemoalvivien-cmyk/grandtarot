@@ -79,6 +79,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
+import AppNumerology from './pages/AppNumerology';
 import __Layout from './Layout.jsx';
 
 
@@ -164,6 +165,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "AdminNumerologySelftest": AdminNumerologySelftest,
+    "AppNumerology": AppNumerology,
 }
 
 export const pagesConfig = {

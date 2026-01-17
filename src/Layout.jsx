@@ -305,6 +305,9 @@ export default function Layout({ children, currentPageName }) {
                   <Link to={createPageUrl('AppGuidance')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {lang === 'fr' ? 'Guidance' : 'Guidance'}
                   </Link>
+                  <Link to={createPageUrl('AppNumerology')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
+                    {lang === 'fr' ? 'Numérologie' : 'Numerology'}
+                  </Link>
                   <Link to={createPageUrl('AppSettings')} onClick={() => setMenuOpen(false)} className="px-4 py-2 text-sm text-slate-300 hover:text-amber-200 hover:bg-slate-800/50 rounded-lg transition-all">
                     {t.settings}
                   </Link>
