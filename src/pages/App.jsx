@@ -12,6 +12,10 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [lang, setLang] = useState('fr');
   const [currentMode, setCurrentMode] = useState('love');
+  const [featureFlags, setFeatureFlags] = useState({
+    numerology: true,
+    astrology: true
+  });
 
   useEffect(() => {
     checkAccess();
@@ -68,6 +72,17 @@ export default function App() {
         window.location.href = createPageUrl('AppOnboarding');
         return;
       }
+
+      // Load feature flags
+      const [numFlag, astroFlag] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1)
+      ]);
+      
+      setFeatureFlags({
+        numerology: numFlag.length > 0 ? numFlag[0].value_boolean : true,
+        astrology: astroFlag.length > 0 ? astroFlag[0].value_boolean : true
+      });
     } catch (error) {
       console.error('Error:', error);
     } finally {

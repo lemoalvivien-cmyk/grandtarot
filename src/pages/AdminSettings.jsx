@@ -13,7 +13,12 @@ import AdminGuard from '@/components/auth/AdminGuard';
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   const [settings, setSettings] = useState({});
+  const [featureFlags, setFeatureFlags] = useState({
+    feature_numerology: null,
+    feature_astrology: null
+  });
 
   const defaultSettings = {
     // Limits
@@ -52,6 +57,17 @@ export default function AdminSettings() {
       });
 
       setSettings(settingsMap);
+      
+      // Load feature flags
+      const [numFlag, astroFlag] = await Promise.all([
+        base44.entities.AppSettings.filter({ setting_key: 'feature_numerology' }, null, 1),
+        base44.entities.AppSettings.filter({ setting_key: 'feature_astrology' }, null, 1)
+      ]);
+      
+      setFeatureFlags({
+        feature_numerology: numFlag.length > 0 ? numFlag[0] : null,
+        feature_astrology: astroFlag.length > 0 ? astroFlag[0] : null
+      });
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -111,6 +127,86 @@ export default function AdminSettings() {
     }));
   };
 
+  const initializeFeatureFlags = async () => {
+    setInitializing(true);
+    try {
+      const admin = await base44.auth.me();
+      
+      // Create feature_numerology if missing
+      if (!featureFlags.feature_numerology) {
+        await base44.entities.AppSettings.create({
+          setting_key: 'feature_numerology',
+          value_boolean: true,
+          category: 'features',
+          description_fr: 'Activer la numérologie',
+          description_en: 'Enable numerology',
+          is_public: false
+        });
+      }
+      
+      // Create feature_astrology if missing
+      if (!featureFlags.feature_astrology) {
+        await base44.entities.AppSettings.create({
+          setting_key: 'feature_astrology',
+          value_boolean: true,
+          category: 'features',
+          description_fr: 'Activer l\'astrologie',
+          description_en: 'Enable astrology',
+          is_public: false
+        });
+      }
+      
+      // Log action
+      await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
+        action: 'settings_changed',
+        entity_name: 'AppSettings',
+        payload_summary: 'Initialized feature flags (numerology, astrology)',
+        severity: 'info',
+        status: 'success'
+      }).catch(() => {});
+      
+      alert('✅ Feature flags initialisés');
+      loadData();
+    } catch (error) {
+      console.error('Error:', error);
+      alert(`❌ Erreur: ${error.message}`);
+    } finally {
+      setInitializing(false);
+    }
+  };
+
+  const toggleFeatureFlag = async (flagKey) => {
+    setSaving(true);
+    try {
+      const flag = featureFlags[flagKey];
+      if (!flag) return;
+      
+      await base44.entities.AppSettings.update(flag.id, {
+        value_boolean: !flag.value_boolean
+      });
+      
+      const admin = await base44.auth.me();
+      await base44.entities.AuditLog.create({
+        actor_user_id: admin.email,
+        actor_role: 'admin',
+        action: 'settings_changed',
+        entity_name: 'AppSettings',
+        payload_summary: `Toggled ${flagKey} to ${!flag.value_boolean}`,
+        severity: 'info',
+        status: 'success'
+      }).catch(() => {});
+      
+      loadData();
+    } catch (error) {
+      console.error('Error:', error);
+      alert(`❌ Erreur: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const limitSettings = Object.entries(settings).filter(([_, s]) => s.category === 'limits');
   const pricingSettings = Object.entries(settings).filter(([_, s]) => s.category === 'pricing');
   const promptSettings = Object.entries(settings).filter(([_, s]) => s.category === 'prompts');
@@ -151,8 +247,12 @@ export default function AdminSettings() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <Tabs defaultValue="limits">
+        <Tabs defaultValue="features">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
+            <TabsTrigger value="features" className="data-[state=active]:bg-purple-500">
+              <Settings className="w-4 h-4 mr-2" />
+              Features
+            </TabsTrigger>
             <TabsTrigger value="limits" className="data-[state=active]:bg-purple-500">
               <Shield className="w-4 h-4 mr-2" />
               Limites
@@ -166,6 +266,85 @@ export default function AdminSettings() {
               Prompts IA
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="features">
+            <Card className="bg-white/5 border-white/10 mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Feature Flags (Global)</span>
+                  {(!featureFlags.feature_numerology || !featureFlags.feature_astrology) && (
+                    <Button
+                      onClick={initializeFeatureFlags}
+                      disabled={initializing}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {initializing ? '...' : 'Initialize Missing Flags'}
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Numerology Flag */}
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-white">Numérologie</h3>
+                      <p className="text-xs text-slate-400">
+                        {featureFlags.feature_numerology 
+                          ? `Status: ${featureFlags.feature_numerology.value_boolean ? 'ACTIVÉ ✅' : 'DÉSACTIVÉ ❌'}`
+                          : 'Status: NON INITIALISÉ ⚠️'}
+                      </p>
+                    </div>
+                    {featureFlags.feature_numerology && (
+                      <Button
+                        onClick={() => toggleFeatureFlag('feature_numerology')}
+                        disabled={saving}
+                        size="sm"
+                        className={featureFlags.feature_numerology.value_boolean 
+                          ? 'bg-red-600 hover:bg-red-700' 
+                          : 'bg-green-600 hover:bg-green-700'}
+                      >
+                        {featureFlags.feature_numerology.value_boolean ? 'Désactiver' : 'Activer'}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Si désactivé: liens cachés, widgets masqués, AppNumerology affiche page fallback
+                  </p>
+                </div>
+
+                {/* Astrology Flag */}
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-white">Astrologie</h3>
+                      <p className="text-xs text-slate-400">
+                        {featureFlags.feature_astrology 
+                          ? `Status: ${featureFlags.feature_astrology.value_boolean ? 'ACTIVÉ ✅' : 'DÉSACTIVÉ ❌'}`
+                          : 'Status: NON INITIALISÉ ⚠️'}
+                      </p>
+                    </div>
+                    {featureFlags.feature_astrology && (
+                      <Button
+                        onClick={() => toggleFeatureFlag('feature_astrology')}
+                        disabled={saving}
+                        size="sm"
+                        className={featureFlags.feature_astrology.value_boolean 
+                          ? 'bg-red-600 hover:bg-red-700' 
+                          : 'bg-green-600 hover:bg-green-700'}
+                      >
+                        {featureFlags.feature_astrology.value_boolean ? 'Désactiver' : 'Activer'}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Si désactivé: liens cachés, widgets masqués, AppAstrology affiche page fallback
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="limits">
             <Card className="bg-white/5 border-white/10">
