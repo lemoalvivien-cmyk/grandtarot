@@ -32,13 +32,31 @@ export default function ManageSubscription() {
     }
   };
 
-  const openStripePortal = () => {
-    // NOTE: Requires backend function to generate portal session
-    // For now, redirect to Stripe payment link
-    alert(lang === 'fr' 
-      ? 'Portail Stripe non disponible (backend requis). Contactez support@grandtarot.com pour gérer votre abonnement.'
-      : 'Stripe portal unavailable (backend required). Contact support@grandtarot.com to manage your subscription.'
-    );
+  const openStripePortal = async () => {
+    try {
+      const response = await fetch('/api/v1/functions/stripe_create_portal_session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          returnUrl: window.location.origin + createPageUrl('ManageSubscription')
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || 'Failed to create portal session');
+      }
+      
+      window.location.href = result.url;
+      
+    } catch (error) {
+      console.error('Portal error:', error);
+      alert(lang === 'fr' 
+        ? `Erreur: ${error.message}. Contactez support@grandtarot.com`
+        : `Error: ${error.message}. Contact support@grandtarot.com`);
+    }
   };
 
   const content = {

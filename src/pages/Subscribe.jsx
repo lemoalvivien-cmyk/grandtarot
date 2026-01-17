@@ -59,29 +59,31 @@ export default function Subscribe() {
 
   const handleSubscribe = async () => {
     try {
-      // Store user email for webhook matching
-      if (user?.email) {
-        sessionStorage.setItem('subscribing_user', user.email);
-      }
-
-      // Try Base44 native payments first
-      if (window.base44?.payments) {
-        // Will redirect to Stripe Checkout managed by Base44
-        // Base44 handles webhooks automatically
-        await window.base44.payments.subscribe({
-          priceId: 'price_monthly_premium', // To be configured in Base44 dashboard
+      // Call backend function to create Checkout Session (SECURE)
+      const response = await fetch('/api/v1/functions/stripe_create_checkout_session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
           successUrl: window.location.origin + createPageUrl('SubscribeSuccess'),
           cancelUrl: window.location.origin + createPageUrl('SubscribeCancel')
-        });
-      } else {
-        // Fallback to Payment Link (requires manual webhook setup)
-        window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || 'Failed to create checkout session');
       }
+      
+      // Redirect to Stripe Checkout
+      window.location.href = result.url;
+      
     } catch (error) {
       console.error('Payment error:', error);
       alert(lang === 'fr' 
-        ? 'Erreur lors de l\'accès au paiement. Veuillez réessayer.' 
-        : 'Payment access error. Please try again.');
+        ? `Erreur: ${error.message}. Contactez support@grandtarot.com` 
+        : `Error: ${error.message}. Contact support@grandtarot.com`);
     }
   };
 

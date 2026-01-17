@@ -83,6 +83,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import AdminFinalAudit from './pages/AdminFinalAudit';
+import AdminPaymentSmokeCheck from './pages/AdminPaymentSmokeCheck';
 import __Layout from './Layout.jsx';
 
 
@@ -172,6 +173,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "AdminFinalAudit": AdminFinalAudit,
+    "AdminPaymentSmokeCheck": AdminPaymentSmokeCheck,
 }
 
 export const pagesConfig = {
