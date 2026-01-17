@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { lifePathNumber, compatibilitySignal } from './numerologyEngine';
 
 /**
  * Matching Engine for GRANDTAROT
@@ -123,12 +124,64 @@ const calculateActivityScore = (targetProfile) => {
 };
 
 /**
+ * Calculate numerology compatibility (0-10 points)
+ * ONLY if both users have numerology enabled + scope = personal_and_matching
+ */
+const calculateNumerologyScore = async (userProfile, targetProfile) => {
+  try {
+    // Fetch AccountPrivate for both users
+    const [userAccounts, targetAccounts] = await Promise.all([
+      base44.entities.AccountPrivate.filter({ user_email: userProfile.user_id }, null, 1),
+      base44.entities.AccountPrivate.filter({ user_email: targetProfile.user_id }, null, 1)
+    ]);
+
+    const userAccount = userAccounts[0];
+    const targetAccount = targetAccounts[0];
+
+    // STRICT CHECK: both must have numerology enabled + scope = personal_and_matching
+    if (!userAccount?.numerology_enabled || userAccount.numerology_scope !== 'personal_and_matching') {
+      return 0;
+    }
+    if (!targetAccount?.numerology_enabled || targetAccount.numerology_scope !== 'personal_and_matching') {
+      return 0;
+    }
+
+    // Calculate life path numbers
+    const userBirthDate = {
+      year: userProfile.birth_year,
+      month: userProfile.birth_month,
+      day: userProfile.birth_day
+    };
+    const targetBirthDate = {
+      year: targetProfile.birth_year,
+      month: targetProfile.birth_month,
+      day: targetProfile.birth_day
+    };
+
+    if (!userBirthDate.year || !userBirthDate.month || !userBirthDate.day) return 0;
+    if (!targetBirthDate.year || !targetBirthDate.month || !targetBirthDate.day) return 0;
+
+    const userLifePath = lifePathNumber(userBirthDate);
+    const targetLifePath = lifePathNumber(targetBirthDate);
+
+    if (!userLifePath || !targetLifePath) return 0;
+
+    // Get compatibility signal (scoreLite: 0-10)
+    const compat = compatibilitySignal(userLifePath, targetLifePath, userProfile.language_pref || 'fr');
+    return compat.scoreLite; // 0-10
+  } catch (error) {
+    return 0;
+  }
+};
+
+/**
  * Generate match reasons (max 3)
+ * Priority: 1 geo/interests + 1 pro/mode + 1 guidance signal (numerology OR tarot)
  */
 const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang) => {
   const reasons = [];
   
-  // Interests
+  // PRIORITY 1: Interests (most visible/concrete)
   if (scoreBreakdown.interests >= 15) {
     const userInterests = new Set(userProfile.interest_ids || []);
     const common = (targetProfile.interest_ids || []).filter(id => userInterests.has(id));
@@ -136,56 +189,75 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
       reasons.push({
         reason_fr: `${common.length} centres d'intérêt en commun`,
         reason_en: `${common.length} shared interests`,
-        weight: scoreBreakdown.interests
+        weight: scoreBreakdown.interests,
+        category: 'concrete'
       });
     }
   }
   
-  // Location
-  if (scoreBreakdown.location >= 15) {
+  // PRIORITY 2: Location (if no interests or equally important)
+  if (scoreBreakdown.location >= 15 && reasons.length < 2) {
     if (userProfile.city === targetProfile.city) {
       reasons.push({
         reason_fr: `Même ville : ${userProfile.city}`,
         reason_en: `Same city: ${userProfile.city}`,
-        weight: scoreBreakdown.location
+        weight: scoreBreakdown.location,
+        category: 'concrete'
       });
     } else if (userProfile.country === targetProfile.country) {
       reasons.push({
         reason_fr: 'Proximité géographique',
         reason_en: 'Geographic proximity',
-        weight: scoreBreakdown.location
+        weight: scoreBreakdown.location,
+        category: 'concrete'
       });
     }
   }
   
-  // Tarot synergy
-  if (scoreBreakdown.tarot_synergy >= 6) {
-    reasons.push({
-      reason_fr: 'Énergies astrologiques compatibles',
-      reason_en: 'Compatible astrological energies',
-      weight: scoreBreakdown.tarot_synergy
-    });
-  }
-  
-  // Activity
-  if (scoreBreakdown.activity >= 7) {
-    reasons.push({
-      reason_fr: 'Membre actif',
-      reason_en: 'Active member',
-      weight: scoreBreakdown.activity
-    });
-  }
-  
-  // Pro specific
-  if (userProfile.mode_active === 'professional' && scoreBreakdown.pro_bonus >= 5) {
+  // PRIORITY 3: Pro specific (mode-based)
+  if (userProfile.mode_active === 'professional' && scoreBreakdown.pro_bonus >= 5 && reasons.length < 2) {
     reasons.push({
       reason_fr: 'Profil professionnel compatible',
       reason_en: 'Compatible professional profile',
-      weight: scoreBreakdown.pro_bonus
+      weight: scoreBreakdown.pro_bonus,
+      category: 'mode'
     });
   }
   
-  // Sort by weight and take top 3
+  // PRIORITY 4: Guidance signal (NUMEROLOGY preferred, fallback to tarot)
+  // ONLY add if we have room (max 3 reasons total)
+  if (reasons.length < 3) {
+    // Try numerology first (if available)
+    if (scoreBreakdown.numerology >= 7) {
+      reasons.push({
+        reason_fr: 'Compatibilité numérologique',
+        reason_en: 'Numerological compatibility',
+        weight: scoreBreakdown.numerology,
+        category: 'guidance'
+      });
+    }
+    // Fallback to tarot synergy if no numerology
+    else if (scoreBreakdown.tarot_synergy >= 6) {
+      reasons.push({
+        reason_fr: 'Énergies astrologiques compatibles',
+        reason_en: 'Compatible astrological energies',
+        weight: scoreBreakdown.tarot_synergy,
+        category: 'guidance'
+      });
+    }
+  }
+  
+  // PRIORITY 5: Activity (only if space left)
+  if (scoreBreakdown.activity >= 7 && reasons.length < 3) {
+    reasons.push({
+      reason_fr: 'Membre actif',
+      reason_en: 'Active member',
+      weight: scoreBreakdown.activity,
+      category: 'bonus'
+    });
+  }
+  
+  // STRICT: Sort by weight and take top 3 (never exceed)
   return reasons.sort((a, b) => b.weight - a.weight).slice(0, 3);
 };
 
@@ -294,12 +366,13 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
           const location = calculateDistanceScore(userProfile, candidate);
           const interests = calculateInterestsScore(userProfile, candidate);
           const tarot_synergy = await calculateTarotSynergy(userProfile.public_id, candidate.public_id);
+          const numerology = await calculateNumerologyScore(userProfile, candidate);
           const pro_bonus = calculateProBonus(userProfile, candidate);
           const age = calculateAgeScore(userProfile, candidate);
           const activity = calculateActivityScore(candidate);
           
-          const scoreBreakdown = { location, interests, tarot_synergy, pro_bonus, age, activity };
-          const totalScore = location + interests + tarot_synergy + pro_bonus + age + activity;
+          const scoreBreakdown = { location, interests, tarot_synergy, numerology, pro_bonus, age, activity };
+          const totalScore = location + interests + tarot_synergy + numerology + pro_bonus + age + activity;
           
           const reasons = await generateReasons(userProfile, candidate, scoreBreakdown, userProfile.language_pref || 'fr');
           
