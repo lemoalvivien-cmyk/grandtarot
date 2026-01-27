@@ -74,7 +74,8 @@ export default function CookieBanner({ lang = 'fr' }) {
   };
 
   const handleClose = () => {
-    setShowBanner(false);
+    // CNIL compliance: closing = reject all (default safe choice)
+    handleRejectAll();
   };
 
   if (!showBanner) {

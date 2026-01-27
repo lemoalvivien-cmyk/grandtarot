@@ -154,6 +154,28 @@ export default function AppOnboarding() {
 
     setSaving(true);
     try {
+      // CRITICAL: SERVER-SIDE AGE VERIFICATION (RGPD/COPPA compliance)
+      const ageVerifyResponse = await fetch('/api/v1/functions/validate_age_gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          birth_year: profile.birth_year,
+          birth_month: profile.birth_month || null,
+          birth_day: profile.birth_day || null
+        })
+      });
+      
+      const ageResult = await ageVerifyResponse.json();
+      
+      if (!ageVerifyResponse.ok || !ageResult.age_confirmed) {
+        alert(lang === 'fr' 
+          ? `Vous devez avoir au moins 18 ans. Âge calculé: ${ageResult.calculated_age || 'invalide'}` 
+          : `You must be at least 18 years old. Calculated age: ${ageResult.calculated_age || 'invalid'}`);
+        setSaving(false);
+        return;
+      }
+      
       // Calculate profile completion
       let completion = 40; // Base
       if (formData.photo_url) completion += 20;

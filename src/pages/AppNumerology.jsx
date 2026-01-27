@@ -1,266 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Hash, AlertCircle, Sparkles, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
+import { Hash, Loader2 } from 'lucide-react';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 import NumerologyProfileCard from '@/components/numerology/NumerologyProfileCard';
 import NumerologyDailyCard from '@/components/numerology/NumerologyDailyCard';
 import NumerologySettingsPanel from '@/components/numerology/NumerologySettingsPanel';
-import {
-  lifePathNumber,
-  personalDayNumber,
-  nameExpressionNumber
-} from '@/components/helpers/numerologyEngine';
-import { loadFeatureFlags } from '@/components/helpers/featureFlagsLoader';
 
 export default function AppNumerology() {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [featureEnabled, setFeatureEnabled] = useState(true);
   const [account, setAccount] = useState(null);
-  const [lang, setLang] = useState('fr');
-  const [numerologyData, setNumerologyData] = useState(null);
-  const [featureDisabled, setFeatureDisabled] = useState(false);
 
   useEffect(() => {
-    loadData();
+    checkFeatureFlag();
   }, []);
 
-  const loadData = async () => {
+  const checkFeatureFlag = async () => {
     try {
-      // Check global feature flag FIRST
-      const flags = await loadFeatureFlags();
-      if (!flags.numerology) {
-        setFeatureDisabled(true);
+      // CHECK: Feature flag must be enabled
+      const flags = await base44.entities.AppSettings.filter({
+        setting_key: 'feature_numerology'
+      }, null, 1);
+      
+      if (flags.length === 0 || flags[0].value_boolean !== true) {
+        setFeatureEnabled(false);
         setLoading(false);
         return;
       }
-
+      
       const currentUser = await base44.auth.me();
-      setUser(currentUser);
-
-      const [profiles, accounts] = await Promise.all([
-        base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1),
-        base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1)
-      ]);
-
-      if (profiles.length > 0) {
-        setProfile(profiles[0]);
-        setLang(profiles[0].language_pref || 'fr');
-      }
-
+      const accounts = await base44.entities.AccountPrivate.filter({
+        user_email: currentUser.email
+      }, null, 1);
+      
       if (accounts.length > 0) {
         setAccount(accounts[0]);
-        calculateNumerology(profiles[0], accounts[0]);
       }
+      
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateNumerology = (userProfile, userAccount) => {
-    if (!userProfile) return;
-
-    const birthDate = {
-      year: userProfile.birth_year,
-      month: userProfile.birth_month,
-      day: userProfile.birth_day
-    };
-
-    const today = new Date();
-    const todayDate = {
-      year: today.getFullYear(),
-      month: today.getMonth() + 1,
-      day: today.getDate()
-    };
-
-    const lifePath = lifePathNumber(birthDate);
-    const personalDay = personalDayNumber(birthDate, todayDate);
-    const expressionNum = userAccount?.numerology_name 
-      ? nameExpressionNumber(userAccount.numerology_name) 
-      : null;
-
-    setNumerologyData({
-      lifePath,
-      personalDay,
-      expressionNum,
-      hasCompleteData: lifePath && personalDay
-    });
-  };
-
-  const handleSettingsUpdate = (updatedAccount) => {
-    setAccount(updatedAccount);
-    calculateNumerology(profile, updatedAccount);
-  };
-
-  const content = {
-    fr: {
-      title: 'Numérologie',
-      subtitle: 'Découvrez votre profil numérologique',
-      notEnabled: 'La numérologie n\'est pas encore activée',
-      notEnabledDesc: 'Activez la numérologie pour découvrir votre profil, votre chiffre du jour et recevoir une guidance personnalisée.',
-      enableBtn: 'Activer la numérologie',
-      missingData: 'Données incomplètes',
-      missingDataDesc: 'Votre date de naissance complète (jour/mois/année) est nécessaire pour les calculs numérologie.',
-      updateProfile: 'Compléter mon profil',
-      profile: 'Votre Profil',
-      daily: 'Aujourd\'hui',
-      settings: 'Paramètres'
-    },
-    en: {
-      title: 'Numerology',
-      subtitle: 'Discover your numerological profile',
-      notEnabled: 'Numerology is not yet enabled',
-      notEnabledDesc: 'Enable numerology to discover your profile, your daily number and receive personalized guidance.',
-      enableBtn: 'Enable numerology',
-      missingData: 'Incomplete data',
-      missingDataDesc: 'Your complete birth date (day/month/year) is required for numerology calculations.',
-      updateProfile: 'Complete my profile',
-      profile: 'Your Profile',
-      daily: 'Today',
-      settings: 'Settings'
-    }
-  };
-
-  const t = content[lang];
-
   if (loading) {
     return (
       <SubscriptionGuard>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
         </div>
       </SubscriptionGuard>
     );
   }
 
-  // Feature disabled fallback
-  if (featureDisabled) {
-    return (
-      <SubscriptionGuard>
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="max-w-md text-center">
-            <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-3xl p-8">
-              <AlertCircle className="w-16 h-16 text-amber-400 mx-auto mb-6" />
-              <h2 className="text-2xl font-serif font-bold mb-4 text-amber-100">
-                {lang === 'fr' ? 'Fonctionnalité désactivée' : 'Feature disabled'}
-              </h2>
-              <p className="text-slate-300 mb-8">
-                {lang === 'fr' 
-                  ? 'La numérologie a été temporairement désactivée par les administrateurs.' 
-                  : 'Numerology has been temporarily disabled by administrators.'}
-              </p>
-              <Button
-                onClick={() => window.location.href = createPageUrl('App')}
-                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {lang === 'fr' ? 'Retour au dashboard' : 'Back to dashboard'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </SubscriptionGuard>
-    );
+  if (!featureEnabled) {
+    // GUARD: Feature disabled → redirect
+    window.location.href = createPageUrl('App');
+    return null;
   }
 
   return (
     <SubscriptionGuard>
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <Hash className="w-8 h-8 text-amber-400" />
-              <h1 className="text-3xl md:text-4xl font-serif font-bold bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
-                {t.title}
-              </h1>
+      <div className="min-h-screen p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-4">
+              <Hash className="w-4 h-4 text-amber-400" />
+              <span className="text-amber-200 text-sm">Numérologie</span>
             </div>
-            <p className="text-slate-400">{t.subtitle}</p>
+            <h1 className="text-4xl font-serif font-bold mb-2 bg-gradient-to-r from-amber-200 to-orange-200 bg-clip-text text-transparent">
+              Votre Chemin de Vie
+            </h1>
           </div>
 
-          {/* Not Enabled State */}
-          {!account?.numerology_enabled && (
-            <div className="bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-3xl p-8 md:p-12 text-center">
-              <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-6" />
-              <h2 className="text-2xl font-serif font-bold mb-4 text-amber-100">
-                {t.notEnabled}
-              </h2>
-              <p className="text-slate-300 mb-8 max-w-2xl mx-auto">
-                {t.notEnabledDesc}
-              </p>
-              <Button
-                onClick={() => {
-                  const settingsSection = document.getElementById('numerology-settings');
-                  if (settingsSection) settingsSection.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-8 py-6 text-lg"
-              >
-                {t.enableBtn}
-              </Button>
-            </div>
-          )}
+          <div className="grid md:grid-cols-2 gap-6">
+            <NumerologyProfileCard account={account} />
+            <NumerologyDailyCard account={account} />
+          </div>
 
-          {/* Enabled State */}
-          {account?.numerology_enabled && (
-            <>
-              {/* Missing Data Warning */}
-              {(!profile?.birth_year || !profile?.birth_month || !profile?.birth_day) && (
-                <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 mb-8">
-                  <div className="flex items-start gap-4">
-                    <AlertCircle className="w-6 h-6 text-orange-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-orange-200 mb-2">{t.missingData}</h3>
-                      <p className="text-orange-300 mb-4">{t.missingDataDesc}</p>
-                      <Button
-                        onClick={() => window.location.href = '/app-settings'}
-                        variant="outline"
-                        className="border-orange-500/30 text-orange-200 hover:bg-orange-500/10"
-                      >
-                        {t.updateProfile}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Content Grid */}
-              {numerologyData?.hasCompleteData && (
-                <div className="grid lg:grid-cols-2 gap-8 mb-8">
-                  {/* Profile Card */}
-                  <div>
-                    <h2 className="text-xl font-semibold text-amber-100 mb-4">{t.profile}</h2>
-                    <NumerologyProfileCard
-                      lifePathNum={numerologyData.lifePath}
-                      expressionNum={numerologyData.expressionNum}
-                      lang={lang}
-                    />
-                  </div>
-
-                  {/* Daily Card */}
-                  <div>
-                    <h2 className="text-xl font-semibold text-amber-100 mb-4">{t.daily}</h2>
-                    <NumerologyDailyCard
-                      personalDayNum={numerologyData.personalDay}
-                      lang={lang}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Settings Panel */}
-          <div id="numerology-settings">
-            <h2 className="text-xl font-semibold text-amber-100 mb-4">{t.settings}</h2>
-            <NumerologySettingsPanel
-              account={account}
-              onUpdate={handleSettingsUpdate}
-              lang={lang}
-            />
+          <div className="mt-8">
+            <NumerologySettingsPanel account={account} onUpdate={setAccount} />
           </div>
         </div>
       </div>

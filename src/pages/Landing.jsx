@@ -194,7 +194,7 @@ export default function Landing() {
       hero: {
         title: "Le Tarot révèle votre destinée",
         subtitle: "Rejoignez le cercle des âmes éveillées",
-        desc: "Tirage quotidien IA personnalisé • 20 affinités cosmiques • Connexions authentiques",
+        desc: "Tirage quotidien IA personnalisé • Jusqu'à 20 affinités cosmiques • Connexions authentiques",
         cta: "Entrer dans le Cercle"
       },
       proof: {
@@ -224,7 +224,7 @@ export default function Landing() {
         subtitle: "Zéro harcèlement, zéro spam",
         features: [
           { icon: Lock, title: "Intention validée", desc: "Pas de chat sans acceptation mutuelle des deux côtés" },
-          { icon: Eye, title: "Modération IA", desc: "Messages scannés en temps réel pour détecter contenu inapproprié" },
+          { icon: Eye, title: "Modération IA", desc: "Messages analysés pour détecter contenu inapproprié (scam, harcèlement)" },
           { icon: Shield, title: "Blocage instantané", desc: "Un clic pour bloquer et signaler tout comportement suspect" }
         ]
       },
@@ -235,11 +235,11 @@ export default function Landing() {
         period: "/mois",
         features: [
           "Tirage quotidien IA personnalisé",
-          "20 affinités cosmiques par jour",
+          "Jusqu'à 20 affinités cosmiques par jour",
           "3 modes : Amour, Amitié, Pro",
           "Chat sécurisé après acceptation",
           "Encyclopédie 78 cartes complète",
-          "Support prioritaire 7j/7"
+          "Support par email"
         ],
         guarantee: "Résiliation facile à tout moment",
         cta: "Commencer maintenant"
@@ -331,7 +331,7 @@ export default function Landing() {
       hero: {
         title: "Tarot reveals your destiny",
         subtitle: "Join the circle of awakened souls",
-        desc: "AI personalized daily reading • 20 cosmic affinities • Authentic connections",
+        desc: "AI personalized daily reading • Up to 20 cosmic affinities • Authentic connections",
         cta: "Enter the Circle"
       },
       proof: {
@@ -361,7 +361,7 @@ export default function Landing() {
         subtitle: "Zero harassment, zero spam",
         features: [
           { icon: Lock, title: "Validated intention", desc: "No chat without mutual acceptance from both sides" },
-          { icon: Eye, title: "AI moderation", desc: "Messages scanned in real-time to detect inappropriate content" },
+          { icon: Eye, title: "AI moderation", desc: "Messages analyzed to detect inappropriate content (scam, harassment)" },
           { icon: Shield, title: "Instant blocking", desc: "One click to block and report any suspicious behavior" }
         ]
       },
@@ -372,11 +372,11 @@ export default function Landing() {
         period: "/month",
         features: [
           "AI personalized daily reading",
-          "20 cosmic affinities per day",
+          "Up to 20 cosmic affinities per day",
           "3 modes: Love, Friendship, Pro",
           "Secure chat after acceptance",
           "Complete 78 cards encyclopedia",
-          "Priority support 7/7"
+          "Email support"
         ],
         guarantee: "Easy cancellation anytime",
         cta: "Start now"

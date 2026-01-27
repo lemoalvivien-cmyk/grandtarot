@@ -5,6 +5,7 @@ import { Heart, Users, Briefcase, Sparkles, Send, Loader2, CheckCircle, AlertCir
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
+import { canRequestGuidance } from '@/components/helpers/guidanceQuotaManager';
 
 export default function AppGuidance() {
   const [loading, setLoading] = useState(true);
@@ -133,6 +134,15 @@ export default function AppGuidance() {
       setError(lang === 'fr' 
         ? 'Ta guidance du jour est déjà générée pour ce mode.' 
         : 'Your daily guidance is already generated for this mode.');
+      return;
+    }
+
+    // QUOTA CHECK (STRICT: 1 guidance/day ALL modes)
+    const quotaCheck = await canRequestGuidance(user.email);
+    if (!quotaCheck.allowed) {
+      setError(lang === 'fr' 
+        ? 'Limite quotidienne atteinte (1 guidance par jour, tous modes confondus). Revenez demain.' 
+        : 'Daily limit reached (1 guidance per day, all modes). Come back tomorrow.');
       return;
     }
 
