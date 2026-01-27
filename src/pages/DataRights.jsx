@@ -39,6 +39,40 @@ export default function DataRights() {
         return;
       }
 
+      // INSTANT EXPORT for "access" requests (auto-DSAR)
+      if (formData.type === 'access') {
+        const response = await fetch('/api/v1/functions/generate_dsar_export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({})
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.export_data) {
+          // Download JSON file
+          const blob = new Blob([JSON.stringify(result.export_data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = result.download_filename || `grandtarot_export_${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          alert(lang === 'fr' 
+            ? '✅ Export téléchargé ! Vos données complètes sont dans le fichier JSON.' 
+            : '✅ Export downloaded! Your complete data is in the JSON file.');
+          
+          setFormData({ type: 'access', message: '' });
+          setSubmitting(false);
+          return;
+        } else {
+          throw new Error(result.error || 'Export failed');
+        }
+      }
+      
+      // Other request types: create DSAR request (manual admin review)
       await base44.entities.DsarRequest.create({
         requester_user_id: user.email,
         type: formData.type,
@@ -54,7 +88,7 @@ export default function DataRights() {
       setFormData({ type: 'access', message: '' });
     } catch (error) {
       console.error('Error:', error);
-      alert(lang === 'fr' ? 'Erreur lors de la soumission' : 'Error submitting request');
+      alert(lang === 'fr' ? `Erreur: ${error.message}` : `Error: ${error.message}`);
     } finally {
       setSubmitting(false);
     }

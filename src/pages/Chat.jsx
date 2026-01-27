@@ -53,13 +53,29 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    if (conversation && messages.length > 0) {
-      const interval = setInterval(() => {
-        loadNewMessages(conversation.id);
-      }, 12000);
-      return () => clearInterval(interval);
-    }
-  }, [conversation, messages]);
+    if (!conversation?.id) return;
+    
+    // REAL-TIME SUBSCRIPTION (remplace polling)
+    const unsubscribe = base44.entities.Message.subscribe((event) => {
+      // Filter: only this conversation + not deleted
+      if (event.data.conversation_id !== conversation.id) return;
+      if (event.data.is_deleted) return;
+      
+      if (event.type === 'create') {
+        setMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(m => m.id === event.data.id)) return prev;
+          return [...prev, event.data];
+        });
+      } else if (event.type === 'update') {
+        setMessages(prev => prev.map(m => m.id === event.id ? event.data : m));
+      } else if (event.type === 'delete') {
+        setMessages(prev => prev.filter(m => m.id !== event.id));
+      }
+    });
+    
+    return unsubscribe;
+  }, [conversation?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -157,28 +173,7 @@ export default function Chat() {
     }
   };
   
-  const loadNewMessages = async (conversationId) => {
-    try {
-      if (messages.length === 0) return;
-      
-      const lastMessage = messages[messages.length - 1];
-      const allMessages = await base44.entities.Message.filter({ 
-        conversation_id: conversationId,
-        is_deleted: false 
-      }, '-created_date', 50);
-      
-      const newMessages = allMessages.filter(m => 
-        new Date(m.created_date) > new Date(lastMessage.created_date)
-      );
-      
-      if (newMessages.length > 0) {
-        newMessages.reverse();
-        setMessages(prev => [...prev, ...newMessages]);
-      }
-    } catch (error) {
-      console.error('Error loading new messages:', error);
-    }
-  };
+
   
   const loadMoreMessages = async () => {
     if (!hasMore || loadingMore || !conversation?.id) return;
@@ -270,7 +265,7 @@ export default function Chat() {
       setLastSendTime(now);
       setSendAttempts(prev => prev + 1);
       
-      await loadNewMessages(conversation.id);
+      // Message will appear via subscription (no manual reload needed)
     } catch (error) {
       console.error('Error sending message:', error);
       setError(lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Error sending message');

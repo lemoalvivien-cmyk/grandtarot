@@ -18,12 +18,14 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminDeckCheck from './pages/AdminDeckCheck';
 import AdminDsarRequests from './pages/AdminDsarRequests';
 import AdminEvidenceRuns from './pages/AdminEvidenceRuns';
+import AdminFinalAudit from './pages/AdminFinalAudit';
 import AdminGoLive from './pages/AdminGoLive';
 import AdminGuidanceUsage from './pages/AdminGuidanceUsage';
 import AdminLaunchChecklist from './pages/AdminLaunchChecklist';
 import AdminMobileReadiness from './pages/AdminMobileReadiness';
 import AdminModeration from './pages/AdminModeration';
 import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
+import AdminPaymentSmokeCheck from './pages/AdminPaymentSmokeCheck';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
 import AdminReports from './pages/AdminReports';
@@ -82,8 +84,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import AdminFinalAudit from './pages/AdminFinalAudit';
-import AdminPaymentSmokeCheck from './pages/AdminPaymentSmokeCheck';
 import __Layout from './Layout.jsx';
 
 
@@ -108,12 +108,14 @@ export const PAGES = {
     "AdminDeckCheck": AdminDeckCheck,
     "AdminDsarRequests": AdminDsarRequests,
     "AdminEvidenceRuns": AdminEvidenceRuns,
+    "AdminFinalAudit": AdminFinalAudit,
     "AdminGoLive": AdminGoLive,
     "AdminGuidanceUsage": AdminGuidanceUsage,
     "AdminLaunchChecklist": AdminLaunchChecklist,
     "AdminMobileReadiness": AdminMobileReadiness,
     "AdminModeration": AdminModeration,
     "AdminNumerologySelftest": AdminNumerologySelftest,
+    "AdminPaymentSmokeCheck": AdminPaymentSmokeCheck,
     "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
     "AdminReports": AdminReports,
@@ -172,8 +174,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "AdminFinalAudit": AdminFinalAudit,
-    "AdminPaymentSmokeCheck": AdminPaymentSmokeCheck,
 }
 
 export const pagesConfig = {
