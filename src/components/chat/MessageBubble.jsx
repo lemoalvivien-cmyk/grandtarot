@@ -7,6 +7,17 @@ export default function MessageBubble({ message, isOwn, lang }) {
                     message.flagged_harassment || 
                     message.flagged_inappropriate;
 
+  // XSS PROTECTION: Escape HTML entities
+  const sanitizeText = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  };
+
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
@@ -15,9 +26,10 @@ export default function MessageBubble({ message, isOwn, lang }) {
             ? 'bg-gradient-to-r from-amber-500 to-violet-600 text-white' 
             : 'bg-slate-800/50 border border-amber-500/10 text-slate-200'
         }`}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-            {message.body}
-          </p>
+          <p 
+            className="text-sm leading-relaxed whitespace-pre-wrap break-words"
+            dangerouslySetInnerHTML={{ __html: sanitizeText(message.body) }}
+          />
         </div>
         
         <div className="flex items-center gap-2 mt-1 px-2">
