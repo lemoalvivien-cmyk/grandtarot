@@ -11,28 +11,64 @@ export default function PhotoUpload({ currentPhotoUrl, onPhotoUploaded, lang = '
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert(lang === 'fr' ? 'Veuillez sélectionner une image' : 'Please select an image');
+    // VALIDATION MIME TYPE (whitelist stricte)
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert(lang === 'fr' 
+        ? 'Format autorisé : JPEG, PNG, WebP uniquement' 
+        : 'Allowed formats: JPEG, PNG, WebP only');
       return;
     }
 
+    // VALIDATION TAILLE (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert(lang === 'fr' ? 'Taille max : 5MB' : 'Max size: 5MB');
       return;
     }
-
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setPreview(file_url);
-      onPhotoUploaded(file_url);
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert(lang === 'fr' ? 'Erreur lors de l\'upload' : 'Upload error');
-    } finally {
-      setUploading(false);
-    }
+    
+    // VALIDATION DIMENSIONS (max 4000x4000, min 200x200)
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl);
+      
+      if (img.width < 200 || img.height < 200) {
+        alert(lang === 'fr' ? 'Image trop petite (min 200x200px)' : 'Image too small (min 200x200px)');
+        return;
+      }
+      
+      if (img.width > 4000 || img.height > 4000) {
+        alert(lang === 'fr' ? 'Image trop grande (max 4000x4000px)' : 'Image too large (max 4000x4000px)');
+        return;
+      }
+      
+      // Upload OK
+      await uploadFile(file);
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      alert(lang === 'fr' ? 'Fichier image corrompu' : 'Corrupted image file');
+    };
+    
+    img.src = objectUrl;
   };
+  
+  const uploadFile = async (file) => {
+
+  setUploading(true);
+  try {
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setPreview(file_url);
+    onPhotoUploaded(file_url);
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert(lang === 'fr' ? 'Erreur lors de l\'upload' : 'Upload error');
+  } finally {
+    setUploading(false);
+  }
+};
 
   const content = {
     fr: {

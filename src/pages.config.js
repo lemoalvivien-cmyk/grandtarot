@@ -85,6 +85,7 @@ import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
 import Health from './pages/Health';
+import AdminProductionReadiness from './pages/AdminProductionReadiness';
 import __Layout from './Layout.jsx';
 
 
@@ -176,6 +177,7 @@ export const PAGES = {
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
     "Health": Health,
+    "AdminProductionReadiness": AdminProductionReadiness,
 }
 
 export const pagesConfig = {
