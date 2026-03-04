@@ -118,22 +118,26 @@ export default function AppIntentions() {
   };
 
   const handleRefuse = async (intention) => {
+    if (refusingId) return;
+    setRefusingId(intention.id);
+    setActionError('');
     try {
-      // Update intention status
       await base44.entities.Intention.update(intention.id, {
         status: 'refused',
         responded_at: new Date().toISOString()
       });
 
-      // COOLDOWN MANAGEMENT: Track refusals and apply cooldown if 3+ consecutive
       await trackIntentionRefusal(intention.from_user_id);
 
-      // Update local state
       setReceivedIntentions(prev => 
         prev.map(i => i.id === intention.id ? { ...i, status: 'refused' } : i)
       );
-    } catch (error) {
-      console.error('Error refusing intention:', error);
+    } catch (err) {
+      setActionError(lang === 'fr'
+        ? 'Une erreur s\'est produite. Réessayez.'
+        : 'An error occurred. Please try again.');
+    } finally {
+      setRefusingId(null);
     }
   };
 
