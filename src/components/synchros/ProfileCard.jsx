@@ -49,8 +49,8 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
             </div>
             
             {/* Score Badge */}
-            <div className={`absolute -top-2 -right-2 w-12 h-12 rounded-full bg-gradient-to-br ${getScoreColor(match.compatibility_score)} flex items-center justify-center border-2 border-slate-900 shadow-lg`}>
-              <span className="text-white font-bold text-sm">{match.compatibility_score}</span>
+            <div className={`absolute -top-2 -right-2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${getScoreColor(match.compatibility_score)} flex items-center justify-center border-2 border-slate-900 shadow-lg`}>
+              <span className="text-white font-bold text-xs md:text-sm">{match.compatibility_score}</span>
             </div>
           </div>
           
