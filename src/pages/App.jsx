@@ -116,11 +116,9 @@ export default function App() {
 
   if (loading) {
     return (
-      <SubscriptionGuard>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
-        </div>
-      </SubscriptionGuard>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full" />
+      </div>
     );
   }
 
