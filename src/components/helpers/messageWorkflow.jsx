@@ -87,35 +87,15 @@ const applyModerationAction = async (userId, severity, flags) => {
  */
 export const openConversationSecure = async (otherUserEmail) => {
   try {
-    const result = await callFunctionRaw('chat_open_conversation', { otherUserEmail });
-    
-    if (!result.success) {
-      return {
-        success: false,
-        status: result.status,
-        error: result.json?.error || result.text || 'Erreur ouverture conversation'
-      };
+    const result = await base44.functions.invoke('chat_open_conversation', { otherUserEmail });
+    const conversationId = result?.data?.conversationId;
+    if (!conversationId) {
+      return { success: false, error: result?.data?.error || 'Pas de conversationId retourné' };
     }
-    
-    if (!result.json?.conversationId) {
-      return {
-        success: false,
-        status: result.status,
-        error: 'Pas de conversationId retourné'
-      };
-    }
-    
-    return {
-      success: true,
-      conversationId: result.json.conversationId,
-      status: result.status
-    };
+    return { success: true, conversationId };
   } catch (error) {
     console.error('[openConversation] Error:', error);
-    return {
-      success: false,
-      error: error.message || 'Erreur ouverture conversation'
-    };
+    return { success: false, error: error.message || 'Erreur ouverture conversation' };
   }
 };
 
