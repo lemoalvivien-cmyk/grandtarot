@@ -209,7 +209,7 @@ export default function Subscribe() {
         {/* Back Link */}
         <div className="text-center mt-8">
           <button 
-            onClick={() => base44.auth.logout(createPageUrl('Landing'))}
+            onClick={() => window.location.href = createPageUrl('Landing')}
             className="text-sm text-slate-400 hover:text-amber-200 transition-colors"
           >
             {t.back}
