@@ -327,8 +327,24 @@ export default function AppSynchros() {
         {/* Header */}
         {!personalModeOnly && (
         <>
-        <div className="text-center mb-12">
-...
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-4">
+            <ModeIcon className="w-4 h-4 text-amber-400" />
+            <span className="text-amber-200 text-sm">{t.subtitle}</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            {t.title}
+          </h1>
+          <Button
+            onClick={regenerateMatches}
+            disabled={generating}
+            variant="outline"
+            size="sm"
+            className="border-amber-500/20 text-amber-200 hover:bg-amber-500/10"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
+            {t.regenerate}
+          </Button>
         </div>
 
         {/* Generating State */}
