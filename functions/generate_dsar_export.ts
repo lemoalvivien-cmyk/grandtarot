@@ -1,224 +1,167 @@
 /**
- * BACKEND FUNCTION: generate_dsar_export
- * RGPD Art. 15 - Right of Access (Droit d'accès)
- * 
- * COMPLIANCE:
- * - Generates complete JSON export of user data
- * - SLA: 30 days maximum (CNIL)
- * - Format: JSON structured (portable)
- * - Scope: ALL entities containing user data
- * 
- * SECURITY:
- * - User can ONLY export their OWN data
- * - Admin can export any user (for DSAR processing)
- * - Excludes: other users' private data, system secrets
+ * generate_dsar_export — Base44 V3
+ * Export RGPD Art. 15 — Droit d'accès.
+ * Collecte toutes les données d'un utilisateur de manière sécurisée.
  */
 
-export default async function handler(req, context) {
-  const { target_user_email } = req.body;
-  
-  // STEP 1: AUTH
-  const client = context.createClientFromRequest(req);
-  let currentUser;
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
+Deno.serve(async (req) => {
   try {
-    currentUser = await client.auth.me();
-  } catch (error) {
-    return {
-      statusCode: 401,
-      body: { error: 'Non authentifié' }
-    };
-  }
-  
-  // STEP 2: AUTHORIZATION CHECK
-  // User can export ONLY their own data
-  // Admin can export any user
-  const targetEmail = target_user_email || currentUser.email;
-  
-  if (targetEmail !== currentUser.email && currentUser.role !== 'admin') {
-    return {
-      statusCode: 403,
-      body: { error: 'Forbidden: You can only export your own data' }
-    };
-  }
-  
-  const serviceClient = context.createServiceRoleClient();
-  
-  try {
-    // STEP 3: COLLECT ALL USER DATA (comprehensive)
+    const base44 = createClientFromRequest(req);
+
+    // STEP 1: AUTH
+    const currentUser = await base44.auth.me();
+    if (!currentUser) {
+      return Response.json({ error: 'Non authentifié' }, { status: 401 });
+    }
+
+    // STEP 2: AUTORISATION
+    let body = {};
+    try { body = await req.json(); } catch { /* body optionnel */ }
+    const { target_user_email } = body;
+    const targetEmail = target_user_email || currentUser.email;
+
+    if (targetEmail !== currentUser.email && currentUser.role !== 'admin') {
+      return Response.json({ error: 'Vous ne pouvez exporter que vos propres données' }, { status: 403 });
+    }
+
+    const serviceRole = base44.asServiceRole;
+
+    // STEP 3: COLLECTER DONNÉES (séquentiel pour éviter race condition)
+    const accountPrivate = await serviceRole.entities.AccountPrivate.filter({ user_email: targetEmail }, null, 1);
+    const userProfile = await serviceRole.entities.UserProfile.filter({ user_id: targetEmail }, null, 1);
+
+    // Récupérer ProfilePublic via public_profile_id dans AccountPrivate
+    let profilePublic = [];
+    if (accountPrivate.length > 0 && accountPrivate[0].public_profile_id) {
+      profilePublic = await serviceRole.entities.ProfilePublic.filter({
+        public_id: accountPrivate[0].public_profile_id
+      }, null, 1);
+    }
+
+    const publicId = profilePublic[0]?.public_id || '';
+
+    // Collecter données d'activité (parallélisé maintenant que accountPrivate est résolu)
     const [
-      userRecord,
-      accountPrivate,
-      userProfile,
-      profilePublic,
-      dailyDraws,
       guidanceAnswers,
-      dailyMatches,
       intentionsSent,
       intentionsReceived,
-      conversations,
-      messagesSent,
-      messagesReceived,
-      reports,
-      blocks,
+      messagesFromUser,
+      messagesToUser,
       billingRequests,
       dsarRequests,
       consentPreferences
     ] = await Promise.all([
-      // Core user
-      serviceClient.entities.User.filter({ email: targetEmail }, null, 1),
-      
-      // Account data
-      serviceClient.entities.AccountPrivate.filter({ user_email: targetEmail }),
-      serviceClient.entities.UserProfile.filter({ user_id: targetEmail }),
-      serviceClient.entities.ProfilePublic.filter({}, null, 1000).then(all => {
-        // Find by cross-reference (no direct email field)
-        const account = accountPrivate || [];
-        if (account.length === 0) return [];
-        return all.filter(p => p.public_id === account[0].public_profile_id);
-      }),
-      
-      // Activity data
-      serviceClient.entities.DailyDraw.filter({ 
-        profile_id: { $in: [] } // Will be filled after ProfilePublic loaded
-      }, null, 1000),
-      serviceClient.entities.GuidanceAnswer.filter({ user_id: targetEmail }, null, 1000),
-      serviceClient.entities.DailyMatch.filter({
-        profile_id: { $in: [] } // Will be filled
-      }, null, 1000),
-      
-      // Social interactions
-      serviceClient.entities.Intention.filter({ from_user_id: targetEmail }, null, 1000),
-      serviceClient.entities.Intention.filter({ to_user_id: targetEmail }, null, 1000),
-      serviceClient.entities.Conversation.filter({}, null, 1000).then(all => 
-        all.filter(c => c.user_a_id === targetEmail || c.user_b_id === targetEmail)
-      ),
-      serviceClient.entities.Message.filter({ from_user_id: targetEmail }, null, 1000),
-      serviceClient.entities.Message.filter({ to_user_id: targetEmail }, null, 1000),
-      
-      // Safety & compliance
-      serviceClient.entities.Report.filter({}, null, 1000).then(all => {
-        // Reports created by user OR about user
-        return all.filter(r => 
-          r.reporter_profile_id === (profilePublic[0]?.public_id || '') ||
-          r.target_profile_id === (profilePublic[0]?.public_id || '')
-        );
-      }),
-      serviceClient.entities.Block.filter({}, null, 1000).then(all => {
-        return all.filter(b => 
-          b.blocker_profile_id === (profilePublic[0]?.public_id || '') ||
-          b.blocked_profile_id === (profilePublic[0]?.public_id || '')
-        );
-      }),
-      serviceClient.entities.BillingRequest.filter({ requester_user_email: targetEmail }),
-      serviceClient.entities.DsarRequest.filter({ requester_user_id: targetEmail }),
-      serviceClient.entities.ConsentPreference.filter({ user_id: targetEmail })
+      serviceRole.entities.GuidanceAnswer.filter({ user_id: targetEmail }, null, 1000),
+      serviceRole.entities.Intention.filter({ from_user_id: targetEmail }, null, 1000),
+      serviceRole.entities.Intention.filter({ to_user_id: targetEmail }, null, 1000),
+      serviceRole.entities.Message.filter({ from_user_id: targetEmail }, null, 1000),
+      serviceRole.entities.Message.filter({ to_user_id: targetEmail }, null, 1000),
+      serviceRole.entities.BillingRequest.filter({ requester_user_email: targetEmail }),
+      serviceRole.entities.DsarRequest.filter({ requester_user_id: targetEmail }),
+      serviceRole.entities.ConsentPreference.filter({ user_id: targetEmail })
     ]);
-    
-    // STEP 4: SANITIZE (remove other users' emails)
-    const sanitizeEmail = (obj) => {
-      const sanitized = { ...obj };
-      // Remove fields containing other users' emails
-      if (sanitized.user_a_id && sanitized.user_a_id !== targetEmail) {
-        sanitized.user_a_id = '[REDACTED]';
-      }
-      if (sanitized.user_b_id && sanitized.user_b_id !== targetEmail) {
-        sanitized.user_b_id = '[REDACTED]';
-      }
-      if (sanitized.to_user_id && sanitized.to_user_id !== targetEmail) {
-        sanitized.to_user_id = '[REDACTED]';
-      }
-      if (sanitized.from_user_id && sanitized.from_user_id !== targetEmail) {
-        sanitized.from_user_id = '[REDACTED]';
-      }
-      return sanitized;
+
+    // Conversations (requêtes séparées pour chaque côté)
+    const [convsA, convsB] = await Promise.all([
+      serviceRole.entities.Conversation.filter({ user_a_id: targetEmail }, null, 500),
+      serviceRole.entities.Conversation.filter({ user_b_id: targetEmail }, null, 500)
+    ]);
+    const conversations = [...convsA, ...convsB];
+
+    // DailyDraw via profile_id si disponible
+    let dailyDraws = [];
+    if (publicId) {
+      dailyDraws = await serviceRole.entities.DailyDraw.filter({ profile_id: publicId }, null, 1000);
+    }
+
+    // Reports (reporter ou cible, via public_id)
+    let reports = [];
+    if (publicId) {
+      const [reportsBy, reportsAbout] = await Promise.all([
+        serviceRole.entities.Report.filter({ reporter_profile_id: publicId }, null, 500),
+        serviceRole.entities.Report.filter({ target_profile_id: publicId }, null, 500)
+      ]);
+      reports = [...reportsBy, ...reportsAbout];
+    }
+
+    // STEP 4: SANITIZE (masquer emails tiers)
+    const sanitize = (obj) => {
+      const s = { ...obj };
+      if (s.user_a_id && s.user_a_id !== targetEmail) s.user_a_id = '[REDACTED]';
+      if (s.user_b_id && s.user_b_id !== targetEmail) s.user_b_id = '[REDACTED]';
+      if (s.to_user_id && s.to_user_id !== targetEmail) s.to_user_id = '[REDACTED]';
+      if (s.from_user_id && s.from_user_id !== targetEmail) s.from_user_id = '[REDACTED]';
+      return s;
     };
-    
-    // STEP 5: BUILD EXPORT OBJECT (RGPD-compliant structure)
+
+    // Retirer champs Stripe sensibles de accountPrivate
+    const safeAccount = accountPrivate[0]
+      ? { ...accountPrivate[0], stripe_customer_id: '[REDACTED]', stripe_subscription_id: '[REDACTED]' }
+      : null;
+
+    // STEP 5: CONSTRUIRE L'EXPORT
     const exportData = {
       export_metadata: {
         generated_at: new Date().toISOString(),
         user_email: targetEmail,
-        format_version: '1.0',
-        rgpd_article: 'Article 15 - Right of Access'
+        format_version: '1.1',
+        rgpd_article: 'Article 15 - Droit d\'accès'
       },
-      
       user_account: {
-        user: userRecord[0] || null,
-        account_private: accountPrivate[0] || null,
+        account_private: safeAccount,
         user_profile: userProfile[0] || null,
         profile_public: profilePublic[0] || null
       },
-      
       tarot_activity: {
-        daily_draws: dailyDraws || [],
-        guidance_answers: guidanceAnswers || []
+        daily_draws: dailyDraws,
+        guidance_answers: guidanceAnswers
       },
-      
-      matching_data: {
-        daily_matches: dailyMatches || [],
-        intentions_sent: intentionsSent.map(sanitizeEmail),
-        intentions_received: intentionsReceived.map(sanitizeEmail)
+      social_data: {
+        intentions_sent: intentionsSent.map(sanitize),
+        intentions_received: intentionsReceived.map(sanitize),
+        conversations: conversations.map(sanitize),
+        messages_sent: messagesFromUser.map(sanitize),
+        messages_received: messagesToUser.map(sanitize)
       },
-      
-      conversations_messages: {
-        conversations: conversations.map(sanitizeEmail),
-        messages_sent: messagesSent.map(sanitizeEmail),
-        messages_received: messagesReceived.map(sanitizeEmail)
-      },
-      
       safety_compliance: {
-        reports: reports || [],
-        blocks: blocks || [],
-        billing_requests: billingRequests || [],
-        dsar_requests: dsarRequests || [],
-        consent_preferences: consentPreferences || []
+        reports,
+        billing_requests: billingRequests,
+        dsar_requests: dsarRequests,
+        consent_preferences: consentPreferences
       },
-      
       summary: {
         total_daily_draws: dailyDraws.length,
         total_guidance: guidanceAnswers.length,
-        total_matches_received: dailyMatches.length,
         total_intentions_sent: intentionsSent.length,
         total_intentions_received: intentionsReceived.length,
         total_conversations: conversations.length,
-        total_messages_sent: messagesSent.length,
-        total_messages_received: messagesReceived.length,
-        total_reports: reports.length,
-        total_blocks: blocks.length
+        total_messages_sent: messagesFromUser.length,
+        total_messages_received: messagesToUser.length,
+        total_reports: reports.length
       }
     };
-    
+
     // STEP 6: AUDIT LOG
-    await serviceClient.entities.AuditLog.create({
+    serviceRole.entities.AuditLog.create({
       actor_user_id: currentUser.email,
       actor_role: currentUser.role || 'user',
-      action: 'dsar_export_generated',
+      action: 'admin_action',
       entity_name: 'DsarRequest',
       target_user_id: targetEmail,
-      payload_summary: `DSAR export generated for ${targetEmail}`,
-      payload_data: {
-        record_count: Object.keys(exportData.summary).length,
-        generated_by: currentUser.email
-      },
+      payload_summary: `Export DSAR généré pour ${targetEmail}`,
       severity: 'info',
       status: 'success'
     }).catch(() => {});
-    
-    return {
-      statusCode: 200,
-      body: {
-        success: true,
-        export_data: exportData,
-        download_filename: `grandtarot_export_${targetEmail.replace('@', '_')}_${Date.now()}.json`
-      }
-    };
-    
+
+    return Response.json({
+      success: true,
+      export_data: exportData,
+      download_filename: `grandtarot_export_${targetEmail.replace('@', '_at_')}_${Date.now()}.json`
+    });
+
   } catch (error) {
-    console.error('[generate_dsar_export] Error:', error);
-    
-    return {
-      statusCode: 500,
-      body: { error: 'Failed to generate export', details: error.message }
-    };
+    return Response.json({ error: 'Erreur génération export', details: error.message }, { status: 500 });
   }
-}
+});

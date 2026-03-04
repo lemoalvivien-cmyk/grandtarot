@@ -1,99 +1,61 @@
 /**
- * BACKEND FUNCTION: stripe_create_checkout_session
- * Creates a Stripe Checkout Session for subscription payment
- * 
- * SECURITY:
- * - Uses STRIPE_SECRET_KEY from server secrets (NEVER exposed to client)
- * - Validates user authentication server-side
- * - Links session to user via metadata (user_email)
- * - Returns only session.id + url (NO secret data)
- * 
- * REQUIREMENTS:
- * - Secrets: STRIPE_SECRET_KEY (sk_live_... or sk_test_...)
- * - AppSettings: stripe_price_id (price_xxx from Stripe dashboard)
+ * stripe_create_checkout_session — Base44 V3
+ * Crée une session Stripe Checkout pour l'abonnement.
+ * Sécurité : auth serveur, clé Stripe via Deno.env, jamais exposée client.
  */
 
-export default async function handler(req, context) {
-  const { successUrl, cancelUrl } = req.body;
-  
-  // STEP 1: AUTH - Get authenticated user (TRUSTED source)
-  const client = context.createClientFromRequest(req);
-  let currentUser;
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import Stripe from 'npm:stripe@17';
+
+Deno.serve(async (req) => {
   try {
-    currentUser = await client.auth.me();
-  } catch (error) {
-    return {
-      statusCode: 401,
-      body: { error: 'Non authentifié' }
-    };
-  }
-  
-  const userEmail = currentUser.email; // TRUSTED
-  
-  // STEP 2: VALIDATION INPUT
-  if (!successUrl || !cancelUrl) {
-    return {
-      statusCode: 400,
-      body: { error: 'successUrl and cancelUrl required' }
-    };
-  }
-  
-  // STEP 3: LOAD STRIPE CONFIG (server-side ONLY)
-  const serviceClient = context.createServiceRoleClient();
-  
-  let stripeSecretKey;
-  let stripePriceId;
-  
-  try {
-    // Get secret key from server environment (SECURE)
-    stripeSecretKey = context.secrets?.STRIPE_SECRET_KEY;
-    
-    if (!stripeSecretKey) {
-      return {
-        statusCode: 500,
-        body: { error: 'STRIPE_SECRET_KEY not configured on server' }
-      };
+    const base44 = createClientFromRequest(req);
+
+    // STEP 1: AUTH
+    const currentUser = await base44.auth.me();
+    if (!currentUser) {
+      return Response.json({ error: 'Non authentifié' }, { status: 401 });
     }
-    
-    // Get price ID from AppSettings
-    const priceSettings = await serviceClient.entities.AppSettings.filter({
+    const userEmail = currentUser.email;
+
+    // STEP 2: VALIDATION INPUT
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json({ error: 'Corps de requête invalide' }, { status: 400 });
+    }
+    const { successUrl, cancelUrl } = body;
+    if (!successUrl || !cancelUrl) {
+      return Response.json({ error: 'successUrl et cancelUrl requis' }, { status: 400 });
+    }
+
+    // STEP 3: SECRETS (Deno.env uniquement — jamais client)
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeSecretKey) {
+      return Response.json({ error: 'STRIPE_SECRET_KEY non configuré' }, { status: 500 });
+    }
+
+    // STEP 4: PRICE ID depuis AppSettings
+    const serviceRole = base44.asServiceRole;
+    const priceSettings = await serviceRole.entities.AppSettings.filter({
       setting_key: 'stripe_price_id'
     }, null, 1);
-    
+
     if (!priceSettings.length || !priceSettings[0].value_string) {
-      return {
-        statusCode: 500,
-        body: { error: 'stripe_price_id not configured in AppSettings' }
-      };
+      return Response.json({ error: 'stripe_price_id non configuré dans AppSettings' }, { status: 500 });
     }
-    
-    stripePriceId = priceSettings[0].value_string;
-    
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: 'Failed to load Stripe config', details: error.message }
-    };
-  }
-  
-  // STEP 4: CREATE CHECKOUT SESSION (Stripe API call)
-  try {
-    // Initialize Stripe with secret key (server-side ONLY)
-    const stripe = require('stripe')(stripeSecretKey);
-    
-    // Create Checkout Session
+    const stripePriceId = priceSettings[0].value_string;
+
+    // STEP 5: CRÉATION SESSION CHECKOUT
+    const stripe = new Stripe(stripeSecretKey);
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: stripePriceId, // e.g., 'price_1Abc...' from Stripe dashboard
-          quantity: 1
-        }
-      ],
-      customer_email: userEmail, // Pre-fill email
+      line_items: [{ price: stripePriceId, quantity: 1 }],
+      customer_email: userEmail,
       metadata: {
-        user_email: userEmail, // CRITICAL: link payment to user
+        user_email: userEmail,
         app_name: 'GRANDTAROT',
         created_at: new Date().toISOString()
       },
@@ -102,54 +64,25 @@ export default async function handler(req, context) {
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       subscription_data: {
-        metadata: {
-          user_email: userEmail // Also in subscription metadata
-        }
+        metadata: { user_email: userEmail }
       }
     });
-    
-    // STEP 5: AUDIT LOG (non-blocking)
-    await serviceClient.entities.AuditLog.create({
+
+    // STEP 6: AUDIT LOG (non-bloquant)
+    serviceRole.entities.AuditLog.create({
       actor_user_id: userEmail,
       actor_role: 'user',
-      action: 'stripe_checkout_created',
+      action: 'subscription_started',
       entity_name: 'StripeCheckout',
       entity_id: session.id,
-      payload_summary: `Checkout session created: ${session.id}`,
-      payload_data: {
-        session_id: session.id,
-        amount: session.amount_total,
-        currency: session.currency
-      },
+      payload_summary: `Checkout session créée: ${session.id}`,
       severity: 'info',
       status: 'success'
     }).catch(() => {});
-    
-    return {
-      statusCode: 200,
-      body: {
-        sessionId: session.id,
-        url: session.url // Client redirects to this URL
-      }
-    };
-    
+
+    return Response.json({ sessionId: session.id, url: session.url });
+
   } catch (error) {
-    console.error('[stripe_create_checkout_session] Error:', error);
-    
-    // Log error (non-blocking)
-    await serviceClient.entities.AuditLog.create({
-      actor_user_id: userEmail,
-      actor_role: 'user',
-      action: 'stripe_checkout_failed',
-      entity_name: 'StripeCheckout',
-      payload_summary: `Checkout creation failed: ${error.message}`,
-      severity: 'critical',
-      status: 'failed'
-    }).catch(() => {});
-    
-    return {
-      statusCode: 500,
-      body: { error: 'Failed to create checkout session', details: error.message }
-    };
+    return Response.json({ error: 'Erreur création session', details: error.message }, { status: 500 });
   }
-}
+});

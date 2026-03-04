@@ -1,247 +1,177 @@
 /**
- * BACKEND FUNCTION: stripe_webhook
- * Handles Stripe webhook events (auto-activation plan_status)
- * 
- * SECURITY:
- * - Verifies Stripe signature (STRIPE_WEBHOOK_SECRET)
- * - Idempotent (event_id stored to prevent double processing)
- * - Uses serviceRole to bypass AccessRules
- * - NO user authentication (webhook from Stripe servers)
- * 
- * REQUIREMENTS:
- * - Secrets: STRIPE_WEBHOOK_SECRET (whsec_...)
- * - Entity: AppSettings (to store processed event_ids)
- * 
- * EVENTS HANDLED:
- * - checkout.session.completed → activate plan_status
- * - invoice.payment_succeeded → renew subscription (future)
- * - customer.subscription.deleted → cancel subscription (future)
+ * stripe_webhook — Base44 V3
+ * Webhook Stripe avec vérification de signature async (Deno).
+ * Active/désactive plan_status dans AccountPrivate via serviceRole.
+ * Idempotence : AuditLog avec entity_id = event.id.
  */
 
-export default async function handler(req, context) {
-  // STEP 1: GET RAW BODY (required for signature verification)
-  const rawBody = req.rawBody || JSON.stringify(req.body);
-  const signature = req.headers['stripe-signature'];
-  
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import Stripe from 'npm:stripe@17';
+
+Deno.serve(async (req) => {
+  // STEP 1: LIRE LE BODY RAW (requis pour signature Stripe)
+  const rawBodyBuffer = await req.arrayBuffer();
+  const rawBody = new TextDecoder().decode(rawBodyBuffer);
+
+  const signature = req.headers.get('stripe-signature');
   if (!signature) {
-    return {
-      statusCode: 400,
-      body: { error: 'Missing Stripe signature' }
-    };
+    return Response.json({ error: 'Signature Stripe manquante' }, { status: 400 });
   }
-  
-  // STEP 2: LOAD WEBHOOK SECRET (server-side ONLY)
-  const webhookSecret = context.secrets?.STRIPE_WEBHOOK_SECRET;
-  
-  if (!webhookSecret) {
-    console.error('[stripe_webhook] STRIPE_WEBHOOK_SECRET not configured');
-    return {
-      statusCode: 500,
-      body: { error: 'Webhook secret not configured' }
-    };
+
+  // STEP 2: SECRETS
+  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+  const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+
+  if (!webhookSecret || !stripeSecretKey) {
+    return Response.json({ error: 'Secrets Stripe non configurés' }, { status: 500 });
   }
-  
-  // STEP 3: VERIFY SIGNATURE (anti-spoofing)
+
+  // STEP 3: VÉRIFICATION SIGNATURE (async requis sur Deno)
+  const stripe = new Stripe(stripeSecretKey);
   let event;
   try {
-    const stripe = require('stripe')(context.secrets?.STRIPE_SECRET_KEY);
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
   } catch (err) {
-    console.error('[stripe_webhook] Signature verification failed:', err.message);
-    return {
-      statusCode: 400,
-      body: { error: `Webhook signature verification failed: ${err.message}` }
-    };
+    return Response.json({ error: `Signature invalide: ${err.message}` }, { status: 400 });
   }
-  
-  // STEP 4: IDEMPOTENCE CHECK (prevent double processing)
-  const serviceClient = context.createServiceRoleClient();
-  const eventId = event.id;
-  
-  try {
-    const processedEvents = await serviceClient.entities.AppSettings.filter({
-      setting_key: `stripe_event_${eventId}`
-    }, null, 1);
-    
-    if (processedEvents.length > 0) {
-      console.log(`[stripe_webhook] Event ${eventId} already processed (idempotent)`);
-      return {
-        statusCode: 200,
-        body: { received: true, processed: false, reason: 'already_processed' }
-      };
-    }
-  } catch (error) {
-    console.error('[stripe_webhook] Idempotence check failed:', error);
-    // Continue anyway (fail-open for critical payment events)
+
+  // STEP 4: SERVICE ROLE (bypass accessRules)
+  // NB: pas d'auth user ici — c'est un appel venant de Stripe, pas d'un utilisateur
+  const base44 = createClientFromRequest(req);
+  const serviceRole = base44.asServiceRole;
+
+  // STEP 5: IDEMPOTENCE — vérifier si event déjà traité (via AuditLog)
+  const existingLogs = await serviceRole.entities.AuditLog.filter({
+    entity_id: event.id,
+    entity_name: 'StripeWebhook'
+  }, null, 1);
+
+  if (existingLogs.length > 0) {
+    return Response.json({ received: true, processed: false, reason: 'already_processed' });
   }
-  
-  // STEP 5: HANDLE EVENT TYPE
+
+  // STEP 6: TRAITEMENT PAR TYPE D'ÉVÉNEMENT
   let processed = false;
   let userEmail = null;
-  
+
   try {
     switch (event.type) {
+
       case 'checkout.session.completed': {
         const session = event.data.object;
         userEmail = session.metadata?.user_email || session.customer_email;
-        
         if (!userEmail) {
-          console.error('[stripe_webhook] No user_email in session metadata');
-          return {
-            statusCode: 400,
-            body: { error: 'Missing user_email in session metadata' }
-          };
+          return Response.json({ error: 'user_email absent des métadonnées session' }, { status: 400 });
         }
-        
-        // ACTIVATE PLAN (primary authority)
-        const accounts = await serviceClient.entities.AccountPrivate.filter({
-          user_email: userEmail
-        }, null, 1);
-        
+
+        const accounts = await serviceRole.entities.AccountPrivate.filter({ user_email: userEmail }, null, 1);
+        const now = new Date().toISOString();
+        const updateData = {
+          plan_status: 'active',
+          plan_activated_at: now,
+          stripe_customer_id: session.customer || null,
+          stripe_subscription_id: session.subscription || null,
+          subscription_status: 'active',
+          subscription_start: now
+        };
+
         if (accounts.length === 0) {
-          // Create AccountPrivate if missing (new user)
-          await serviceClient.entities.AccountPrivate.create({
-            user_email: userEmail,
-            plan_status: 'active',
-            plan_activated_at: new Date().toISOString(),
-            stripe_customer_id: session.customer || null,
-            stripe_subscription_id: session.subscription || null,
-            subscription_status: 'active', // Legacy field (kept for backward compat)
-            subscription_start: new Date().toISOString()
-          });
+          await serviceRole.entities.AccountPrivate.create({ user_email: userEmail, ...updateData });
         } else {
-          // Update existing account
-          await serviceClient.entities.AccountPrivate.update(accounts[0].id, {
-            plan_status: 'active',
-            plan_activated_at: new Date().toISOString(),
-            stripe_customer_id: session.customer || null,
-            stripe_subscription_id: session.subscription || null,
-            subscription_status: 'active', // Legacy
-            subscription_start: new Date().toISOString()
-          });
+          await serviceRole.entities.AccountPrivate.update(accounts[0].id, updateData);
         }
-        
         processed = true;
-        console.log(`[stripe_webhook] Plan activated for ${userEmail}`);
         break;
       }
-      
+
       case 'invoice.payment_succeeded': {
-        // Subscription renewal (future enhancement)
         const invoice = event.data.object;
-        const customerId = invoice.customer;
-        
-        // Find user by stripe_customer_id
-        const accounts = await serviceClient.entities.AccountPrivate.filter({
-          stripe_customer_id: customerId
+        const accounts = await serviceRole.entities.AccountPrivate.filter({
+          stripe_customer_id: invoice.customer
         }, null, 1);
-        
         if (accounts.length > 0) {
           userEmail = accounts[0].user_email;
-          
-          // Renew plan (update subscription_end)
           const subscriptionEnd = new Date();
           subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
-          
-          await serviceClient.entities.AccountPrivate.update(accounts[0].id, {
+          await serviceRole.entities.AccountPrivate.update(accounts[0].id, {
             plan_status: 'active',
             subscription_status: 'active',
             subscription_end: subscriptionEnd.toISOString()
           });
-          
           processed = true;
-          console.log(`[stripe_webhook] Subscription renewed for ${userEmail}`);
         }
         break;
       }
-      
-      case 'customer.subscription.deleted': {
-        // Subscription canceled (future enhancement)
-        const subscription = event.data.object;
-        const customerId = subscription.customer;
-        
-        const accounts = await serviceClient.entities.AccountPrivate.filter({
-          stripe_customer_id: customerId
+
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
+        const accounts = await serviceRole.entities.AccountPrivate.filter({
+          stripe_customer_id: sub.customer
         }, null, 1);
-        
         if (accounts.length > 0) {
           userEmail = accounts[0].user_email;
-          
-          await serviceClient.entities.AccountPrivate.update(accounts[0].id, {
+          // cancel_at_period_end = true → garder actif jusqu'à fin de période
+          const planStatus = (sub.status === 'active' || sub.status === 'trialing') ? 'active' : 'free';
+          await serviceRole.entities.AccountPrivate.update(accounts[0].id, {
+            plan_status: planStatus,
+            subscription_status: sub.status,
+            subscription_end: sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString()
+              : null
+          });
+          processed = true;
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        const accounts = await serviceRole.entities.AccountPrivate.filter({
+          stripe_customer_id: sub.customer
+        }, null, 1);
+        if (accounts.length > 0) {
+          userEmail = accounts[0].user_email;
+          await serviceRole.entities.AccountPrivate.update(accounts[0].id, {
             plan_status: 'free',
             subscription_status: 'canceled'
           });
-          
           processed = true;
-          console.log(`[stripe_webhook] Subscription canceled for ${userEmail}`);
         }
         break;
       }
-      
+
       default:
-        console.log(`[stripe_webhook] Unhandled event type: ${event.type}`);
+        break;
     }
-    
+
   } catch (error) {
-    console.error(`[stripe_webhook] Error processing ${event.type}:`, error);
-    
-    // Log error (non-blocking)
-    await serviceClient.entities.AuditLog.create({
+    await serviceRole.entities.AuditLog.create({
       actor_user_id: userEmail || 'stripe_webhook',
       actor_role: 'system',
-      action: 'stripe_webhook_error',
+      action: 'admin_action',
       entity_name: 'StripeWebhook',
-      entity_id: eventId,
-      payload_summary: `Webhook processing failed: ${event.type}`,
-      payload_data: {
-        event_type: event.type,
-        error_message: error.message
-      },
+      entity_id: event.id,
+      payload_summary: `Erreur webhook: ${event.type} — ${error.message}`,
       severity: 'critical',
       status: 'failed'
     }).catch(() => {});
-    
-    return {
-      statusCode: 500,
-      body: { error: 'Webhook processing failed', details: error.message }
-    };
+
+    return Response.json({ error: 'Erreur traitement webhook', details: error.message }, { status: 500 });
   }
-  
-  // STEP 6: MARK EVENT AS PROCESSED (idempotence)
-  try {
-    await serviceClient.entities.AppSettings.create({
-      setting_key: `stripe_event_${eventId}`,
-      value_string: event.type,
-      value_boolean: true,
-      category: 'system',
-      description_en: `Stripe event processed at ${new Date().toISOString()}`,
-      is_public: false
-    });
-  } catch (error) {
-    console.error('[stripe_webhook] Failed to mark event as processed:', error);
-    // Non-blocking (event was processed, just couldn't mark it)
-  }
-  
-  // STEP 7: AUDIT LOG (success)
+
+  // STEP 7: MARQUER COMME TRAITÉ (via AuditLog — pas d'enum contraignant)
   if (processed && userEmail) {
-    await serviceClient.entities.AuditLog.create({
+    await serviceRole.entities.AuditLog.create({
       actor_user_id: userEmail,
       actor_role: 'system',
-      action: 'stripe_webhook_processed',
+      action: 'subscription_started',
       entity_name: 'StripeWebhook',
-      entity_id: eventId,
-      payload_summary: `Stripe event ${event.type} processed for ${userEmail}`,
-      payload_data: {
-        event_type: event.type,
-        event_id: eventId
-      },
+      entity_id: event.id,
+      payload_summary: `Stripe event ${event.type} traité pour ${userEmail}`,
       severity: 'info',
       status: 'success'
     }).catch(() => {});
   }
-  
-  return {
-    statusCode: 200,
-    body: { received: true, processed, event_type: event.type }
-  };
-}
+
+  return Response.json({ received: true, processed, event_type: event.type });
+});
