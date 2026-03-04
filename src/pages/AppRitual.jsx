@@ -193,9 +193,9 @@ export default function AppRitual() {
         userProfile: profile
       });
       
-      // Create daily draw with interpretation (today already declared above)
+      // Create daily draw using profile_id (correct field per schema)
       const newDraw = await base44.entities.DailyDraw.create({
-        user_id: user.email,
+        profile_id: profileId,
         draw_date: today,
         mode: profile.mode_active,
         tarot_card_id: randomCard.id,
