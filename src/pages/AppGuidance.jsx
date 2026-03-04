@@ -347,7 +347,7 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
 
   return (
     <SubscriptionGuard>
-      <div className="min-h-screen p-6">
+      <div className="min-h-screen px-4 py-8 md:p-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
