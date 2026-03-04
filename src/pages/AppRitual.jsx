@@ -312,8 +312,9 @@ export default function AppRitual() {
               
               <Button 
                 onClick={performDraw}
+                disabled={drawing}
                 size="lg"
-                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-12 py-6 text-lg rounded-xl shadow-2xl shadow-amber-500/20"
+                className="bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 px-12 py-6 text-lg rounded-xl shadow-2xl shadow-amber-500/20 disabled:opacity-70"
               >
                 <Sparkles className="w-5 h-5 mr-2" />
                 {t.draw}
