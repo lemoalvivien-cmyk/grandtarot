@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
 
     // STEP 5: ENREGISTREMENT CONFIRMATION
     const accounts = await serviceRole.entities.AccountPrivate.filter({ user_email: userEmail }, null, 1);
+
     const now = new Date().toISOString();
 
     if (accounts.length === 0) {
