@@ -77,34 +77,43 @@ export default function AppIntentions() {
     }
   };
 
+  const [acceptingId, setAcceptingId] = useState(null);
+  const [refusingId, setRefusingId] = useState(null);
+  const [actionError, setActionError] = useState('');
+
   const handleAccept = async (intention, senderProfile) => {
+    if (acceptingId) return;
+    setAcceptingId(intention.id);
+    setActionError('');
     try {
-      // Update intention status
       await base44.entities.Intention.update(intention.id, {
         status: 'accepted',
         responded_at: new Date().toISOString()
       });
 
-      // Open conversation via BACKEND FUNCTION (NOT direct create)
       const { openConversationSecure } = await import('@/components/helpers/messageWorkflow');
       const result = await openConversationSecure(intention.from_user_id);
       
       if (!result.success) {
-        alert('Erreur: ' + result.error);
+        setActionError(lang === 'fr'
+          ? 'Impossible d\'ouvrir la conversation : ' + result.error
+          : 'Could not open conversation: ' + result.error);
         return;
       }
 
-      // Update local state
       setReceivedIntentions(prev => 
         prev.map(i => i.id === intention.id ? { ...i, status: 'accepted' } : i)
       );
 
-      // Redirect to chat
       setTimeout(() => {
         window.location.href = createPageUrl('Chat') + `?conversation=${result.conversationId}`;
-      }, 1000);
-    } catch (error) {
-      console.error('Error accepting intention:', error);
+      }, 800);
+    } catch (err) {
+      setActionError(lang === 'fr'
+        ? 'Une erreur s\'est produite. Réessayez.'
+        : 'An error occurred. Please try again.');
+    } finally {
+      setAcceptingId(null);
     }
   };
 
