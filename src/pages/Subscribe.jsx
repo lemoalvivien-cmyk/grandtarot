@@ -58,33 +58,30 @@ export default function Subscribe() {
     }
   };
 
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+
   const handleSubscribe = async () => {
+    if (checkoutLoading) return;
+    setCheckoutLoading(true);
+    setCheckoutError('');
     try {
-      // Call backend function to create Checkout Session (SECURE)
-      const response = await fetch('/api/v1/functions/stripe_create_checkout_session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          successUrl: window.location.origin + createPageUrl('SubscribeSuccess'),
-          cancelUrl: window.location.origin + createPageUrl('SubscribeCancel')
-        })
+      const result = await base44.functions.invoke('stripe_create_checkout_session', {
+        successUrl: window.location.origin + createPageUrl('SubscribeSuccess'),
+        cancelUrl: window.location.origin + createPageUrl('SubscribeCancel')
       });
       
-      const result = await response.json();
-      
-      if (!response.ok || !result.url) {
-        throw new Error(result.error || 'Failed to create checkout session');
+      const url = result?.data?.url;
+      if (!url) {
+        throw new Error(result?.data?.error || 'Impossible de créer la session de paiement');
       }
-      
-      // Redirect to Stripe Checkout
-      window.location.href = result.url;
-      
+      window.location.href = url;
     } catch (error) {
-      console.error('Payment error:', error);
-      alert(lang === 'fr' 
-        ? `Erreur: ${error.message}. Contactez support@grandtarot.com` 
-        : `Error: ${error.message}. Contact support@grandtarot.com`);
+      setCheckoutError(lang === 'fr'
+        ? 'Une erreur est survenue lors de la connexion au paiement. Réessayez ou contactez support@grandtarot.com'
+        : 'An error occurred connecting to payment. Please retry or contact support@grandtarot.com');
+    } finally {
+      setCheckoutLoading(false);
     }
   };
 
