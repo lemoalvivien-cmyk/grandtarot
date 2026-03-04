@@ -32,30 +32,27 @@ export default function ManageSubscription() {
     }
   };
 
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState('');
+
   const openStripePortal = async () => {
+    if (portalLoading) return;
+    setPortalLoading(true);
+    setPortalError('');
     try {
-      const response = await fetch('/api/v1/functions/stripe_create_portal_session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          returnUrl: window.location.origin + createPageUrl('ManageSubscription')
-        })
+      const result = await base44.functions.invoke('stripe_create_portal_session', {
+        returnUrl: window.location.origin + createPageUrl('ManageSubscription')
       });
       
-      const result = await response.json();
-      
-      if (!response.ok || !result.url) {
-        throw new Error(result.error || 'Failed to create portal session');
-      }
-      
-      window.location.href = result.url;
-      
+      const url = result?.data?.url;
+      if (!url) throw new Error(result?.data?.error || 'Impossible d\'ouvrir le portail');
+      window.location.href = url;
     } catch (error) {
-      console.error('Portal error:', error);
-      alert(lang === 'fr' 
-        ? `Erreur: ${error.message}. Contactez support@grandtarot.com`
-        : `Error: ${error.message}. Contact support@grandtarot.com`);
+      setPortalError(lang === 'fr'
+        ? 'Impossible d\'accéder au portail Stripe. Contactez support@grandtarot.com'
+        : 'Unable to access Stripe portal. Contact support@grandtarot.com');
+    } finally {
+      setPortalLoading(false);
     }
   };
 
