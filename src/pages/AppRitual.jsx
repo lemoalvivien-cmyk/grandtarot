@@ -42,26 +42,26 @@ export default function AppRitual() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
-      
-      const hasActiveSubscription = profiles.length > 0 && 
-        (profiles[0].subscription_status === 'active' || profiles[0].subscription_status === 'trialing');
-      
-      if (!hasActiveSubscription) {
+      const [profiles, accounts] = await Promise.all([
+        base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1),
+        base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1)
+      ]);
+
+      // plan_status (AccountPrivate) est la source de vérité — pas subscription_status (UserProfile)
+      const planStatus = accounts[0]?.plan_status || 'free';
+      if (planStatus !== 'active') {
         window.location.href = createPageUrl('Subscribe');
         return;
       }
 
-      if (!profiles[0].onboarding_completed || !profiles[0].photo_url) {
+      if (profiles.length === 0 || !profiles[0].onboarding_completed || !profiles[0].photo_url) {
         window.location.href = createPageUrl('AppOnboarding');
         return;
       }
 
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
-      
-      // Load account for guidance features
-      const accounts = await base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1);
+
       if (accounts.length > 0) {
         setAccount(accounts[0]);
         await loadGuidanceSignals(profiles[0], accounts[0]);
