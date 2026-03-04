@@ -269,7 +269,7 @@ export default function AppRitual() {
   return (
     <SubscriptionGuard>
       <div className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
@@ -335,7 +335,7 @@ export default function AppRitual() {
                 transition={{ duration: 0.8 }}
                 className="space-y-8"
               >
-                <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
                   {/* Card Image */}
                   <motion.div 
                     initial={{ rotateY: 90 }}
@@ -344,7 +344,7 @@ export default function AppRitual() {
                     className="relative mx-auto"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-violet-500/30 rounded-3xl blur-2xl" />
-                    <div className="relative w-72 h-[420px] bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 overflow-hidden p-4">
+                    <div className="relative w-56 h-80 md:w-72 md:h-[420px] bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-amber-500/20 overflow-hidden p-4">
                       <TarotCardImage
                         src={card.image_url}
                         alt={lang === 'fr' ? card.name_fr : card.name_en}
