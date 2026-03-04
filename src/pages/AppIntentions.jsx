@@ -56,19 +56,21 @@ export default function AppIntentions() {
       setReceivedIntentions(received);
       setSentIntentions(sent);
 
-      // Load only profiles for intentions (batch fetch)
-      const allUserIds = [
+      // Load only PUBLIC profiles (ProfilePublic via AccountPrivate) — never UserProfile which has sensitive data
+      const allUserEmails = [
         ...received.map(i => i.from_user_id),
         ...sent.map(i => i.to_user_id)
       ];
-      const uniqueUserIds = [...new Set(allUserIds)];
+      const uniqueEmails = [...new Set(allUserEmails)];
       
-      // Parallel batch fetch (pas de boucle séquentielle)
       const profileMap = {};
       await Promise.all(
-        uniqueUserIds.map(async (uid) => {
-          const profs = await base44.entities.UserProfile.filter({ user_id: uid }, null, 1);
-          if (profs.length > 0) profileMap[uid] = profs[0];
+        uniqueEmails.map(async (email) => {
+          const accts = await base44.entities.AccountPrivate.filter({ user_email: email }, null, 1);
+          const publicId = accts[0]?.public_profile_id;
+          if (!publicId) return;
+          const pubs = await base44.entities.ProfilePublic.filter({ public_id: publicId }, null, 1);
+          if (pubs.length > 0) profileMap[email] = pubs[0];
         })
       );
       setProfiles(profileMap);
