@@ -137,7 +137,7 @@ export const logRateLimitViolation = async (userEmail, action, details) => {
     await base44.entities.AuditLog.create({
       actor_user_id: userEmail,
       actor_role: 'user',
-      action: 'rate_limit_violation',
+      action: 'admin_action',
       entity_name: 'RateLimit',
       payload_summary: `Rate limit exceeded: ${action}`,
       payload_data: { action, ...details },
