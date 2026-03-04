@@ -361,14 +361,14 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
           </div>
 
           {/* Mode Tabs */}
-          <div className="flex gap-3 justify-center mb-8 flex-wrap">
+          <div className="flex gap-2 md:gap-3 justify-center mb-8 flex-wrap">
             {modes.map((mode) => {
               const ModeIcon = mode.icon;
               return (
                 <button
                   key={mode.id}
                   onClick={() => setActiveMode(mode.id)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all ${
+                  className={`flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-xl text-sm md:text-base transition-all ${
                     activeMode === mode.id
                       ? `bg-gradient-to-r ${mode.color} text-white shadow-lg`
                       : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-800'
