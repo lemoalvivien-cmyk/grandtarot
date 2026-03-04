@@ -12,20 +12,19 @@
 export function sanitizeProfile(profile) {
   if (!profile) return null;
 
-  const currentYear = new Date().getFullYear();
-  const age = profile.birth_year ? currentYear - profile.birth_year : null;
-  
-  // Age range for privacy (e.g., "25-30", "31-35")
-  let ageRange = null;
-  if (age) {
+  // ProfilePublic already has age_range (privacy-safe). UserProfile has birth_year.
+  let ageRange = profile.age_range || null;
+  if (!ageRange && profile.birth_year) {
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - profile.birth_year;
     const lowerBound = Math.floor(age / 5) * 5;
-    const upperBound = lowerBound + 4;
-    ageRange = `${lowerBound}-${upperBound}`;
+    ageRange = `${lowerBound}-${lowerBound + 4}`;
   }
 
   return {
     // Safe identifiers (NO email, NO user_id)
-    id: profile.id, // Profile record ID only (not user email)
+    id: profile.id,
+    public_id: profile.public_id || null,
     
     // Public display data
     display_name: profile.display_name || 'User',
