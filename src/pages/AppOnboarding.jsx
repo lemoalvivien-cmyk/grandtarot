@@ -155,23 +155,14 @@ export default function AppOnboarding() {
     setSaving(true);
     try {
       // CRITICAL: SERVER-SIDE AGE VERIFICATION (RGPD/COPPA compliance)
-      const ageVerifyResponse = await fetch('/api/v1/functions/validate_age_gate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          birth_year: profile.birth_year,
-          birth_month: profile.birth_month || null,
-          birth_day: profile.birth_day || null
-        })
-      });
+      // Le serveur lit lui-même birth_year/month/day depuis UserProfile — rien n'est passé du client
+      const ageResult = await base44.functions.invoke('validate_age_gate', {});
       
-      const ageResult = await ageVerifyResponse.json();
-      
-      if (!ageVerifyResponse.ok || !ageResult.age_confirmed) {
+      if (!ageResult?.data?.age_confirmed) {
+        const age = ageResult?.data?.calculated_age;
         alert(lang === 'fr' 
-          ? `Vous devez avoir au moins 18 ans. Âge calculé: ${ageResult.calculated_age || 'invalide'}` 
-          : `You must be at least 18 years old. Calculated age: ${ageResult.calculated_age || 'invalid'}`);
+          ? `Vous devez avoir au moins 18 ans.${age ? ` Âge calculé: ${age}` : ''}` 
+          : `You must be at least 18 years old.${age ? ` Calculated age: ${age}` : ''}`);
         setSaving(false);
         return;
       }
