@@ -160,10 +160,20 @@ export default function AppSynchros() {
 
     setSending(true);
     try {
-      // Create intention
+      // Create intention — to_user_id est l'email, récupéré via AccountPrivate
+      const targetAcct = await base44.entities.AccountPrivate.filter({
+        public_profile_id: selectedMatch.matched_profile_id
+      }, null, 1);
+      const targetEmail = targetAcct[0]?.user_email;
+      if (!targetEmail) {
+        alert(lang === 'fr' ? 'Profil cible introuvable' : 'Target profile not found');
+        setSending(false);
+        return;
+      }
+
       await base44.entities.Intention.create({
         from_user_id: user.email,
-        to_user_id: selectedMatch.matched_user_id,
+        to_user_id: targetEmail,
         mode: profile.mode_active,
         message: intentionMessage.trim(),
         status: 'pending',
