@@ -106,7 +106,7 @@ export default function AdminSubscriptionSync() {
             <CardContent className="p-6 text-center">
               <h3 className="text-xl font-semibold mb-4">Synchroniser tous les abonnements</h3>
               <p className="text-slate-400 text-sm mb-6">
-                Cette opération vérifie tous les profils et met à jour les statuts selon les dates d'expiration.
+              Vérifie tous les AccountPrivate et rétrograde plan_status → 'free' si subscription_end est dépassée. Complément au webhook Stripe.
               </p>
               <Button
                 onClick={syncAllSubscriptions}
