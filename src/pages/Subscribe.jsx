@@ -181,14 +181,31 @@ export default function Subscribe() {
               ))}
             </ul>
 
+            {/* Erreur checkout */}
+            {checkoutError && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <p className="text-sm text-red-300 text-center">{checkoutError}</p>
+              </div>
+            )}
+
             {/* CTA */}
             <Button 
               onClick={handleSubscribe}
-              className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white py-6 text-lg rounded-xl shadow-2xl shadow-amber-500/20 mb-4"
+              disabled={checkoutLoading}
+              className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white py-6 text-lg rounded-xl shadow-2xl shadow-amber-500/20 mb-4 disabled:opacity-70"
             >
-              <Sparkles className="w-5 h-5 mr-2" />
-              {t.cta}
-              <ArrowRight className="w-5 h-5 ml-2" />
+              {checkoutLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                  <span>{lang === 'fr' ? 'Connexion...' : 'Connecting...'}</span>
+                </div>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  {t.cta}
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
+              )}
             </Button>
 
             {/* Security & Info */}
