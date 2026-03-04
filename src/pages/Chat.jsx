@@ -291,23 +291,24 @@ export default function Chat() {
 
     setReporting(true);
     try {
-      const publicProfiles = await base44.entities.ProfilePublic.filter({ 
-        user_id: user.email
-      }, null, 1);
+      // Lookup public_ids via AccountPrivate (source of vérité, ProfilePublic n'a pas user_id)
+      const [myAcct, otherAcct] = await Promise.all([
+        base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1),
+        base44.entities.AccountPrivate.filter({ user_email: otherProfile.user_id }, null, 1)
+      ]);
       
-      const targetPublicProfiles = await base44.entities.ProfilePublic.filter({ 
-        user_id: otherProfile.user_id
-      }, null, 1);
+      const myPublicId = myAcct[0]?.public_profile_id;
+      const otherPublicId = otherAcct[0]?.public_profile_id;
       
-      if (publicProfiles.length === 0 || targetPublicProfiles.length === 0) {
+      if (!myPublicId || !otherPublicId) {
         alert('Erreur: Profils publics introuvables');
         setReporting(false);
         return;
       }
       
       await base44.entities.Report.create({
-        reporter_profile_id: publicProfiles[0].public_id,
-        target_profile_id: targetPublicProfiles[0].public_id,
+        reporter_profile_id: myPublicId,
+        target_profile_id: otherPublicId,
         target_conversation_id: conversation.id,
         reason: reportReason,
         description: reportDescription.trim(),
