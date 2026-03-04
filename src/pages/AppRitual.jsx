@@ -10,7 +10,7 @@ import TarotCardImage from '@/components/tarot/TarotCardImage';
 import DailySynthesis from '@/components/guidance/DailySynthesis';
 import AstroWidget from '@/components/guidance/AstroWidget';
 import NumerologyWidget from '@/components/guidance/NumerologyWidget';
-import { loadFeatureFlags } from '@/components/helpers/featureFlagsLoader';
+
 import { getSunSign } from '@/components/helpers/astrologyEngine';
 import { personalDayNumber } from '@/components/helpers/numerologyEngine';
 
