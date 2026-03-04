@@ -163,8 +163,7 @@ export default function AppGuidance() {
         const publicProfileId = account?.public_profile_id;
         const dailyDraws = publicProfileId ? await base44.entities.DailyDraw.filter({
           profile_id: publicProfileId,
-          draw_date: today,
-          mode: activeMode
+          draw_date: today
         }, null, 1) : [];
 
         if (dailyDraws && dailyDraws.length > 0) {
