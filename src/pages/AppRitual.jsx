@@ -208,7 +208,11 @@ export default function AppRitual() {
       setCard(randomCard);
       setShowCard(true);
     } catch (error) {
-      console.error('Error performing draw:', error);
+      // Afficher l'erreur à l'utilisateur
+      const lang = account?.language_pref || 'fr';
+      alert(lang === 'fr'
+        ? 'Erreur lors du tirage. Vérifiez votre connexion et réessayez.'
+        : 'Error during draw. Check your connection and try again.');
     } finally {
       setDrawing(false);
     }
