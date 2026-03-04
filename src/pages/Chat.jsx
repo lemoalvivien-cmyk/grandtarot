@@ -139,10 +139,19 @@ export default function Chat() {
 
       setConversation(conv);
 
+      // Fetch other user's public profile via AccountPrivate → ProfilePublic
       const otherUserId = conv.user_a_id === userId ? conv.user_b_id : conv.user_a_id;
-      const profiles = await base44.entities.UserProfile.filter({ user_id: otherUserId }, null, 1);
-      if (profiles.length > 0) {
-        setOtherProfile(profiles[0]);
+      const otherAccts = await base44.entities.AccountPrivate.filter({ user_email: otherUserId }, null, 1);
+      const otherPublicId = otherAccts[0]?.public_profile_id;
+      if (otherPublicId) {
+        const pubs = await base44.entities.ProfilePublic.filter({ public_id: otherPublicId }, null, 1);
+        if (pubs.length > 0) {
+          // Attach user_id (email) for block/report — never displayed in UI
+          setOtherProfile({ ...pubs[0], user_id: otherUserId });
+        }
+      } else {
+        // Fallback: minimal display object so chat still opens
+        setOtherProfile({ display_name: 'Utilisateur', user_id: otherUserId });
       }
 
       await loadMessages(conversationId);
