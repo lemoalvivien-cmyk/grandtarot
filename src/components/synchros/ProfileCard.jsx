@@ -56,9 +56,9 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
           
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div>
-                <h3 className="text-xl font-semibold text-amber-100 mb-1">{safeProfile.display_name}</h3>
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="min-w-0">
+                <h3 className="text-lg md:text-xl font-semibold text-amber-100 mb-1 truncate">{safeProfile.display_name}</h3>
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   {safeProfile.age_range && <span>{safeProfile.age_range} {lang === 'fr' ? 'ans' : 'years'}</span>}
                   {safeProfile.city && (
