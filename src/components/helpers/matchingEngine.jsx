@@ -338,8 +338,19 @@ const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 
     
     const blockedIds = new Set(blocks.map(b => b.blocked_profile_id));
     const blockerIds = new Set(blockedBy.map(b => b.blocker_profile_id));
-    const intentionSentTo = new Set(intentions.map(i => i.to_user_id));
+    // Intentions store to_user_id as email → map to public_profile_id for comparison against ProfilePublic.public_id
+    const intentionEmailsSentTo = new Set(intentions.map(i => i.to_user_id));
     const personalOnlyPublicIds = new Set(personalOnlyAccounts.map(a => a.public_profile_id).filter(Boolean));
+    // Build a set of public_ids we already sent intentions to (via AccountPrivate lookup)
+    // Since we can't do a join, we collect all AccountPrivate public_profile_ids for those emails
+    const intentionAccounts = intentions.length > 0
+      ? await Promise.all(
+          [...intentionEmailsSentTo].map(email =>
+            base44.entities.AccountPrivate.filter({ user_email: email }, null, 1).then(r => r[0]?.public_profile_id).catch(() => null)
+          )
+        )
+      : [];
+    const intentionPublicIdsSentTo = new Set(intentionAccounts.filter(Boolean));
     
     // STEP 2: Fetch candidates with FILTERS (use ProfilePublic for matching)
     // Query only profiles that meet basic criteria
