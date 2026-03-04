@@ -78,21 +78,20 @@ export default function AppSynchros() {
 
       setMatches(dailyMatches);
 
-      // SCALABLE: Load ONLY the 20 matched profiles (targeted queries)
+      // SCALABLE: Load matched ProfilePublic via matched_profile_id (DailyMatch.matched_profile_id = ProfilePublic.public_id)
       if (dailyMatches.length > 0) {
-        const profileMap = {};
-        
-        // Batch fetch only needed profiles (max 20 queries)
-        await Promise.all(
-          dailyMatches.map(async (match) => {
-            const profiles = await base44.entities.UserProfile.filter({ user_id: match.matched_user_id });
-            if (profiles.length > 0) {
-              profileMap[match.matched_user_id] = profiles[0];
-            }
-          })
-        );
-        
-        setMatchProfiles(profileMap);
+      const profileMap = {};
+
+      await Promise.all(
+        dailyMatches.map(async (match) => {
+          const profiles = await base44.entities.ProfilePublic.filter({ public_id: match.matched_profile_id }, null, 1);
+          if (profiles.length > 0) {
+            profileMap[match.matched_profile_id] = profiles[0];
+          }
+        })
+      );
+
+      setMatchProfiles(profileMap);
       }
     } catch (error) {
       console.error('Error loading matches:', error);
