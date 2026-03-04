@@ -19,7 +19,8 @@ export default function Subscribe() {
     try {
       const isAuth = await base44.auth.isAuthenticated();
       if (!isAuth) {
-        window.location.href = createPageUrl('Landing');
+        // Redirige vers le login Base44, puis retour sur Subscribe après connexion
+        base44.auth.redirectToLogin(createPageUrl('Subscribe'));
         return;
       }
 
