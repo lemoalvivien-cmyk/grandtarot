@@ -52,29 +52,14 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
         }
       }
 
-      // Check paywall status (PLAN_STATUS is authoritative)
-      const settings = await base44.entities.AppSettings.filter({
-        setting_key: 'paywall_enabled'
-      }, null, 1);
-
-      const paywallEnabled = settings.length > 0 && settings[0].value_boolean === true;
-
-      if (paywallEnabled) {
-        // STRICT: Check plan_status in AccountPrivate (PRIMARY AUTHORITY)
-        // NO fallback to subscription_status (prevents bypass)
-        if (accounts.length > 0) {
-          const planStatus = accounts[0].plan_status || 'free';
-
-          if (planStatus !== 'active') {
-            setNeedsSubscription(true);
-            setChecking(false);
-            return;
-          }
-        } else {
-          setNeedsSubscription(true);
-          setChecking(false);
-          return;
-        }
+      // Check paywall: plan_status in AccountPrivate is AUTHORITATIVE (server-set by Stripe webhook)
+      // AppSettings.paywall_enabled est admin-only → on ne peut pas le lire client-side pour un user normal.
+      // Stratégie: on vérifie plan_status directement. Si absent ou 'free' → paywall.
+      const planStatus = accounts.length > 0 ? (accounts[0].plan_status || 'free') : 'free';
+      if (planStatus !== 'active') {
+        setNeedsSubscription(true);
+        setChecking(false);
+        return;
       }
 
       // Onboarding check (after paywall + age gate)
