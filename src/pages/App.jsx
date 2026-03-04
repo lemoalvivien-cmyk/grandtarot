@@ -127,7 +127,7 @@ export default function App() {
   return (
     <SubscriptionGuard>
       <div className="min-h-screen">
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
         {/* Welcome */}
         <div className="mb-12">
           <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
