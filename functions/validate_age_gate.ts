@@ -16,20 +16,25 @@ Deno.serve(async (req) => {
     }
     const userEmail = currentUser.email;
 
-    // STEP 2: VALIDATION INPUT
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return Response.json({ error: 'Corps de requête invalide' }, { status: 400 });
+    // STEP 2: LIRE birth_year/month/day DEPUIS LA DB (jamais faire confiance au client)
+    // SÉCURITÉ: on ne lit PAS ces valeurs depuis le body — elles sont dans UserProfile
+    const serviceRole = base44.asServiceRole;
+    const profiles = await serviceRole.entities.UserProfile.filter({ user_id: userEmail }, null, 1);
+
+    if (profiles.length === 0) {
+      return Response.json({ error: 'Profil utilisateur introuvable' }, { status: 404 });
     }
-    const { birth_year, birth_month, birth_day } = body;
+
+    const profile = profiles[0];
+    const birth_year = profile.birth_year;
+    const birth_month = profile.birth_month || null;
+    const birth_day = profile.birth_day || null;
 
     if (!birth_year || birth_year < 1900 || birth_year > new Date().getFullYear()) {
-      return Response.json({ error: 'birth_year invalide' }, { status: 400 });
+      return Response.json({ error: 'Année de naissance absente ou invalide dans votre profil' }, { status: 400 });
     }
 
-    // STEP 3: CALCUL ÂGE SERVEUR (jamais faire confiance au client)
+    // STEP 3: CALCUL ÂGE SERVEUR
     const today = new Date();
     let age = today.getFullYear() - birth_year;
     if (birth_month && birth_day) {
