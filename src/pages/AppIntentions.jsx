@@ -21,17 +21,25 @@ export default function AppIntentions() {
     checkAccess();
   }, []);
 
+  const [error, setError] = useState(null);
+
   const checkAccess = async () => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
       const userProfiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
+      if (userProfiles.length === 0) {
+        window.location.href = createPageUrl('AppOnboarding');
+        return;
+      }
       setProfile(userProfiles[0]);
       setLang(userProfiles[0].language_pref || 'fr');
       await loadIntentions(currentUser.email);
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (err) {
+      setError(lang === 'fr'
+        ? 'Impossible de charger vos intentions. Réessayez dans un instant.'
+        : 'Unable to load your intentions. Please try again.');
     } finally {
       setLoading(false);
     }
