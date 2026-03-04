@@ -292,10 +292,22 @@ export default function DataRights() {
               <p className="text-sm text-amber-100">{t.info}</p>
             </div>
 
+            {/* Feedback */}
+            {submitSuccess && (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                <p className="text-sm text-green-200">{submitSuccess}</p>
+              </div>
+            )}
+            {submitError && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <p className="text-sm text-red-300">{submitError}</p>
+              </div>
+            )}
+
             {/* Submit */}
             <Button
               type="submit"
-              disabled={submitting || !user || formData.message.length < 10}
+              disabled={submitting || !user}
               className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 disabled:opacity-50"
             >
               <Mail className="w-4 h-4 mr-2" />
