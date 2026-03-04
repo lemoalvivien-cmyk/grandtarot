@@ -1,3 +1,52 @@
+/**
+ * pages.config.js - Page routing configuration
+ * 
+ * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
+ * Pages are auto-registered when you create files in the ./pages/ folder.
+ * 
+ * THE ONLY EDITABLE VALUE: mainPage
+ * This controls which page is the landing page (shown when users visit the app).
+ * 
+ * Example file structure:
+ * 
+ *   import HomePage from './pages/HomePage';
+ *   import Dashboard from './pages/Dashboard';
+ *   import Settings from './pages/Settings';
+ *   
+ *   export const PAGES = {
+ *       "HomePage": HomePage,
+ *       "Dashboard": Dashboard,
+ *       "Settings": Settings,
+ *   }
+ *   
+ *   export const pagesConfig = {
+ *       mainPage: "HomePage",
+ *       Pages: PAGES,
+ *   };
+ * 
+ * Example with Layout (wraps all pages):
+ *
+ *   import Home from './pages/Home';
+ *   import Settings from './pages/Settings';
+ *   import __Layout from './Layout.jsx';
+ *
+ *   export const PAGES = {
+ *       "Home": Home,
+ *       "Settings": Settings,
+ *   }
+ *
+ *   export const pagesConfig = {
+ *       mainPage: "Home",
+ *       Pages: PAGES,
+ *       Layout: __Layout,
+ *   };
+ *
+ * To change the main page from HomePage to Dashboard, use find_replace:
+ *   Old: mainPage: "HomePage",
+ *   New: mainPage: "Dashboard",
+ *
+ * The mainPage value must match a key in the PAGES object exactly.
+ */
 import About from './pages/About';
 import AccountPrivacy from './pages/AccountPrivacy';
 import AdminAiPrompts from './pages/AdminAiPrompts';
@@ -26,6 +75,7 @@ import AdminMobileReadiness from './pages/AdminMobileReadiness';
 import AdminModeration from './pages/AdminModeration';
 import AdminNumerologySelftest from './pages/AdminNumerologySelftest';
 import AdminPaymentSmokeCheck from './pages/AdminPaymentSmokeCheck';
+import AdminProductionReadiness from './pages/AdminProductionReadiness';
 import AdminReleaseCheck from './pages/AdminReleaseCheck';
 import AdminReleaseCheckCandidate from './pages/AdminReleaseCheckCandidate';
 import AdminReports from './pages/AdminReports';
@@ -69,6 +119,7 @@ import DataRights from './pages/DataRights';
 import Demo from './pages/Demo';
 import DemoStart from './pages/DemoStart';
 import Encyclopedia from './pages/Encyclopedia';
+import Health from './pages/Health';
 import Landing from './pages/Landing';
 import Legal from './pages/Legal';
 import LegalNotice from './pages/LegalNotice';
@@ -84,8 +135,6 @@ import Subscribe from './pages/Subscribe';
 import SubscribeCancel from './pages/SubscribeCancel';
 import SubscribeSuccess from './pages/SubscribeSuccess';
 import Terms from './pages/Terms';
-import Health from './pages/Health';
-import AdminProductionReadiness from './pages/AdminProductionReadiness';
 import __Layout from './Layout.jsx';
 
 
@@ -118,6 +167,7 @@ export const PAGES = {
     "AdminModeration": AdminModeration,
     "AdminNumerologySelftest": AdminNumerologySelftest,
     "AdminPaymentSmokeCheck": AdminPaymentSmokeCheck,
+    "AdminProductionReadiness": AdminProductionReadiness,
     "AdminReleaseCheck": AdminReleaseCheck,
     "AdminReleaseCheckCandidate": AdminReleaseCheckCandidate,
     "AdminReports": AdminReports,
@@ -161,6 +211,7 @@ export const PAGES = {
     "Demo": Demo,
     "DemoStart": DemoStart,
     "Encyclopedia": Encyclopedia,
+    "Health": Health,
     "Landing": Landing,
     "Legal": Legal,
     "LegalNotice": LegalNotice,
@@ -176,8 +227,6 @@ export const PAGES = {
     "SubscribeCancel": SubscribeCancel,
     "SubscribeSuccess": SubscribeSuccess,
     "Terms": Terms,
-    "Health": Health,
-    "AdminProductionReadiness": AdminProductionReadiness,
 }
 
 export const pagesConfig = {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Heart, Users, Briefcase, Shield, Mail } from 'lucide-react';
+import { Eye, Pencil, Trash2, Ban, Download, Lock, Shield, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
