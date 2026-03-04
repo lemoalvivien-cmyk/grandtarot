@@ -290,7 +290,7 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
   const content = {
     fr: {
       title: 'Guidance Quotidienne',
-      subtitle: '1 guidance par jour et par mode',
+      subtitle: '1 guidance par jour (tous modes confondus)',
       questionLabel: 'Ta question du jour',
       questionPlaceholder: 'Pose ta question (10-240 caractères)...',
       generate: 'Obtenir ma guidance',
@@ -298,7 +298,7 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
       suggestions: 'Suggestions',
       yourGuidance: 'Ta guidance du jour',
       generatedAt: 'Générée',
-      limitInfo: (count) => `${count}/3 guidances utilisées aujourd'hui`,
+      limitInfo: (count) => `${count}/1 guidance utilisée aujourd'hui`,
       modes: {
         amour: 'Amour',
         amitie: 'Amitié',
@@ -307,7 +307,7 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
     },
     en: {
       title: 'Daily Guidance',
-      subtitle: '1 guidance per day per mode',
+      subtitle: '1 guidance per day (all modes combined)',
       questionLabel: 'Your question of the day',
       questionPlaceholder: 'Ask your question (10-240 characters)...',
       generate: 'Get my guidance',
@@ -315,7 +315,7 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
       suggestions: 'Suggestions',
       yourGuidance: 'Your daily guidance',
       generatedAt: 'Generated',
-      limitInfo: (count) => `${count}/3 guidances used today`,
+      limitInfo: (count) => `${count}/1 guidance used today`,
       modes: {
         amour: 'Love',
         amitie: 'Friendship',
