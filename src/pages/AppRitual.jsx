@@ -156,10 +156,9 @@ export default function AppRitual() {
   const performDraw = async () => {
     setDrawing(true);
     try {
-      // PERF: Check if draw already exists to prevent duplicate
+      // PERF: Use cached account (already loaded in checkAccess)
       const today = new Date().toISOString().split('T')[0];
-      const accounts = await base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1);
-      const profileId = accounts[0]?.public_profile_id;
+      const profileId = account?.public_profile_id;
       if (!profileId) {
         setDrawing(false);
         return;
