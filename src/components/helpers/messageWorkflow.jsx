@@ -153,27 +153,22 @@ export const sendMessageSecure = async ({
  */
 export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'not_interested') => {
   try {
-    // STEP 1: Fetch blocker's ProfilePublic (unique source of public_id)
-    const blockerProfiles = await base44.entities.ProfilePublic.filter({ 
-      user_id: blockerUserEmail 
-    }, null, 1);
+    // STEP 1: Fetch public_id via AccountPrivate (user_id n'existe pas dans ProfilePublic)
+    const [blockerAccts, blockedAccts] = await Promise.all([
+      base44.entities.AccountPrivate.filter({ user_email: blockerUserEmail }, null, 1),
+      base44.entities.AccountPrivate.filter({ user_email: blockedUserEmail }, null, 1)
+    ]);
     
-    if (!blockerProfiles.length) {
-      return { success: false, error: 'Blocker onboarding incomplete (ProfilePublic missing)' };
+    const blockerPublicId = blockerAccts[0]?.public_profile_id;
+    const blockedPublicId = blockedAccts[0]?.public_profile_id;
+    
+    if (!blockerPublicId) {
+      return { success: false, error: 'Blocker onboarding incomplete (public_profile_id missing)' };
     }
     
-    const blockerPublicId = blockerProfiles[0].public_id;
-    
-    // STEP 2: Fetch blocked user's ProfilePublic
-    const blockedProfiles = await base44.entities.ProfilePublic.filter({ 
-      user_id: blockedUserEmail 
-    }, null, 1);
-    
-    if (!blockedProfiles.length) {
-      return { success: false, error: 'Blocked user onboarding incomplete (ProfilePublic missing)' };
+    if (!blockedPublicId) {
+      return { success: false, error: 'Blocked user onboarding incomplete (public_profile_id missing)' };
     }
-    
-    const blockedPublicId = blockedProfiles[0].public_id;
     
     // STEP 3: Create Block with STRICT public_id fields (NEVER email)
     await base44.entities.Block.create({
