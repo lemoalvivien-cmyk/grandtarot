@@ -1,6 +1,5 @@
 import { base44 } from '@/api/base44Client';
 import { moderateMessage } from './aiService';
-import { callFunctionRaw } from './functionFetch';
 
 /**
  * SECURE MESSAGE WORKFLOW - NO MERCY MODE
