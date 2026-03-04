@@ -159,14 +159,17 @@ export default function AppGuidance() {
       }
 
       // Load today's card (if exists, zero extra cost)
+      // DailyDraw uses profile_id (public_id), not user.email
       let cardContext = null;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const dailyDraws = await base44.entities.DailyDraw.filter({
-          user_id: user.email,
+        const accounts = await base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1);
+        const publicProfileId = accounts[0]?.public_profile_id;
+        const dailyDraws = publicProfileId ? await base44.entities.DailyDraw.filter({
+          profile_id: publicProfileId,
           draw_date: today,
           mode: activeMode
-        }, null, 1);
+        }, null, 1) : [];
 
         if (dailyDraws && dailyDraws.length > 0) {
           const cards = await base44.entities.TarotCard.filter({ id: dailyDraws[0].tarot_card_id }, null, 1);
