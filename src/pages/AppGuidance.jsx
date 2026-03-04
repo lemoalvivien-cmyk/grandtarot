@@ -332,11 +332,9 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
 
   if (loading) {
     return (
-      <SubscriptionGuard>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-        </div>
-      </SubscriptionGuard>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
     );
   }
 
