@@ -63,13 +63,14 @@ export default function AppIntentions() {
       ];
       const uniqueUserIds = [...new Set(allUserIds)];
       
+      // Parallel batch fetch (pas de boucle séquentielle)
       const profileMap = {};
-      for (const uid of uniqueUserIds) {
-        const profiles = await base44.entities.UserProfile.filter({ user_id: uid }, null, 1);
-        if (profiles.length > 0) {
-          profileMap[uid] = profiles[0];
-        }
-      }
+      await Promise.all(
+        uniqueUserIds.map(async (uid) => {
+          const profs = await base44.entities.UserProfile.filter({ user_id: uid }, null, 1);
+          if (profs.length > 0) profileMap[uid] = profs[0];
+        })
+      );
       setProfiles(profileMap);
     } catch (error) {
       console.error('Error loading intentions:', error);
