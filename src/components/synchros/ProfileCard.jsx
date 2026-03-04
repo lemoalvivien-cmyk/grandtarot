@@ -31,10 +31,10 @@ export default function ProfileCard({ match, profile, onSendIntention, lang }) {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-violet-500/10 rounded-2xl blur-xl" />
       <div className="relative bg-slate-900/50 backdrop-blur-sm border border-amber-500/10 rounded-2xl p-6 hover:border-amber-500/30 transition-all">
-        <div className="flex gap-6">
+        <div className="flex gap-4 md:gap-6">
           {/* Photo */}
           <div className="relative flex-shrink-0">
-            <div className="w-24 h-24 rounded-xl overflow-hidden border border-amber-500/20">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-amber-500/20">
               {safeProfile.photo_url ? (
                 <img 
                   src={safeProfile.photo_url} 
