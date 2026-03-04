@@ -158,8 +158,14 @@ export default function AppRitual() {
     try {
       // PERF: Check if draw already exists to prevent duplicate
       const today = new Date().toISOString().split('T')[0];
+      const accounts = await base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1);
+      const profileId = accounts[0]?.public_profile_id;
+      if (!profileId) {
+        setDrawing(false);
+        return;
+      }
       const existingDraws = await base44.entities.DailyDraw.filter({
-        user_id: user.email,
+        profile_id: profileId,
         draw_date: today,
         mode: profile.mode_active
       }, null, 1);
