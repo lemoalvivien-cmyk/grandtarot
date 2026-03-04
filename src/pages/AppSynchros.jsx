@@ -347,7 +347,7 @@ export default function AppSynchros() {
         {matches.length > 0 && (
           <div className="space-y-4">
             {matches.map((match) => {
-              const matchProfile = matchProfiles[match.matched_user_id];
+              const matchProfile = matchProfiles[match.matched_profile_id];
               if (!matchProfile) return null;
               
               return (
