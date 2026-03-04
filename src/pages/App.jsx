@@ -58,12 +58,10 @@ export default function App() {
       setCurrentMode(initialMode);
       localStorage.setItem('gt_mode', initialMode);
 
-      // Check subscription status (admins bypass)
+      // Check subscription status (admins bypass) — plan_status (AccountPrivate) est la source de vérité
       if (currentUser.role !== 'admin') {
-        const hasActiveSubscription = userProfile.subscription_status === 'active' || 
-                                      userProfile.subscription_status === 'trialing';
-        
-        if (!hasActiveSubscription) {
+        const planStatus = accounts && accounts.length > 0 ? accounts[0].plan_status : 'free';
+        if (planStatus !== 'active') {
           window.location.href = createPageUrl('Subscribe');
           return;
         }
