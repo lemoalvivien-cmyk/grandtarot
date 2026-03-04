@@ -373,8 +373,8 @@ const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 
       // Not blocked
       if (blockedIds.has(p.public_id) || blockerIds.has(p.public_id)) return false;
       
-      // Don't rematch if intention already sent (check against user mapping)
-      if (intentionSentTo.has(p.public_id)) return false;
+      // Don't rematch if intention already sent (compare public_id correctly)
+      if (intentionPublicIdsSentTo.has(p.public_id)) return false;
       
       // Location filter (with radius multiplier for fallback)
       const effectiveRadius = (userProfile.radius_km || 50) * radiusMultiplier;
