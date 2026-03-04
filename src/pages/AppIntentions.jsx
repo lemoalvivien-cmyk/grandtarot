@@ -204,6 +204,13 @@ export default function AppIntentions() {
           <p className="text-lg text-slate-400">{t.subtitle}</p>
         </div>
 
+        {/* Action error */}
+        {actionError && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-300 text-center">
+            {actionError}
+          </div>
+        )}
+
         {/* Tabs */}
         <Tabs defaultValue="received" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-slate-900/50 border border-amber-500/10 mb-8">
