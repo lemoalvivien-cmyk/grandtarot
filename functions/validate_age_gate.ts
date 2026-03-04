@@ -44,8 +44,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const serviceRole = base44.asServiceRole;
-
     // STEP 4: REJET SI MINEUR
     if (age < 18) {
       serviceRole.entities.AuditLog.create({
