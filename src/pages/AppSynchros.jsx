@@ -295,7 +295,7 @@ export default function AppSynchros() {
   return (
     <SubscriptionGuard>
       <div className="min-h-screen">
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
         {/* Personal Mode Only Message */}
         {personalModeOnly && (
           <div className="max-w-2xl mx-auto text-center py-24">
