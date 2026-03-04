@@ -408,7 +408,7 @@ export default function Chat() {
 
   return (
     <SubscriptionGuard>
-      <div className="h-screen flex flex-col">
+      <div className="flex flex-col" style={{ height: '100dvh' }}>
       <div className="border-b border-amber-500/10 bg-slate-900/50 backdrop-blur-xl px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
