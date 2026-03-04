@@ -114,60 +114,30 @@ export const sendMessageSecure = async ({
   }
   
   try {
-    const result = await callFunctionRaw('chat_send_message', {
+    const result = await base44.functions.invoke('chat_send_message', {
       conversationId,
       body: messageBody,
       clientMsgId
     });
     
-    if (!result.success) {
-      let errorMsg = lang === 'fr' 
-        ? 'Erreur lors de l\'envoi du message.' 
-        : 'Error sending message.';
-      
-      if (result.status === 403) {
-        errorMsg = lang === 'fr' ? 'Accès interdit.' : 'Access denied.';
-      } else if (result.status === 429) {
-        errorMsg = lang === 'fr' ? 'Trop rapide - Attendez 1 seconde.' : 'Too fast - Wait 1 second.';
-      } else if (result.status === 400) {
-        errorMsg = lang === 'fr' ? 'Message invalide.' : 'Invalid message.';
-      }
-      
+    const msg = result?.data?.message;
+    if (!msg) {
       return {
         success: false,
-        status: result.status,
-        error: errorMsg,
-        code: `HTTP_${result.status}`
+        error: result?.data?.error || (lang === 'fr' ? 'Pas de message retourné' : 'No message returned')
       };
     }
-    
-    if (!result.json?.message) {
-      return {
-        success: false,
-        status: result.status,
-        error: lang === 'fr' ? 'Pas de message retourné' : 'No message returned'
-      };
-    }
-    
-    return {
-      success: true,
-      status: result.status,
-      message: result.json.message,
-      duplicate: result.json.duplicate || false
-    };
+    return { success: true, message: msg, duplicate: result?.data?.duplicate || false };
     
   } catch (error) {
     console.error('[sendMessage] Error:', error);
-    
-    let errorMsg = lang === 'fr' 
-      ? 'Erreur lors de l\'envoi du message.' 
-      : 'Error sending message.';
-    
-    return {
-      success: false,
-      error: errorMsg,
-      code: 'EXCEPTION'
-    };
+    // Essai d'extraire le status HTTP depuis l'erreur axios
+    const status = error?.response?.status;
+    let errorMsg = lang === 'fr' ? 'Erreur lors de l\'envoi du message.' : 'Error sending message.';
+    if (status === 403) errorMsg = lang === 'fr' ? 'Accès interdit.' : 'Access denied.';
+    else if (status === 429) errorMsg = lang === 'fr' ? 'Trop rapide - Attendez 1 seconde.' : 'Too fast - Wait 1 second.';
+    else if (status === 400) errorMsg = lang === 'fr' ? 'Message invalide.' : 'Invalid message.';
+    return { success: false, error: errorMsg };
   }
 };
 
