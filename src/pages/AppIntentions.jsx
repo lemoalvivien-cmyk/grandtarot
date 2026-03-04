@@ -172,6 +172,21 @@ export default function AppIntentions() {
     );
   }
 
+  if (error) {
+    return (
+      <SubscriptionGuard>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-center">
+            <p className="text-red-300 mb-4">{error}</p>
+            <button onClick={() => window.location.reload()} className="text-amber-300 underline text-sm">
+              {lang === 'fr' ? 'Réessayer' : 'Retry'}
+            </button>
+          </div>
+        </div>
+      </SubscriptionGuard>
+    );
+  }
+
   return (
     <SubscriptionGuard>
     <div className="min-h-screen">
