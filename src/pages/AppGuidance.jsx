@@ -149,11 +149,8 @@ export default function AppGuidance() {
     setGenerating(true);
 
     try {
-      // Check plan status if paywall enabled
-      const paywallSettings = await base44.entities.AppSettings.filter({ setting_key: 'paywall_enabled' }, null, 1);
-      const paywallEnabled = paywallSettings.length > 0 && paywallSettings[0].value_boolean === true;
-
-      if (paywallEnabled && account?.plan_status !== 'active') {
+      // Check plan status via account (already in state — plan_status is source of truth)
+      if (account?.plan_status !== 'active' && user?.role !== 'admin') {
         window.location.href = createPageUrl('Billing');
         return;
       }
@@ -163,8 +160,7 @@ export default function AppGuidance() {
       let cardContext = null;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const accounts = await base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1);
-        const publicProfileId = accounts[0]?.public_profile_id;
+        const publicProfileId = account?.public_profile_id;
         const dailyDraws = publicProfileId ? await base44.entities.DailyDraw.filter({
           profile_id: publicProfileId,
           draw_date: today,
