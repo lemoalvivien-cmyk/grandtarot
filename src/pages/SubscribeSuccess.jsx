@@ -22,79 +22,58 @@ export default function SubscribeSuccess() {
       }
 
       const user = await base44.auth.me();
+
+      // Polling du plan_status dans AccountPrivate (mis à jour par le webhook Stripe)
+      // Le webhook est l'autorité — on attend jusqu'à 15s max
+      let attempts = 0;
+      const maxAttempts = 10;
       
-      // Get URL params (Stripe session info if available)
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('session_id');
-      const customerId = urlParams.get('customer_id');
-      
-      const profiles = await base44.entities.UserProfile.filter({ user_id: user.email });
-      const now = new Date().toISOString();
-      const subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // +30 days
-      
-      const updateData = {
-        subscription_status: 'active',
-        subscription_start: now,
-        subscription_end: subscriptionEnd,
-        is_subscribed: true
-      };
-      
-      if (customerId) {
-        updateData.stripe_customer_id = customerId;
-      }
-      
-      if (profiles.length === 0) {
-        // Create profile if doesn't exist
-        await base44.entities.UserProfile.create({
-          user_id: user.email,
-          display_name: user.full_name || '',
-          language_pref: 'fr',
-          ...updateData
-        });
-      } else {
-        // Update existing profile
-        const profile = profiles[0];
-        setLang(profile.language_pref || 'fr');
-        
-        // Check if already active (webhook already processed)
-        if (profile.subscription_status === 'active' || profile.subscription_status === 'trialing') {
-          setProcessing(false);
-          setTimeout(() => {
-            window.location.href = profile.onboarding_completed 
-              ? createPageUrl('App') 
-              : createPageUrl('AppOnboarding');
-          }, 1500);
-          return;
+      const checkPlanStatus = async () => {
+        const accounts = await base44.entities.AccountPrivate.filter({
+          user_email: user.email
+        }, null, 1);
+
+        if (accounts.length > 0) {
+          const account = accounts[0];
+          setLang(account.language_pref || 'fr');
+
+          if (account.plan_status === 'active') {
+            // Plan activé par le webhook
+            const profiles = await base44.entities.UserProfile.filter({ user_id: user.email }, null, 1);
+            setProcessing(false);
+            setTimeout(() => {
+              const dest = profiles[0]?.onboarding_completed ? createPageUrl('App') : createPageUrl('AppOnboarding');
+              window.location.href = dest;
+            }, 1500);
+            return true;
+          }
         }
+        return false;
+      };
 
-        // Activate subscription
-        await base44.entities.UserProfile.update(profile.id, updateData);
+      // Tenter immédiatement, puis toutes les 1.5s
+      const pollActivation = async () => {
+        const done = await checkPlanStatus();
+        if (done) return;
+        
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(pollActivation, 1500);
+        } else {
+          // Timeout : plan pas encore activé (webhook peut être en retard)
+          setProcessing(false);
+          // Rediriger quand même — le guard affichera le bon état quand le webhook arrive
+          const profiles = await base44.entities.UserProfile.filter({ user_id: user.email }, null, 1);
+          window.location.href = profiles[0]?.onboarding_completed ? createPageUrl('App') : createPageUrl('AppOnboarding');
+        }
+      };
 
-        // Audit log
-        await base44.entities.AuditLog.create({
-          actor_user_id: user.email,
-          actor_role: 'user',
-          action: 'subscription_started',
-          entity_name: 'UserProfile',
-          entity_id: profile.id,
-          payload_summary: `Subscription activated - Session: ${sessionId || 'N/A'}`,
-          payload_data: { sessionId, customerId, activatedAt: now },
-          severity: 'info',
-          status: 'success'
-        });
-      }
+      await pollActivation();
 
-      // Success - redirect
-      const updatedProfiles = await base44.entities.UserProfile.filter({ user_id: user.email });
-      setProcessing(false);
-      setTimeout(() => {
-        window.location.href = updatedProfiles[0].onboarding_completed 
-          ? createPageUrl('App') 
-          : createPageUrl('AppOnboarding');
-      }, 1500);
     } catch (error) {
-      console.error('Error activating subscription:', error);
-      setError(error.message);
+      setError(lang === 'fr'
+        ? 'Erreur lors de la vérification. Votre paiement a bien été reçu — actualisez la page dans quelques instants.'
+        : 'Verification error. Your payment was received — refresh the page in a moment.');
       setProcessing(false);
     }
   };
