@@ -15,31 +15,32 @@ export default function AdminSubscriptionSync() {
     setResults(null);
 
     try {
-      const profiles = await base44.entities.UserProfile.list();
+      // SOURCE DE VÉRITÉ: AccountPrivate.plan_status (pas UserProfile.subscription_status)
+      const accounts = await base44.entities.AccountPrivate.list();
       const now = new Date();
       let updated = 0;
       let errors = 0;
 
-      for (const profile of profiles) {
+      for (const account of accounts) {
         try {
-          // Check if subscription should be expired
-          if (profile.subscription_end && new Date(profile.subscription_end) < now) {
-            if (profile.subscription_status === 'active' || profile.subscription_status === 'trialing') {
-              // Mark as past_due (should renew or cancel)
-              await base44.entities.UserProfile.update(profile.id, {
+          // Si subscription_end est dépassée et plan_status encore 'active' → rétrograder à 'free'
+          if (account.subscription_end && new Date(account.subscription_end) < now) {
+            if (account.plan_status === 'active' && account.subscription_status !== 'canceled') {
+              await base44.entities.AccountPrivate.update(account.id, {
+                plan_status: 'free',
                 subscription_status: 'past_due'
               });
               updated++;
             }
           }
         } catch (error) {
-          console.error(`Error syncing ${profile.user_id}:`, error);
+          console.error(`Error syncing account ${account.user_email}:`, error);
           errors++;
         }
       }
 
       setResults({
-        total: profiles.length,
+        total: accounts.length,
         updated,
         errors,
         timestamp: new Date().toISOString()
@@ -50,10 +51,10 @@ export default function AdminSubscriptionSync() {
       await base44.entities.AuditLog.create({
         actor_user_id: admin.email,
         actor_role: 'admin',
-        action: 'subscription_sync_all',
-        entity_name: 'UserProfile',
-        payload_summary: `Synced ${profiles.length} subscriptions: ${updated} updated, ${errors} errors`,
-        payload_data: { total: profiles.length, updated, errors },
+        action: 'subscription_resynced',
+        entity_name: 'AccountPrivate',
+        payload_summary: `Synced ${accounts.length} accounts: ${updated} updated, ${errors} errors`,
+        payload_data: { total: accounts.length, updated, errors },
         severity: 'info',
         status: 'success'
       });
