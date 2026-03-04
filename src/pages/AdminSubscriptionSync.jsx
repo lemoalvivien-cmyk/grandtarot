@@ -91,10 +91,10 @@ export default function AdminSubscriptionSync() {
                 <div>
                   <h3 className="font-semibold text-blue-200 mb-2">À propos de la synchronisation</h3>
                   <ul className="text-blue-300 text-sm space-y-2">
-                    <li>• Vérifie tous les profils avec abonnements actifs</li>
-                    <li>• Marque "past_due" les abonnements expirés (subscription_end &lt; maintenant)</li>
-                    <li>• Ne modifie PAS les statuts "canceled" ou "none"</li>
-                    <li>• <strong>⚠️ LIMITATION:</strong> Pas de vérification Stripe réelle (backend requis)</li>
+                    <li>• Vérifie tous les <strong>AccountPrivate</strong> (source de vérité Stripe)</li>
+                    <li>• Marque <code>plan_status: 'free'</code> si <code>subscription_end</code> dépassée</li>
+                    <li>• Ne modifie PAS les comptes déjà <code>canceled</code></li>
+                    <li>• Complément au webhook Stripe (rattrapage en cas de webhook manqué)</li>
                   </ul>
                 </div>
               </div>
