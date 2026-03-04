@@ -125,8 +125,13 @@ export default function AppRitual() {
       const today = new Date().toISOString().split('T')[0];
       
       // Check if draw exists for today + mode (LIMIT 1 - one draw per day)
+      // DailyDraw uses profile_id (AccountPrivate.public_profile_id), not user_id
+      const accounts = await base44.entities.AccountPrivate.filter({ user_email: userId }, null, 1);
+      const profileId = accounts[0]?.public_profile_id;
+      if (!profileId) return; // pas encore de profil public
+
       const existingDraws = await base44.entities.DailyDraw.filter({
-        user_id: userId,
+        profile_id: profileId,
         draw_date: today,
         mode: mode
       }, null, 1);
