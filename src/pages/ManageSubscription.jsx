@@ -222,13 +222,23 @@ export default function ManageSubscription() {
             {/* Actions */}
             {currentStatus === 'active' || currentStatus === 'trialing' ? (
               <div className="space-y-3">
+                {portalError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <p className="text-sm text-red-300 text-center">{portalError}</p>
+                  </div>
+                )}
                 <Button
                   onClick={openStripePortal}
-                  className="w-full bg-violet-600 hover:bg-violet-700 flex items-center justify-center gap-2"
+                  disabled={portalLoading}
+                  className="w-full bg-violet-600 hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-70"
                 >
-                  <CreditCard className="w-4 h-4" />
+                  {portalLoading ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <CreditCard className="w-4 h-4" />
+                  )}
                   {t.manage}
-                  <ExternalLink className="w-4 h-4" />
+                  {!portalLoading && <ExternalLink className="w-4 h-4" />}
                 </Button>
                 
                 <p className="text-xs text-slate-500 text-center">{t.info}</p>
