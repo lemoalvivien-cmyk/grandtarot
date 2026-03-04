@@ -27,27 +27,27 @@ export default function Subscribe() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      let profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
-      
+      const [profiles, accounts] = await Promise.all([
+        base44.entities.UserProfile.filter({ user_id: currentUser.email }),
+        base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1)
+      ]);
+
       if (profiles.length === 0) {
-        // Create profile for new user
         const newProfile = await base44.entities.UserProfile.create({
           user_id: currentUser.email,
           display_name: currentUser.full_name || '',
           is_subscribed: false,
           language_pref: 'fr'
         });
-        profiles = [newProfile];
+        profiles.push(newProfile);
       }
-      
+
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
-      
-      // Check subscription status
-      const hasActiveSubscription = profiles[0].subscription_status === 'active' || 
-                                    profiles[0].subscription_status === 'trialing';
-      
-      if (hasActiveSubscription) {
+
+      // SOURCE DE VÉRITÉ: plan_status dans AccountPrivate (mis à jour par le webhook Stripe)
+      const planStatus = accounts[0]?.plan_status || 'free';
+      if (planStatus === 'active') {
         window.location.href = createPageUrl('App');
         return;
       }
