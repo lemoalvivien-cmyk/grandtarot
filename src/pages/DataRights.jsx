@@ -29,66 +29,65 @@ export default function DataRights() {
     }
   };
 
+  const [submitSuccess, setSubmitSuccess] = useState('');
+  const [submitError, setSubmitError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitSuccess('');
+    setSubmitError('');
+
+    if (!user) {
+      setSubmitError(lang === 'fr' ? 'Veuillez vous connecter pour continuer.' : 'Please log in to continue.');
+      setSubmitting(false);
+      return;
+    }
 
     try {
-      if (!user) {
-        alert(lang === 'fr' ? 'Veuillez vous connecter' : 'Please log in');
-        return;
-      }
-
-      // INSTANT EXPORT for "access" requests (auto-DSAR)
       if (formData.type === 'access') {
-        const response = await fetch('/api/v1/functions/generate_dsar_export', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({})
-        });
+        // Export instantané
+        const result = await base44.functions.invoke('generate_dsar_export', {});
         
-        const result = await response.json();
-        
-        if (response.ok && result.export_data) {
-          // Download JSON file
-          const blob = new Blob([JSON.stringify(result.export_data, null, 2)], { type: 'application/json' });
+        if (result?.data?.export_data) {
+          const blob = new Blob([JSON.stringify(result.data.export_data, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = result.download_filename || `grandtarot_export_${Date.now()}.json`;
+          a.download = result.data.download_filename || `grandtarot_export_${Date.now()}.json`;
           a.click();
           URL.revokeObjectURL(url);
-          
-          alert(lang === 'fr' 
-            ? '✅ Export téléchargé ! Vos données complètes sont dans le fichier JSON.' 
+          setSubmitSuccess(lang === 'fr'
+            ? '✅ Export téléchargé ! Vos données complètes sont dans le fichier JSON.'
             : '✅ Export downloaded! Your complete data is in the JSON file.');
-          
           setFormData({ type: 'access', message: '' });
-          setSubmitting(false);
-          return;
         } else {
-          throw new Error(result.error || 'Export failed');
+          throw new Error(result?.data?.error || 'Export échoué');
         }
+        return;
       }
-      
-      // Other request types: create DSAR request (manual admin review)
+
+      if (!formData.message || formData.message.length < 10) {
+        setSubmitError(lang === 'fr'
+          ? 'Veuillez décrire votre demande (minimum 10 caractères).'
+          : 'Please describe your request (minimum 10 characters).');
+        return;
+      }
+
       await base44.entities.DsarRequest.create({
         requester_user_id: user.email,
         type: formData.type,
         message: formData.message
       });
 
-      alert(
-        lang === 'fr'
-          ? 'Votre demande a été soumise. Un admin vous répondra sous 30 jours.'
-          : 'Your request has been submitted. An admin will respond within 30 days.'
-      );
-
+      setSubmitSuccess(lang === 'fr'
+        ? 'Votre demande a été soumise. Un admin vous répondra sous 30 jours.'
+        : 'Your request has been submitted. An admin will respond within 30 days.');
       setFormData({ type: 'access', message: '' });
     } catch (error) {
-      console.error('Error:', error);
-      alert(lang === 'fr' ? `Erreur: ${error.message}` : `Error: ${error.message}`);
+      setSubmitError(lang === 'fr'
+        ? 'Une erreur s\'est produite. Réessayez ou contactez support@grandtarot.com'
+        : 'An error occurred. Please retry or contact support@grandtarot.com');
     } finally {
       setSubmitting(false);
     }
