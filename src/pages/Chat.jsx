@@ -346,7 +346,7 @@ export default function Chat() {
         target_profile_id: otherPublicId,
         target_conversation_id: conversation.id,
         reason: reportReason,
-        description: reportDescription.trim(),
+        description: trimmedDesc.substring(0, 2000),
         severity: 'medium',
         status: 'pending'
       });

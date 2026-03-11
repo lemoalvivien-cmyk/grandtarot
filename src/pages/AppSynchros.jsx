@@ -131,13 +131,21 @@ export default function AppSynchros() {
     try {
       const { generateIcebreakers } = await import('@/components/helpers/aiService');
       const sharedInterestIds = match.shared_interests || [];
-      const icebreakers = await generateIcebreakers({
-        targetProfile,
-        mode: profile.mode_active,
-        lang,
-        sharedInterests: sharedInterestIds
-      });
-      setIcebreakers(icebreakers);
+      
+      // Timeout protection (25s max)
+      const icebreakers = await Promise.race([
+        generateIcebreakers({
+          targetProfile,
+          mode: profile.mode_active,
+          lang,
+          sharedInterests: sharedInterestIds
+        }),
+        new Promise((resolve) => 
+          setTimeout(() => resolve([]), 25000)
+        )
+      ]);
+      
+      setIcebreakers(Array.isArray(icebreakers) ? icebreakers : []);
     } catch (error) {
       console.error('[AppSynchros] Error loading icebreakers:', error);
       // Non-blocking: icebreakers optional

@@ -58,23 +58,29 @@ Signification: ${cardMeaning}
 
 Génère une interprétation personnalisée pour ${mode} en suivant le format JSON attendu.`;
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: userPrompt,
-      add_context_from_internet: false,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          summary: { type: "string", maxLength: 200 },
-          todayFocus: { type: "string", maxLength: 150 },
-          do: { type: "array", items: { type: "string" }, maxItems: 3 },
-          avoid: { type: "array", items: { type: "string" }, maxItems: 2 },
-          reflectionQuestion: { type: "string", maxLength: 150 },
-          themes: { type: "array", items: { type: "string" }, maxItems: 3 },
-          safetyNote: { type: "string" }
-        },
-        required: ["summary", "todayFocus", "do", "avoid", "reflectionQuestion", "themes", "safetyNote"]
-      }
-    });
+    // Add timeout protection (30s max)
+    const response = await Promise.race([
+      base44.integrations.Core.InvokeLLM({
+        prompt: userPrompt,
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            summary: { type: "string", maxLength: 200 },
+            todayFocus: { type: "string", maxLength: 150 },
+            do: { type: "array", items: { type: "string" }, maxItems: 3 },
+            avoid: { type: "array", items: { type: "string" }, maxItems: 2 },
+            reflectionQuestion: { type: "string", maxLength: 150 },
+            themes: { type: "array", items: { type: "string" }, maxItems: 3 },
+            safetyNote: { type: "string" }
+          },
+          required: ["summary", "todayFocus", "do", "avoid", "reflectionQuestion", "themes", "safetyNote"]
+        }
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('LLM timeout')), 30000)
+      )
+    ]);
 
     // Ensure safety note is always present
     if (!response.safetyNote || response.safetyNote.length < 10) {
@@ -132,22 +138,28 @@ Centres d'intérêt communs: ${sharedInterests?.join(', ') || 'Aucun'}
 
 Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`;
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: userPrompt,
-      add_context_from_internet: false,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          icebreakers: {
-            type: "array",
-            items: { type: "string" },
-            minItems: 3,
-            maxItems: 3
-          }
-        },
-        required: ["icebreakers"]
-      }
-    });
+    // Add timeout protection (20s max for icebreakers)
+    const response = await Promise.race([
+      base44.integrations.Core.InvokeLLM({
+        prompt: userPrompt,
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            icebreakers: {
+              type: "array",
+              items: { type: "string" },
+              minItems: 3,
+              maxItems: 3
+            }
+          },
+          required: ["icebreakers"]
+        }
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Icebreaker timeout')), 20000)
+      )
+    ]);
 
     return response.icebreakers || [];
   } catch (error) {

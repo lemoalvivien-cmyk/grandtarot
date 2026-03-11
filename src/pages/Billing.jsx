@@ -96,10 +96,17 @@ export default function Billing() {
   };
 
   const handleSubmitProof = async () => {
-    if (!proofDescription.trim() || proofDescription.length < 20) {
+    const trimmed = proofDescription.trim();
+    if (!trimmed || trimmed.length < 20) {
       alert(lang === 'fr' 
         ? 'Veuillez fournir au moins 20 caractères' 
         : 'Please provide at least 20 characters');
+      return;
+    }
+    if (trimmed.length > 2000) {
+      alert(lang === 'fr' 
+        ? 'Description trop longue (max 2000 caractères)' 
+        : 'Description too long (max 2000 chars)');
       return;
     }
 
@@ -140,7 +147,7 @@ export default function Billing() {
       const newRequest = await base44.entities.BillingRequest.create({
         requester_user_email: user.email,
         request_type: 'payment_proof',
-        description: proofDescription,
+        description: trimmed.substring(0, 2000),
         status: 'pending'
       });
 
