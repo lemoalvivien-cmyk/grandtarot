@@ -453,15 +453,15 @@ export default function Landing() {
             <span className="text-amber-200 text-sm font-medium">GRANDTAROT</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent leading-tight">
             {lang === 'fr' ? 'Rencontres Tarot, Astrologie & Numérologie' : 'Tarot, Astrology & Numerology Dating'}
           </h1>
 
-          <p className="text-2xl md:text-3xl font-serif text-violet-200 mb-4">
+          <p className="text-xl sm:text-2xl md:text-3xl font-serif text-violet-200 mb-4">
             {t.hero.subtitle}
           </p>
 
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
+          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-10 px-4">
             {lang === 'fr' ? 'Tirage quotidien + Astrologie + Numérologie • 20 affinités cosmiques • Connexions authentiques' : 'Daily reading + Astrology + Numerology • 20 cosmic affinities • Authentic connections'}
           </p>
 

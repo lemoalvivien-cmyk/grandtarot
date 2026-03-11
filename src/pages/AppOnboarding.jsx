@@ -363,7 +363,7 @@ export default function AppOnboarding() {
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
             {t.steps[step].title}
           </h1>
           <p className="text-lg text-slate-400">{t.steps[step].subtitle}</p>

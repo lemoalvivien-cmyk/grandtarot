@@ -139,7 +139,7 @@ export default function Layout({ children, currentPageName }) {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
             {isPublicPage ? (
               <>
                 <Link to={createPageUrl('Landing')} className="text-sm text-slate-300 hover:text-amber-200 transition-colors">
@@ -190,7 +190,7 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Language */}
             <div className="hidden sm:flex items-center gap-1 bg-slate-800/50 rounded-full p-1">
               <button

@@ -201,7 +201,7 @@ export default function AppIntentions() {
             <span className="text-amber-200 text-sm">{t.title}</span>
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
             {t.title}
           </h1>
           <p className="text-lg text-slate-400">{t.subtitle}</p>

@@ -355,7 +355,7 @@ export default function AppSynchros() {
             <ModeIcon className="w-4 h-4 text-amber-400" />
             <span className="text-amber-200 text-sm">{t.subtitle}</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
             {t.title}
           </h1>
           <Button

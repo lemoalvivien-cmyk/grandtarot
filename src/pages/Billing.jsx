@@ -277,7 +277,7 @@ export default function Billing() {
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-6">
         <div className="max-w-3xl mx-auto">
           <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-amber-200 to-violet-200 bg-clip-text text-transparent">
               {t.title}
             </h1>
             <p className="text-slate-400">{t.description}</p>

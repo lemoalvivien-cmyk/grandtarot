@@ -147,7 +147,7 @@ export default function Subscribe() {
             <span className="text-sm font-medium text-amber-200">Premium Access</span>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 bg-gradient-to-r from-amber-200 via-amber-100 to-violet-200 bg-clip-text text-transparent">
             {t.title}
           </h1>
           
