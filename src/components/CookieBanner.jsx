@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { X, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import CookiePreferencesModal from './CookiePreferencesModal';
+import CookiePreferencesModal from '@/components/CookiePreferencesModal';
 import {
   shouldShowBanner,
   generateConsentObject,

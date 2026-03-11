@@ -119,7 +119,8 @@ export default function AppRitual() {
         }
       }
     } catch (error) {
-      console.error('Error loading guidance signals:', error);
+      console.error('[AppRitual] Error loading guidance signals:', error);
+      // Non-blocking: guidance signals optional
     }
   };
 
@@ -152,7 +153,8 @@ export default function AppRitual() {
         }
       }
     } catch (error) {
-      console.error('Error loading draw:', error);
+      console.error('[AppRitual] Error loading draw:', error);
+      // Non-blocking: draw can be empty
     }
   };
 

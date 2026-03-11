@@ -98,9 +98,11 @@ export default function AppSynchros() {
       setMatchProfiles(profileMap);
       }
     } catch (error) {
-      console.error('Error loading matches:', error);
-    } finally {
+      console.error('[AppSynchros] Error loading matches:', error);
       setLoading(false);
+      alert(lang === 'fr' 
+        ? 'Erreur lors du chargement des synchros. Réessayez.' 
+        : 'Error loading synchros. Try again.');
     }
   };
 
@@ -137,7 +139,8 @@ export default function AppSynchros() {
       });
       setIcebreakers(icebreakers);
     } catch (error) {
-      console.error('Error loading icebreakers:', error);
+      console.error('[AppSynchros] Error loading icebreakers:', error);
+      // Non-blocking: icebreakers optional
       setIcebreakers([]);
     }
   };
@@ -232,8 +235,10 @@ export default function AppSynchros() {
       // Generate new matches (will store max 20)
       await loadMatches(profile);
     } catch (error) {
-      console.error('Error regenerating matches:', error);
-    } finally {
+      console.error('[AppSynchros] Error regenerating matches:', error);
+      alert(lang === 'fr' 
+        ? 'Erreur lors de la régénération. Réessayez.' 
+        : 'Error regenerating matches. Try again.');
       setGenerating(false);
     }
   };

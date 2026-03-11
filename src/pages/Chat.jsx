@@ -218,7 +218,12 @@ export default function Chat() {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!messageText.trim() || messageText.length > 2000) return;
+    const trimmed = messageText.trim();
+    if (!trimmed || trimmed.length < 1) return;
+    if (trimmed.length > 2000) {
+      setError(lang === 'fr' ? 'Message trop long (max 2000 caractères)' : 'Message too long (max 2000 chars)');
+      return;
+    }
     
     if (!conversation?.id) {
       setError(lang === 'fr' ? 'Conversation invalide' : 'Invalid conversation');
@@ -244,7 +249,7 @@ export default function Chat() {
     setSending(true);
     setError('');
     
-    const currentBody = messageText.trim();
+    const currentBody = trimmed;
     
     const genUUID = () => {
       if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -296,8 +301,10 @@ export default function Chat() {
       await blockUser(user.email, otherProfile.user_id, 'not_interested');
       window.location.href = createPageUrl('AppIntentions');
     } catch (error) {
-      console.error('Error blocking:', error);
-    } finally {
+      console.error('[Chat] Error blocking user:', error);
+      alert(lang === 'fr' 
+        ? 'Erreur lors du blocage. Réessayez.' 
+        : 'Error blocking user. Try again.');
       setBlocking(false);
     }
   };
@@ -340,8 +347,10 @@ export default function Chat() {
         ? 'Signalement envoyé. Notre équipe va l\'examiner.' 
         : 'Report sent. Our team will review it.');
     } catch (error) {
-      console.error('Error reporting:', error);
-    } finally {
+      console.error('[Chat] Error reporting user:', error);
+      alert(lang === 'fr' 
+        ? 'Erreur lors du signalement. Réessayez.' 
+        : 'Error reporting user. Try again.');
       setReporting(false);
     }
   };

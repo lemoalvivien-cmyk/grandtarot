@@ -75,7 +75,8 @@ export default function AppIntentions() {
       );
       setProfiles(profileMap);
     } catch (error) {
-      console.error('Error loading intentions:', error);
+      console.error('[AppIntentions] Error loading intentions:', error);
+      // Non-blocking: empty arrays will display empty state
     }
   };
 
