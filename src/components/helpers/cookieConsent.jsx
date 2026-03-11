@@ -196,7 +196,7 @@ export async function applyConsentToAccountPrivate(base44Client, consentObj) {
       });
     }
   } catch (error) {
-    console.warn("Error applying consent to AccountPrivate:", error);
+    console.warn('[cookieConsent] Error applying consent to AccountPrivate:', error);
     // Fail silently - localStorage is sufficient
   }
 }
@@ -231,7 +231,7 @@ export async function resetConsent(base44Client = null) {
         }
       }
     } catch (error) {
-      console.warn("Error resetting consent in AccountPrivate:", error);
+      console.warn('[cookieConsent] Error resetting consent in AccountPrivate:', error);
     }
   }
 }

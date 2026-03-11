@@ -56,9 +56,11 @@ export const reduceNumber = (num) => {
  * Returns: number (1-9, 11, 22, 33)
  */
 export const lifePathNumber = (birthDate) => {
+  if (!birthDate || typeof birthDate !== 'object') return null;
+  
   const { year, month, day } = birthDate;
   
-  if (!year || !month || !day) return null;
+  if (!year || !month || !day || year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) return null;
   
   // Reduce each component first
   const reducedYear = reduceNumber(year);
@@ -76,10 +78,14 @@ export const lifePathNumber = (birthDate) => {
  * Returns: number (1-9)
  */
 export const personalDayNumber = (birthDate, targetDate) => {
+  if (!birthDate || !targetDate || typeof birthDate !== 'object' || typeof targetDate !== 'object') return null;
+  
   const { month: birthMonth, day: birthDay } = birthDate;
   const { year: targetYear, month: targetMonth, day: targetDay } = targetDate;
   
   if (!birthMonth || !birthDay || !targetYear || !targetMonth || !targetDay) return null;
+  if (birthMonth < 1 || birthMonth > 12 || birthDay < 1 || birthDay > 31) return null;
+  if (targetMonth < 1 || targetMonth > 12 || targetDay < 1 || targetDay > 31) return null;
   
   // Calculate personal year first
   const personalYear = reduceNumber(birthMonth + birthDay + targetYear);

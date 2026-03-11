@@ -77,11 +77,13 @@ export function sanitizeProfiles(profiles) {
  */
 export async function getSanitizedProfileByUserId(base44, userId) {
   try {
-    const profiles = await base44.entities.UserProfile.filter({ user_id: userId });
-    if (profiles.length === 0) return null;
+    if (!base44 || !userId) return null;
+    
+    const profiles = await base44.entities.UserProfile.filter({ user_id: userId }, null, 1);
+    if (!profiles || profiles.length === 0) return null;
     return sanitizeProfile(profiles[0]);
   } catch (error) {
-    console.error('Error fetching profile:', error);
+    console.error('[profileSanitizer] Error fetching profile:', error);
     return null;
   }
 }

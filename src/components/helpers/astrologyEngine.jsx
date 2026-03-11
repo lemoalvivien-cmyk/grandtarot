@@ -30,9 +30,11 @@ const SUN_SIGN_DATES = [
  * Returns: 'aries' | 'taurus' | ... | 'pisces'
  */
 export const getSunSign = (birthDate) => {
+  if (!birthDate || typeof birthDate !== 'object') return null;
+  
   const { month, day } = birthDate;
   
-  if (!month || !day) return null;
+  if (!month || !day || month < 1 || month > 12 || day < 1 || day > 31) return null;
   
   // Handle year-crossing signs (Capricorn: Dec 22 - Jan 19)
   if (month === 12 && day >= 22) return 'capricorn';
