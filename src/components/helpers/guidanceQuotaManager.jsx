@@ -12,6 +12,10 @@ import { base44 } from '@/api/base44Client';
  */
 export const canRequestGuidance = async (userId) => {
   try {
+    if (!userId) {
+      return { allowed: false, reason: 'invalid_user_id' };
+    }
+    
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     
     // Count ALL guidance requests today (across ALL modes)
@@ -20,7 +24,7 @@ export const canRequestGuidance = async (userId) => {
       day_key: today
     }, null, 10); // Max 10 to detect abuse
     
-    const count = todayGuidance.length;
+    const count = todayGuidance ? todayGuidance.length : 0;
     
     // STRICT LIMIT: 1 guidance per day (all modes)
     if (count >= 1) {

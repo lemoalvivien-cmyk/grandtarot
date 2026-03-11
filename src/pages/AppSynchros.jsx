@@ -40,7 +40,12 @@ export default function AppSynchros() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
+      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
+      if (!profiles || profiles.length === 0) {
+        window.location.href = createPageUrl('AppOnboarding');
+        return;
+      }
+      
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
       

@@ -66,11 +66,15 @@ export default function AppIntentions() {
       const profileMap = {};
       await Promise.all(
         uniqueEmails.map(async (email) => {
-          const accts = await base44.entities.AccountPrivate.filter({ user_email: email }, null, 1);
-          const publicId = accts[0]?.public_profile_id;
-          if (!publicId) return;
-          const pubs = await base44.entities.ProfilePublic.filter({ public_id: publicId }, null, 1);
-          if (pubs.length > 0) profileMap[email] = pubs[0];
+          try {
+            const accts = await base44.entities.AccountPrivate.filter({ user_email: email }, null, 1);
+            const publicId = accts && accts.length > 0 ? accts[0].public_profile_id : null;
+            if (!publicId) return;
+            const pubs = await base44.entities.ProfilePublic.filter({ public_id: publicId }, null, 1);
+            if (pubs && pubs.length > 0) profileMap[email] = pubs[0];
+          } catch (err) {
+            console.error('[AppIntentions] Error loading profile for email:', email, err);
+          }
         })
       );
       setProfiles(profileMap);

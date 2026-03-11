@@ -47,14 +47,19 @@ export default function AppRitual() {
         base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1)
       ]);
 
-      // plan_status (AccountPrivate) est la source de vérité — pas subscription_status (UserProfile)
-      const planStatus = accounts[0]?.plan_status || 'free';
-      if (planStatus !== 'active') {
+      if (!profiles || profiles.length === 0) {
         window.location.href = createPageUrl('Subscribe');
         return;
       }
 
-      if (profiles.length === 0 || !profiles[0].onboarding_completed || !profiles[0].photo_url) {
+      // plan_status (AccountPrivate) est la source de vérité — pas subscription_status (UserProfile)
+      const planStatus = accounts && accounts.length > 0 ? accounts[0].plan_status : 'free';
+      if (planStatus !== 'active' && currentUser.role !== 'admin') {
+        window.location.href = createPageUrl('Subscribe');
+        return;
+      }
+
+      if (!profiles[0].onboarding_completed || !profiles[0].photo_url) {
         window.location.href = createPageUrl('AppOnboarding');
         return;
       }

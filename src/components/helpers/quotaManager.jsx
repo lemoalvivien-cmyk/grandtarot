@@ -111,6 +111,14 @@ export const applyCooldown = async (profile, hours = 24) => {
  * Returns { canSend: boolean, reason: string, remainingQuota: number }
  */
 export const canSendIntention = async (profile, lang = 'fr') => {
+  if (!profile || !profile.id) {
+    return {
+      canSend: false,
+      reason: lang === 'fr' ? 'Profil invalide' : 'Invalid profile',
+      remainingQuota: 0
+    };
+  }
+  
   // Check cooldown first
   const cooldownStatus = checkCooldown(profile, lang);
   

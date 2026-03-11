@@ -60,7 +60,7 @@ const calculateTarotSynergy = async (userId, targetUserId) => {
       base44.entities.DailyDraw.filter({ profile_id: targetUserId, draw_date: today }, null, 1)
     ]);
     
-    if (!userDraws.length || !targetDraws.length) return 0;
+    if (!userDraws || !targetDraws || !userDraws.length || !targetDraws.length) return 0;
     
     const userThemes = new Set(userDraws[0].themes || []);
     const targetThemes = targetDraws[0].themes || [];
@@ -136,14 +136,14 @@ const calculateNumerologyScore = async (userProfile, targetProfile) => {
       base44.entities.AccountPrivate.filter({ user_email: targetProfile.user_id }, null, 1)
     ]);
 
-    const userAccount = userAccounts[0];
-    const targetAccount = targetAccounts[0];
+    const userAccount = userAccounts && userAccounts.length > 0 ? userAccounts[0] : null;
+    const targetAccount = targetAccounts && targetAccounts.length > 0 ? targetAccounts[0] : null;
 
     // STRICT CHECK: both must have numerology enabled + scope = personal_and_matching
-    if (!userAccount?.numerology_enabled || userAccount.numerology_scope !== 'personal_and_matching') {
+    if (!userAccount || !userAccount.numerology_enabled || userAccount.numerology_scope !== 'personal_and_matching') {
       return 0;
     }
-    if (!targetAccount?.numerology_enabled || targetAccount.numerology_scope !== 'personal_and_matching') {
+    if (!targetAccount || !targetAccount.numerology_enabled || targetAccount.numerology_scope !== 'personal_and_matching') {
       return 0;
     }
 
@@ -187,14 +187,14 @@ const calculateAstrologyScore = async (userProfile, targetProfile) => {
       base44.entities.AccountPrivate.filter({ user_email: targetProfile.user_id }, null, 1)
     ]);
 
-    const userAccount = userAccounts[0];
-    const targetAccount = targetAccounts[0];
+    const userAccount = userAccounts && userAccounts.length > 0 ? userAccounts[0] : null;
+    const targetAccount = targetAccounts && targetAccounts.length > 0 ? targetAccounts[0] : null;
 
     // STRICT CHECK: both must have astrology enabled + scope = personal_and_matching
-    if (!userAccount?.astrology_enabled || userAccount.astrology_scope !== 'personal_and_matching') {
+    if (!userAccount || !userAccount.astrology_enabled || userAccount.astrology_scope !== 'personal_and_matching') {
       return 0;
     }
-    if (!targetAccount?.astrology_enabled || targetAccount.astrology_scope !== 'personal_and_matching') {
+    if (!targetAccount || !targetAccount.astrology_enabled || targetAccount.astrology_scope !== 'personal_and_matching') {
       return 0;
     }
 

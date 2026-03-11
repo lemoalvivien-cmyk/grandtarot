@@ -33,9 +33,9 @@ export default function App() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email });
+      const profiles = await base44.entities.UserProfile.filter({ user_id: currentUser.email }, null, 1);
       
-      if (profiles.length === 0) {
+      if (!profiles || profiles.length === 0) {
         await base44.entities.UserProfile.create({
           user_id: currentUser.email,
           display_name: currentUser.full_name || '',
@@ -60,7 +60,7 @@ export default function App() {
 
       // Check subscription status (admins bypass) — plan_status (AccountPrivate) est la source de vérité
       if (currentUser.role !== 'admin') {
-        const planStatus = accounts && accounts.length > 0 ? accounts[0].plan_status : 'free';
+        const planStatus = accounts && accounts.length > 0 ? (accounts[0].plan_status || 'free') : 'free';
         if (planStatus !== 'active') {
           window.location.href = createPageUrl('Subscribe');
           return;

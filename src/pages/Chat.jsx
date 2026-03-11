@@ -118,9 +118,9 @@ export default function Chat() {
 
   const loadConversation = async (conversationId, userId) => {
     try {
-      const conversations = await base44.entities.Conversation.filter({ id: conversationId });
+      const conversations = await base44.entities.Conversation.filter({ id: conversationId }, null, 1);
       
-      if (!conversations.length) {
+      if (!conversations || conversations.length === 0) {
         window.location.href = createPageUrl('AppIntentions');
         return;
       }
@@ -145,7 +145,7 @@ export default function Chat() {
       // Fetch other user's public profile via AccountPrivate → ProfilePublic
       const otherUserId = conv.user_a_id === userId ? conv.user_b_id : conv.user_a_id;
       const otherAccts = await base44.entities.AccountPrivate.filter({ user_email: otherUserId }, null, 1);
-      const otherPublicId = otherAccts[0]?.public_profile_id;
+      const otherPublicId = otherAccts && otherAccts.length > 0 ? otherAccts[0].public_profile_id : null;
       if (otherPublicId) {
         const pubs = await base44.entities.ProfilePublic.filter({ public_id: otherPublicId }, null, 1);
         if (pubs.length > 0) {
