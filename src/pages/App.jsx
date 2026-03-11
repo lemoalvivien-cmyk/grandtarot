@@ -76,9 +76,9 @@ export default function App() {
       const flags = await loadFeatureFlags();
       setFeatureFlags(flags);
     } catch (error) {
-      console.error('Error:', error);
-    } finally {
+      console.error('Error loading app:', error);
       setLoading(false);
+      alert('Erreur de connexion. Veuillez réessayer.');
     }
   };
 

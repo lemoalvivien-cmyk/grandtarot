@@ -108,8 +108,11 @@ export default function Chat() {
 
       await loadConversation(conversationId, currentUser.email);
     } catch (error) {
-      console.error('Error:', error);
-      window.location.href = createPageUrl('Landing');
+      console.error('Error loading chat:', error);
+      setLoading(false);
+      setError(lang === 'fr' 
+        ? 'Erreur de connexion. Veuillez réessayer.' 
+        : 'Connection error. Please try again.');
     }
   };
 
@@ -157,7 +160,9 @@ export default function Chat() {
       await loadMessages(conversationId);
     } catch (error) {
       console.error('Error loading conversation:', error);
-    } finally {
+      setError(lang === 'fr' 
+        ? 'Impossible de charger la conversation. Réessayez.' 
+        : 'Failed to load conversation. Try again.');
       setLoading(false);
     }
   };

@@ -54,7 +54,11 @@ export default function AppSynchros() {
       
       await loadMatches(profiles[0]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error loading synchros:', error);
+      setLoading(false);
+      alert(lang === 'fr'
+        ? 'Erreur de connexion. Veuillez réessayer.'
+        : 'Connection error. Please try again.');
     }
   };
 
@@ -204,7 +208,9 @@ export default function AppSynchros() {
       setTurnstileToken(null);
     } catch (error) {
       console.error('Error sending intention:', error);
-    } finally {
+      alert(lang === 'fr' 
+        ? 'Erreur lors de l\'envoi. Vérifiez votre connexion et réessayez.' 
+        : 'Send error. Check your connection and try again.');
       setSending(false);
     }
   };

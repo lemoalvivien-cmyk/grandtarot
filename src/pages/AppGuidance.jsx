@@ -63,10 +63,11 @@ export default function AppGuidance() {
       const storedMode = localStorage.getItem('gt_mode') || accounts[0]?.preferred_mode || 'amour';
       setActiveMode(storedMode);
     } catch (error) {
-      console.error('Error:', error);
-      window.location.href = createPageUrl('Landing');
-    } finally {
+      console.error('Error loading guidance:', error);
       setLoading(false);
+      alert(lang === 'fr'
+        ? 'Erreur de connexion. Veuillez réessayer.'
+        : 'Connection error. Please try again.');
     }
   };
 

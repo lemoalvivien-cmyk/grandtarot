@@ -167,7 +167,8 @@ export const trackIntentionRefusal = async (refusedUserId) => {
     
     return { cooldownApplied: false, consecutiveRefusals };
   } catch (error) {
-    console.error('Error tracking refusal:', error);
+    console.error('[quotaManager] Error tracking refusal:', error);
+    // Fail safe: no cooldown on error
     return { cooldownApplied: false, consecutiveRefusals: 0 };
   }
 };

@@ -38,8 +38,8 @@ export const canCreateReport = async (userEmail) => {
       remaining: 10 - todayReports.length 
     };
   } catch (error) {
-    console.error('Rate limit check error:', error);
-    // Allow on error to not block legitimate users
+    console.error('[rateLimiter] Rate limit check error:', error);
+    // Fail-open: allow on error to not block legitimate users
     return { allowed: true, error: error.message };
   }
 };
@@ -145,6 +145,7 @@ export const logRateLimitViolation = async (userEmail, action, details) => {
       status: 'failed'
     });
   } catch (error) {
-    console.error('Error logging rate limit violation:', error);
+    console.error('[rateLimiter] Error logging violation:', error);
+    // Non-blocking: swallow error
   }
 };

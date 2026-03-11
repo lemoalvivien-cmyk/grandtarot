@@ -70,8 +70,11 @@ export default function AppRitual() {
       await loadDailyDraw(currentUser.email, profiles[0].mode_active);
       setLoading(false);
     } catch (error) {
-      console.error('Error:', error);
-      window.location.href = createPageUrl('Landing');
+      console.error('Error loading ritual:', error);
+      setLoading(false);
+      alert(lang === 'fr'
+        ? 'Erreur de connexion. Veuillez réessayer.'
+        : 'Connection error. Please try again.');
     }
   };
 

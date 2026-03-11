@@ -398,7 +398,8 @@ const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 
     
     return filtered.slice(0, limit);
   } catch (error) {
-    console.error('Error getting candidates:', error);
+    console.error('[matchingEngine] Error getting candidates:', error);
+    // Fail gracefully with empty candidates
     return [];
   }
 };
@@ -510,7 +511,8 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
     
     return [];
   } catch (error) {
-    console.error('Error generating matches:', error);
+    console.error('[matchingEngine] Error generating matches:', error);
+    // Return empty array on error (no crash)
     return [];
   }
 };

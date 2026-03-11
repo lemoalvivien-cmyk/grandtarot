@@ -28,7 +28,8 @@ const loadPrompts = async () => {
     cacheTimestamp = now;
     return promptCache;
   } catch (error) {
-    console.error('Error loading AI prompts:', error);
+    console.error('[aiService] Error loading AI prompts:', error);
+    // Return empty object to trigger fallbacks
     return {};
   }
 };
@@ -84,7 +85,7 @@ Génère une interprétation personnalisée pour ${mode} en suivant le format JS
 
     return response;
   } catch (error) {
-    console.error('Error generating interpretation:', error);
+    console.error('[aiService] Error generating interpretation:', error);
     
     // Fallback interpretation
     return {
@@ -150,7 +151,7 @@ Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`
 
     return response.icebreakers || [];
   } catch (error) {
-    console.error('Error generating icebreakers:', error);
+    console.error('[aiService] Error generating icebreakers:', error);
     
     // Fallback icebreakers
     if (lang === 'fr') {
@@ -217,7 +218,7 @@ Détecte: harcèlement, spam, contenu inapproprié, demande d'argent/crypto, lie
       }
     };
   } catch (error) {
-    console.error('Error moderating message:', error);
+    console.error('[aiService] Error moderating message:', error);
     
     // Basic regex-based fallback moderation
     const lowerMessage = message.toLowerCase();
