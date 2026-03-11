@@ -21,7 +21,6 @@ export default function Billing() {
   const [lang, setLang] = useState('fr');
   const [price, setPrice] = useState('6,90');
   const [currency, setCurrency] = useState('EUR');
-  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     loadData();
