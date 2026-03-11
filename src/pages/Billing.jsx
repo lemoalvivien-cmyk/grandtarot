@@ -12,6 +12,7 @@ export default function Billing() {
   const [paymentLink, setPaymentLink] = useState('');
   const [paywallEnabled, setPaywallEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [subscribing, setSubscribing] = useState(false);
   const [submittingProof, setSubmittingProof] = useState(false);
   const [showProofModal, setShowProofModal] = useState(false);
   const [proofDescription, setProofDescription] = useState('');

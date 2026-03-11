@@ -330,12 +330,12 @@ export default function Chat() {
     try {
       // Lookup public_ids via AccountPrivate (source of vérité, ProfilePublic n'a pas user_id)
       const [myAcct, otherAcct] = await Promise.all([
-        base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1),
-        base44.entities.AccountPrivate.filter({ user_email: otherProfile.user_id }, null, 1)
+        base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1).catch(() => []),
+        base44.entities.AccountPrivate.filter({ user_email: otherProfile.user_id }, null, 1).catch(() => [])
       ]);
       
-      const myPublicId = myAcct[0]?.public_profile_id;
-      const otherPublicId = otherAcct[0]?.public_profile_id;
+      const myPublicId = myAcct && myAcct.length > 0 ? myAcct[0].public_profile_id : null;
+      const otherPublicId = otherAcct && otherAcct.length > 0 ? otherAcct[0].public_profile_id : null;
       
       if (!myPublicId || !otherPublicId) {
         alert('Erreur: Profils publics introuvables');
