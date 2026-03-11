@@ -62,7 +62,7 @@ export default function Subscribe() {
   const [checkoutError, setCheckoutError] = useState('');
 
   const handleSubscribe = async () => {
-    if (checkoutLoading) return;
+    if (checkoutLoading) return; // Prevent double-click
     setCheckoutLoading(true);
     setCheckoutError('');
     try {

@@ -121,6 +121,7 @@ export default function AppGuidance() {
   };
 
   const handleGenerate = async () => {
+    if (generating) return; // Prevent double-click
     setError(null);
 
     const trimmed = question.trim();

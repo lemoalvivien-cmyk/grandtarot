@@ -159,6 +159,7 @@ export default function AppRitual() {
   };
 
   const performDraw = async () => {
+    if (drawing) return; // Prevent double-click
     setDrawing(true);
     try {
       // PERF: Use cached account (already loaded in checkAccess)

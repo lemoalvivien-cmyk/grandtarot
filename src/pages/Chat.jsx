@@ -296,6 +296,7 @@ export default function Chat() {
   };
 
   const handleBlock = async () => {
+    if (blocking) return; // Prevent double-click
     setBlocking(true);
     try {
       await blockUser(user.email, otherProfile.user_id, 'not_interested');
@@ -310,6 +311,7 @@ export default function Chat() {
   };
 
   const handleReport = async () => {
+    if (reporting) return; // Prevent double-click
     const trimmedDesc = reportDescription.trim();
     if (!reportReason) {
       alert(lang === 'fr' ? 'Veuillez sélectionner une raison' : 'Please select a reason');

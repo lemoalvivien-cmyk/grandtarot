@@ -154,6 +154,7 @@ export default function AppSynchros() {
   };
 
   const sendIntention = async () => {
+    if (sending) return; // Prevent double-click
     const trimmed = intentionMessage.trim();
     if (!trimmed || trimmed.length < 20) {
       alert(lang === 'fr' ? 'Message trop court (min 20 caractères)' : 'Message too short (min 20 chars)');
@@ -233,6 +234,7 @@ export default function AppSynchros() {
   };
 
   const regenerateMatches = async () => {
+    if (generating) return; // Prevent double-click
     setGenerating(true);
     try {
       // SCALABLE: Delete only today's matches (limited query)

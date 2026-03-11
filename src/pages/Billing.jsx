@@ -87,15 +87,22 @@ export default function Billing() {
     }
   };
 
+  const [subscribing, setSubscribing] = useState(false);
+  
   const handleSubscribe = () => {
+    if (subscribing) return; // Prevent double-click
     if (!paymentLink) {
       alert(lang === 'fr' ? 'Lien de paiement non disponible' : 'Payment link not available');
       return;
     }
+    setSubscribing(true);
     window.open(paymentLink, '_blank');
+    // Reset after 3s
+    setTimeout(() => setSubscribing(false), 3000);
   };
 
   const handleSubmitProof = async () => {
+    if (submittingProof) return; // Prevent double-click
     const trimmed = proofDescription.trim();
     if (!trimmed || trimmed.length < 20) {
       alert(lang === 'fr' 
@@ -368,7 +375,8 @@ export default function Billing() {
                {paymentLink ? (
                  <Button
                    onClick={handleSubscribe}
-                   className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg rounded-xl"
+                   disabled={subscribing}
+                   className="w-full bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 py-6 text-lg rounded-xl disabled:opacity-70"
                  >
                    <CreditCard className="w-5 h-5 mr-2" />
                    {t.cta}

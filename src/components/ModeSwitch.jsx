@@ -21,7 +21,8 @@ export default function ModeSwitch({ initialMode = 'love', onModeChange, lang = 
   }, []);
 
   const handleModeChange = async (newMode) => {
-    if (newMode === currentMode || updating) return;
+    if (newMode === currentMode) return;
+    if (updating) return; // Prevent concurrent updates
     
     setUpdating(true);
     try {
