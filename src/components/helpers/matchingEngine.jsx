@@ -328,12 +328,12 @@ const generateReasons = async (userProfile, targetProfile, scoreBreakdown, lang)
  */
 const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 50) => {
   try {
-    // STEP 1: Get exclusion lists (SECURED with limits)
+    // STEP 1: Get exclusion lists (SECURED with limits + error handling)
     const [blocks, blockedBy, intentions, personalOnlyAccounts] = await Promise.all([
-      base44.entities.Block.filter({ blocker_profile_id: userProfile.public_id }, null, 100),
-      base44.entities.Block.filter({ blocked_profile_id: userProfile.public_id }, null, 100),
-      base44.entities.Intention.filter({ from_user_id: userProfile.user_id }, null, 100),
-      base44.entities.AccountPrivate.filter({ personal_use_only: true }, null, 100)
+    base44.entities.Block.filter({ blocker_profile_id: userProfile.public_id }, null, 100).catch(() => []),
+    base44.entities.Block.filter({ blocked_profile_id: userProfile.public_id }, null, 100).catch(() => []),
+    base44.entities.Intention.filter({ from_user_id: userProfile.user_id }, null, 100).catch(() => []),
+    base44.entities.AccountPrivate.filter({ personal_use_only: true }, null, 100).catch(() => [])
     ]);
     
     const blockedIds = new Set(blocks.map(b => b.blocked_profile_id));
@@ -357,7 +357,7 @@ const getEligibleCandidates = async (userProfile, radiusMultiplier = 1, limit = 
     const candidates = await base44.entities.ProfilePublic.filter({
       is_visible: true,
       photo_url: { $exists: true, $ne: null }
-    }, '-last_active', limit * 2); // Fetch 2x limit for filtering
+    }, '-last_active', limit * 2).catch(() => []); // Fetch 2x limit for filtering
     
     // STEP 3: Filter candidates in memory (already reduced set)
     const filtered = candidates.filter(p => {
@@ -417,7 +417,7 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
       profile_id: userProfile.public_id,
       match_date: today,
       mode: userProfile.mode_active
-    }, '-compatibility_score', 20); // Limit to 20
+    }, '-compatibility_score', 20).catch(() => []); // Limit to 20
     
     if (existing.length >= targetCount) {
       return existing;

@@ -21,7 +21,7 @@ export const canCreateReport = async (userEmail) => {
     // SECURED: Use filter with limit
     const reports = await base44.entities.Report.filter({ 
       reporter_profile_id: userEmail 
-    }, '-created_date', 50);
+    }, '-created_date', 50).catch(() => []);
     
     const todayReports = reports.filter(r => {
       const reportDate = new Date(r.created_date).toISOString().split('T')[0];
@@ -58,7 +58,7 @@ export const canSendIntention = async (userEmail) => {
       return { allowed: false, reason: 'invalid_email' };
     }
     
-    const profiles = await base44.entities.UserProfile.filter({ user_id: userEmail }, null, 1);
+    const profiles = await base44.entities.UserProfile.filter({ user_id: userEmail }, null, 1).catch(() => []);
     if (!profiles || profiles.length === 0) {
       return { allowed: false, reason: 'no_profile' };
     }
@@ -120,7 +120,7 @@ export const canGenerateDailyMatches = async (userEmail, mode) => {
       profile_id: userEmail,
       match_date: today,
       mode: mode
-    }, null, 20);
+    }, null, 20).catch(() => []);
     
     if (existingMatches.length > 0) {
       return { 

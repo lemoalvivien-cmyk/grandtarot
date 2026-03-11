@@ -22,7 +22,7 @@ export const canRequestGuidance = async (userId) => {
     const todayGuidance = await base44.entities.GuidanceAnswer.filter({
       user_id: userId,
       day_key: today
-    }, null, 10); // Max 10 to detect abuse
+    }, null, 10).catch(() => []); // Max 10 to detect abuse
     
     const count = todayGuidance ? todayGuidance.length : 0;
     
@@ -79,15 +79,15 @@ export const getGuidanceStats = async (userId) => {
     const monthKey = monthAgo.toISOString().split('T')[0];
     
     const [todayData, weekData, monthData] = await Promise.all([
-      base44.entities.GuidanceAnswer.filter({ user_id: userId, day_key: today }, null, 10),
+      base44.entities.GuidanceAnswer.filter({ user_id: userId, day_key: today }, null, 10).catch(() => []),
       base44.entities.GuidanceAnswer.filter({ 
         user_id: userId,
         day_key: { $gte: weekKey }
-      }, null, 100),
+      }, null, 100).catch(() => []),
       base44.entities.GuidanceAnswer.filter({ 
         user_id: userId,
         day_key: { $gte: monthKey }
-      }, null, 100)
+      }, null, 100).catch(() => [])
     ]);
     
     return {

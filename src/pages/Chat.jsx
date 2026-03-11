@@ -172,7 +172,7 @@ export default function Chat() {
       const msgs = await base44.entities.Message.filter({ 
         conversation_id: conversationId,
         is_deleted: false 
-      }, '-created_date', 50);
+      }, '-created_date', 50).catch(() => []);
       
       setHasMore(msgs.length === 50);
       

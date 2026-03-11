@@ -172,7 +172,7 @@ export const trackIntentionRefusal = async (refusedUserId) => {
     }
     
     // Get refuser's profile
-    const profiles = await base44.entities.UserProfile.filter({ user_id: refusedUserId }, null, 1);
+    const profiles = await base44.entities.UserProfile.filter({ user_id: refusedUserId }, null, 1).catch(() => []);
     if (!profiles || profiles.length === 0) return { cooldownApplied: false, consecutiveRefusals: 0 };
     
     const profile = profiles[0];
@@ -185,7 +185,7 @@ export const trackIntentionRefusal = async (refusedUserId) => {
       from_user_id: refusedUserId,
       status: 'refused',
       responded_at: { $gte: oneDayAgo.toISOString() }
-    }, '-responded_at', 10);
+    }, '-responded_at', 10).catch(() => []);
     
     const consecutiveRefusals = recentRefusals.length;
     

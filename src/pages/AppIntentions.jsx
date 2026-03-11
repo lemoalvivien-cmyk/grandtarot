@@ -49,8 +49,8 @@ export default function AppIntentions() {
     try {
       // Load received and sent intentions (LIMIT 50 most recent)
       const [received, sent] = await Promise.all([
-        base44.entities.Intention.filter({ to_user_id: userId }, '-created_date', 50),
-        base44.entities.Intention.filter({ from_user_id: userId }, '-created_date', 50)
+        base44.entities.Intention.filter({ to_user_id: userId }, '-created_date', 50).catch(() => []),
+        base44.entities.Intention.filter({ from_user_id: userId }, '-created_date', 50).catch(() => [])
       ]);
 
       setReceivedIntentions(received);

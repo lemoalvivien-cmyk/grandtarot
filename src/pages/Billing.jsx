@@ -130,7 +130,7 @@ export default function Billing() {
         { requester_user_email: user.email },
         '-created_date',
         10
-      );
+      ).catch(() => []);
       
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

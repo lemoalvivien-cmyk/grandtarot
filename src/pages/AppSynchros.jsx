@@ -88,14 +88,18 @@ export default function AppSynchros() {
       setMatches(dailyMatches);
 
       // SCALABLE: Load matched ProfilePublic via matched_profile_id (DailyMatch.matched_profile_id = ProfilePublic.public_id)
-      if (dailyMatches.length > 0) {
+      if (dailyMatches && dailyMatches.length > 0) {
       const profileMap = {};
 
       await Promise.all(
         dailyMatches.map(async (match) => {
-          const profiles = await base44.entities.ProfilePublic.filter({ public_id: match.matched_profile_id }, null, 1);
-          if (profiles.length > 0) {
-            profileMap[match.matched_profile_id] = profiles[0];
+          try {
+            const profiles = await base44.entities.ProfilePublic.filter({ public_id: match.matched_profile_id }, null, 1);
+            if (profiles && profiles.length > 0) {
+              profileMap[match.matched_profile_id] = profiles[0];
+            }
+          } catch (err) {
+            console.error('[AppSynchros] Error loading match profile:', match.matched_profile_id, err);
           }
         })
       );

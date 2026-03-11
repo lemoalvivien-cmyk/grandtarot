@@ -152,7 +152,7 @@ export default function AppRitual() {
         
         // Load card details
         const cards = await base44.entities.TarotCard.filter({ id: draw.tarot_card_id }, null, 1);
-        if (cards.length > 0) {
+        if (cards && cards.length > 0) {
           setCard(cards[0]);
           setShowCard(true);
         }
