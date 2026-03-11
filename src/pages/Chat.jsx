@@ -310,7 +310,19 @@ export default function Chat() {
   };
 
   const handleReport = async () => {
-    if (!reportReason || !reportDescription.trim() || reportDescription.length < 10) return;
+    const trimmedDesc = reportDescription.trim();
+    if (!reportReason) {
+      alert(lang === 'fr' ? 'Veuillez sélectionner une raison' : 'Please select a reason');
+      return;
+    }
+    if (!trimmedDesc || trimmedDesc.length < 10) {
+      alert(lang === 'fr' ? 'Description trop courte (min 10 caractères)' : 'Description too short (min 10 chars)');
+      return;
+    }
+    if (trimmedDesc.length > 2000) {
+      alert(lang === 'fr' ? 'Description trop longue (max 2000 caractères)' : 'Description too long (max 2000 chars)');
+      return;
+    }
 
     setReporting(true);
     try {

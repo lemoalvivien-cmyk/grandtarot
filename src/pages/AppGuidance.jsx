@@ -123,8 +123,10 @@ export default function AppGuidance() {
   const handleGenerate = async () => {
     setError(null);
 
+    const trimmed = question.trim();
+    
     // Validation
-    const validationError = validateQuestion(question);
+    const validationError = validateQuestion(trimmed);
     if (validationError) {
       setError(validationError);
       return;
@@ -211,16 +213,21 @@ Answer in 6-10 lines max, structure:
 
 Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "certainties".`;
 
-      // Call AI
-      const aiResponse = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
+      // Call AI with timeout protection
+      const aiResponse = await Promise.race([
+        base44.integrations.Core.InvokeLLM({
+          prompt,
+          add_context_from_internet: false
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI timeout')), 30000)
+        )
+      ]);
 
       const answer = typeof aiResponse === 'string' ? aiResponse : aiResponse.response || aiResponse.text || '';
 
       if (!answer || answer.length < 50) {
-        throw new Error('AI response too short');
+        throw new Error('AI response too short or empty');
       }
 
       // Save to database
@@ -229,7 +236,7 @@ Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "
         user_id: user.email,
         mode: activeMode,
         day_key: today,
-        question: question.trim(),
+        question: trimmed.substring(0, 240),
         answer: answer.substring(0, 1600),
         language: lang,
         card_context: cardContext

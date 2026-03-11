@@ -146,7 +146,13 @@ export default function AppSynchros() {
   };
 
   const sendIntention = async () => {
-    if (!intentionMessage.trim() || intentionMessage.length < 20) {
+    const trimmed = intentionMessage.trim();
+    if (!trimmed || trimmed.length < 20) {
+      alert(lang === 'fr' ? 'Message trop court (min 20 caractères)' : 'Message too short (min 20 chars)');
+      return;
+    }
+    if (trimmed.length > 500) {
+      alert(lang === 'fr' ? 'Message trop long (max 500 caractères)' : 'Message too long (max 500 chars)');
       return;
     }
 
@@ -182,7 +188,7 @@ export default function AppSynchros() {
         from_user_id: user.email,
         to_user_id: targetEmail,
         mode: profile.mode_active,
-        message: intentionMessage.trim(),
+        message: trimmed,
         status: 'pending',
         expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() // 72h
       });

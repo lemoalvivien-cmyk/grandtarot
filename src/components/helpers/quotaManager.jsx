@@ -10,23 +10,29 @@ import { base44 } from '@/api/base44Client';
  * Returns updated profile with reset counters
  */
 export const checkAndResetDailyQuota = async (profile) => {
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Check if we need to reset daily counter
-  if (profile.last_intention_reset !== today) {
-    await base44.entities.UserProfile.update(profile.id, {
-      intentions_sent_today: 0,
-      last_intention_reset: today
-    });
+  try {
+    const today = new Date().toISOString().split('T')[0];
     
-    return {
-      ...profile,
-      intentions_sent_today: 0,
-      last_intention_reset: today
-    };
+    // Check if we need to reset daily counter
+    if (profile.last_intention_reset !== today) {
+      await base44.entities.UserProfile.update(profile.id, {
+        intentions_sent_today: 0,
+        last_intention_reset: today
+      });
+      
+      return {
+        ...profile,
+        intentions_sent_today: 0,
+        last_intention_reset: today
+      };
+    }
+    
+    return profile;
+  } catch (error) {
+    console.error('[quotaManager] Error resetting quota:', error);
+    // Return unchanged profile on error
+    return profile;
   }
-  
-  return profile;
 };
 
 /**
@@ -61,31 +67,43 @@ export const checkCooldown = (profile, lang = 'fr') => {
  * Clear expired cooldown
  */
 export const clearExpiredCooldown = async (profile) => {
-  await base44.entities.UserProfile.update(profile.id, {
-    cooldown_until: null
-  });
-  
-  return {
-    ...profile,
-    cooldown_until: null
-  };
+  try {
+    await base44.entities.UserProfile.update(profile.id, {
+      cooldown_until: null
+    });
+    
+    return {
+      ...profile,
+      cooldown_until: null
+    };
+  } catch (error) {
+    console.error('[quotaManager] Error clearing cooldown:', error);
+    // Return unchanged on error
+    return profile;
+  }
 };
 
 /**
  * Apply cooldown after consecutive refusals
  */
 export const applyCooldown = async (profile, hours = 24) => {
-  const cooldownEnd = new Date();
-  cooldownEnd.setHours(cooldownEnd.getHours() + hours);
-  
-  await base44.entities.UserProfile.update(profile.id, {
-    cooldown_until: cooldownEnd.toISOString()
-  });
-  
-  return {
-    ...profile,
-    cooldown_until: cooldownEnd.toISOString()
-  };
+  try {
+    const cooldownEnd = new Date();
+    cooldownEnd.setHours(cooldownEnd.getHours() + hours);
+    
+    await base44.entities.UserProfile.update(profile.id, {
+      cooldown_until: cooldownEnd.toISOString()
+    });
+    
+    return {
+      ...profile,
+      cooldown_until: cooldownEnd.toISOString()
+    };
+  } catch (error) {
+    console.error('[quotaManager] Error applying cooldown:', error);
+    // Return unchanged on error
+    return profile;
+  }
 };
 
 /**

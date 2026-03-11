@@ -183,6 +183,9 @@ export default function AppRitual() {
       
       // Get random card (list is cached on first load)
       const allCards = await base44.entities.TarotCard.list();
+      if (!allCards || allCards.length === 0) {
+        throw new Error('No tarot cards available');
+      }
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
       
       // Animation delay while generating interpretation

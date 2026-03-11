@@ -438,9 +438,10 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
         break;
       }
       
-      // STEP 3: Score candidates (BATCH processing)
+      // STEP 3: Score candidates (BATCH processing with error handling)
       const scoredCandidates = await Promise.all(
         candidates.map(async (candidate) => {
+          try {
           const location = calculateDistanceScore(userProfile, candidate);
           const interests = calculateInterestsScore(userProfile, candidate);
           const tarot_synergy = await calculateTarotSynergy(userProfile.public_id, candidate.public_id);
@@ -466,6 +467,17 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
             reasons,
             sharedInterests
           };
+          } catch (err) {
+            console.error('[matchingEngine] Error scoring candidate:', candidate.public_id, err);
+            // Return minimal score on error (fail gracefully)
+            return {
+              candidate,
+              totalScore: 0,
+              scoreBreakdown: {},
+              reasons: [],
+              sharedInterests: []
+            };
+          }
         })
       );
       
@@ -486,7 +498,7 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, targetCount);
     
-    // STEP 5: Store in DailyMatch (BATCH create)
+    // STEP 5: Store in DailyMatch (BATCH create with error handling)
     if (topMatches.length > 0) {
       const matchRecords = await Promise.all(
         topMatches.map(match => 
@@ -502,11 +514,15 @@ export const generateDailyMatches = async (userProfile, targetCount = 20) => {
             is_viewed: false,
             intention_sent: false,
             is_expired: false
+          }).catch(err => {
+            console.error('[matchingEngine] Error creating match record:', err);
+            return null;
           })
         )
       );
       
-      return matchRecords;
+      // Filter out failed creations
+      return matchRecords.filter(Boolean);
     }
     
     return [];
@@ -527,6 +543,7 @@ export const markMatchViewed = async (matchId) => {
       viewed_at: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error marking match as viewed:', error);
+    console.error('[matchingEngine] Error marking match as viewed:', error);
+    // Non-blocking: analytics only
   }
 };
