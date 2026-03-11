@@ -88,6 +88,10 @@ const applyModerationAction = async (userId, severity, flags) => {
  */
 export const openConversationSecure = async (otherUserEmail) => {
   try {
+    if (!otherUserEmail) {
+      return { success: false, error: 'Invalid email' };
+    }
+    
     const result = await base44.functions.invoke('chat_open_conversation', { otherUserEmail });
     const conversationId = result?.data?.conversationId;
     if (!conversationId) {
@@ -110,8 +114,14 @@ export const sendMessageSecure = async ({
   clientMsgId,
   lang 
 }) => {
+  if (!conversationId) {
+    return { success: false, error: lang === 'fr' ? 'Conversation invalide' : 'Invalid conversation' };
+  }
+  if (!messageBody || !messageBody.trim()) {
+    return { success: false, error: lang === 'fr' ? 'Message vide' : 'Empty message' };
+  }
   if (!clientMsgId) {
-    throw new Error('clientMsgId required for idempotence');
+    return { success: false, error: 'clientMsgId required for idempotence' };
   }
   
   try {
@@ -154,6 +164,13 @@ export const sendMessageSecure = async ({
  */
 export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'not_interested') => {
   try {
+    if (!blockerUserEmail || !blockedUserEmail) {
+      return { success: false, error: 'Invalid email parameters' };
+    }
+    if (blockerUserEmail === blockedUserEmail) {
+      return { success: false, error: 'Cannot block self' };
+    }
+    
     // STEP 1: Fetch public_id via AccountPrivate (user_id n'existe pas dans ProfilePublic)
     const [blockerAccts, blockedAccts] = await Promise.all([
       base44.entities.AccountPrivate.filter({ user_email: blockerUserEmail }, null, 1),

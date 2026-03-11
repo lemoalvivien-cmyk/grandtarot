@@ -89,7 +89,7 @@ export default function AppIntentions() {
   const [actionError, setActionError] = useState('');
 
   const handleAccept = async (intention, senderProfile) => {
-    if (acceptingId) return;
+    if (acceptingId || !intention || !intention.id) return;
     setAcceptingId(intention.id);
     setActionError('');
     try {
@@ -125,7 +125,7 @@ export default function AppIntentions() {
   };
 
   const handleRefuse = async (intention) => {
-    if (refusingId) return;
+    if (refusingId || !intention || !intention.id) return;
     setRefusingId(intention.id);
     setActionError('');
     try {

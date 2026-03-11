@@ -13,6 +13,10 @@ import { base44 } from '@/api/base44Client';
  */
 export const canCreateReport = async (userEmail) => {
   try {
+    if (!userEmail) {
+      return { allowed: false, reason: 'invalid_email' };
+    }
+    
     const today = new Date().toISOString().split('T')[0];
     // SECURED: Use filter with limit
     const reports = await base44.entities.Report.filter({ 
@@ -50,8 +54,12 @@ export const canCreateReport = async (userEmail) => {
  */
 export const canSendIntention = async (userEmail) => {
   try {
+    if (!userEmail) {
+      return { allowed: false, reason: 'invalid_email' };
+    }
+    
     const profiles = await base44.entities.UserProfile.filter({ user_id: userEmail }, null, 1);
-    if (profiles.length === 0) {
+    if (!profiles || profiles.length === 0) {
       return { allowed: false, reason: 'no_profile' };
     }
     

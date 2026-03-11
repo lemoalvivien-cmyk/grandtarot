@@ -167,9 +167,13 @@ export const canSendIntention = async (profile, lang = 'fr') => {
  */
 export const trackIntentionRefusal = async (refusedUserId) => {
   try {
+    if (!refusedUserId) {
+      return { cooldownApplied: false, consecutiveRefusals: 0 };
+    }
+    
     // Get refuser's profile
     const profiles = await base44.entities.UserProfile.filter({ user_id: refusedUserId }, null, 1);
-    if (profiles.length === 0) return { cooldownApplied: false, consecutiveRefusals: 0 };
+    if (!profiles || profiles.length === 0) return { cooldownApplied: false, consecutiveRefusals: 0 };
     
     const profile = profiles[0];
     

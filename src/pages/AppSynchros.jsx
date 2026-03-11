@@ -112,6 +112,8 @@ export default function AppSynchros() {
   };
 
   const handleSendIntention = async (match, targetProfile) => {
+    if (!match || !targetProfile || !profile) return;
+    
     // QUOTA CHECK: Use centralized quota manager
     const quotaCheck = await canSendIntention(profile, lang);
     
