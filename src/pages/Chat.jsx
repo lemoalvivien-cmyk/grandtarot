@@ -183,7 +183,8 @@ export default function Chat() {
         setOldestMessageDate(msgs[0].created_date);
       }
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error('[Chat] Error loading messages:', error);
+      // Non-blocking: messages array stays empty
     }
   };
   
@@ -208,9 +209,9 @@ export default function Chat() {
         setOldestMessageDate(olderMessages[0].created_date);
       }
     } catch (error) {
-      console.error('Error loading more messages:', error);
-    } finally {
+      console.error('[Chat] Error loading more messages:', error);
       setLoadingMore(false);
+      // Non-blocking: stop pagination
     }
   };
 
@@ -281,9 +282,10 @@ export default function Chat() {
       
       // Message will appear via subscription (no manual reload needed)
     } catch (error) {
-      console.error('Error sending message:', error);
-      setError(lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Error sending message');
-    } finally {
+      console.error('[Chat] Error sending message:', error);
+      setError(lang === 'fr' 
+        ? 'Erreur lors de l\'envoi. Vérifiez votre connexion.' 
+        : 'Send error. Check your connection.');
       setSending(false);
     }
   };

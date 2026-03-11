@@ -52,9 +52,9 @@ export default function Subscribe() {
         return;
       }
     } catch (error) {
-      console.error('Error:', error);
-    } finally {
+      console.error('Error loading subscription data:', error);
       setLoading(false);
+      alert('Erreur de connexion. Veuillez réessayer.');
     }
   };
 

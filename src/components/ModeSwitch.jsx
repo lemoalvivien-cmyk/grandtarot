@@ -45,11 +45,11 @@ export default function ModeSwitch({ initialMode = 'love', onModeChange, lang = 
       // Reload page to apply mode change
       window.location.reload();
     } catch (error) {
-      console.error('Error updating mode:', error);
-      // Revert on error
+      console.error('[ModeSwitch] Error updating mode:', error);
+      // Revert local state on error
       setCurrentMode(currentMode);
       localStorage.setItem('gt_mode', currentMode);
-    } finally {
+      alert('Erreur lors du changement de mode. Réessayez.');
       setUpdating(false);
     }
   };

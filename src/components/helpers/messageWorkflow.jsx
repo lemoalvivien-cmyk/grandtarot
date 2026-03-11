@@ -77,7 +77,8 @@ const applyModerationAction = async (userId, severity, flags) => {
       });
     }
   } catch (error) {
-    console.error('Error applying moderation action:', error);
+    console.error('[messageWorkflow] Error applying moderation action:', error);
+    // Non-blocking: don't throw
   }
 };
 
@@ -202,7 +203,7 @@ export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'no
     
     return { success: true };
   } catch (error) {
-    console.error('Error blocking user:', error);
-    return { success: false, error: error.message };
+    console.error('[messageWorkflow] Error blocking user:', error);
+    return { success: false, error: error.message || 'Block failed' };
   }
 };

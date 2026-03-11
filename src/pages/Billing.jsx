@@ -80,8 +80,10 @@ export default function Billing() {
       }
     } catch (error) {
       console.error('Error loading billing data:', error);
-    } finally {
       setLoading(false);
+      alert(lang === 'fr' 
+        ? 'Erreur de chargement. Veuillez réessayer.' 
+        : 'Loading error. Please try again.');
     }
   };
 
@@ -165,8 +167,10 @@ export default function Billing() {
         : 'Request sent. An admin will review your proof.');
       loadData();
     } catch (error) {
-      alert(`Error: ${error.message}`);
-    } finally {
+      console.error('Error submitting payment proof:', error);
+      alert(lang === 'fr'
+        ? `Erreur: ${error.message}`
+        : `Error: ${error.message}`);
       setSubmittingProof(false);
     }
   };

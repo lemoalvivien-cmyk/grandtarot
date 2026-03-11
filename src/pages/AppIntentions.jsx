@@ -37,11 +37,11 @@ export default function AppIntentions() {
       setLang(userProfiles[0].language_pref || 'fr');
       await loadIntentions(currentUser.email);
     } catch (err) {
+      console.error('Error loading intentions access:', err);
+      setLoading(false);
       setError(lang === 'fr'
         ? 'Impossible de charger vos intentions. Réessayez dans un instant.'
         : 'Unable to load your intentions. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -15,9 +15,9 @@ export default function InterestSelector({ selectedIds = [], onSelectionChange, 
       const data = await base44.entities.Interest.filter({ is_active: true });
       setInterests(data);
     } catch (error) {
-      console.error('Error loading interests:', error);
-    } finally {
+      console.error('[InterestSelector] Error loading interests:', error);
       setLoading(false);
+      // Empty interests array = fallback gracefully
     }
   };
 

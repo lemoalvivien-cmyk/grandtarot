@@ -63,9 +63,10 @@ export default function PhotoUpload({ currentPhotoUrl, onPhotoUploaded, lang = '
     setPreview(file_url);
     onPhotoUploaded(file_url);
   } catch (error) {
-    console.error('Upload error:', error);
-    alert(lang === 'fr' ? 'Erreur lors de l\'upload' : 'Upload error');
-  } finally {
+    console.error('[PhotoUpload] Upload error:', error);
+    alert(lang === 'fr' 
+      ? 'Erreur lors de l\'upload. Vérifiez votre connexion et réessayez.' 
+      : 'Upload error. Check your connection and try again.');
     setUploading(false);
   }
 };

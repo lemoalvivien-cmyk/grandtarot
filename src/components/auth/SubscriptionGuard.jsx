@@ -81,10 +81,12 @@ export default function SubscriptionGuard({ children, allowOnboarding = false })
 
       setAuthorized(true);
     } catch (error) {
-      console.error('Subscription guard error:', error);
-      window.location.href = createPageUrl('Landing');
-    } finally {
+      console.error('[SubscriptionGuard] Access check error:', error);
       setChecking(false);
+      // Redirect after error to avoid blank screen
+      setTimeout(() => {
+        window.location.href = createPageUrl('Landing');
+      }, 100);
     }
   };
 
