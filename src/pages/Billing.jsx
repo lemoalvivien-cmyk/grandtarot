@@ -21,6 +21,7 @@ export default function Billing() {
   const [lang, setLang] = useState('fr');
   const [price, setPrice] = useState('6,90');
   const [currency, setCurrency] = useState('EUR');
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -88,8 +89,6 @@ export default function Billing() {
     }
   };
 
-  const [subscribing, setSubscribing] = useState(false);
-  
   const handleSubscribe = () => {
     if (subscribing) return; // Prevent double-click
     if (!paymentLink) {
