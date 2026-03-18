@@ -238,7 +238,7 @@ Détecte: harcèlement, spam, contenu inapproprié, demande d'argent/crypto, lie
       }
     };
   } catch (error) {
-    console.error('[aiService] Error moderating message:', error);
+    logger.error('moderateMessage failed', { message: error.message });
     
     // Basic regex-based fallback moderation
     const lowerMessage = message.toLowerCase();
