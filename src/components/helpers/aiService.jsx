@@ -43,7 +43,7 @@ const loadPrompts = async () => {
     cacheTimestamp = now;
     return promptCache;
   } catch (error) {
-    console.error('[aiService] Error loading AI prompts:', error);
+    logger.error('loadPrompts failed', { message: error.message });
     // Return empty object to trigger fallbacks
     return {};
   }
