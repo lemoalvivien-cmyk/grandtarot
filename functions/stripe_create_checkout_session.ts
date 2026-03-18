@@ -1,11 +1,26 @@
 /**
  * stripe_create_checkout_session — Base44 V3
  * Crée une session Stripe Checkout pour l'abonnement.
- * Sécurité : auth serveur, clé Stripe via Deno.env, jamais exposée client.
+ * Sécurité : auth serveur, rate limit, clé Stripe via Deno.env, jamais exposée client.
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import Stripe from 'npm:stripe@17';
+
+// In-memory rate limiter: max 3 checkout attempts per user per 10 minutes
+const _rlStore = new Map();
+function checkRateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const entry = _rlStore.get(key) || { calls: [] };
+  entry.calls = entry.calls.filter(t => now - t < windowMs);
+  if (entry.calls.length >= max) {
+    _rlStore.set(key, entry);
+    return false;
+  }
+  entry.calls.push(now);
+  _rlStore.set(key, entry);
+  return true;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -18,6 +33,11 @@ Deno.serve(async (req) => {
     }
     const userEmail = currentUser.email;
 
+    // STEP 1b: RATE LIMIT — max 3 checkout/10min par utilisateur
+    if (!checkRateLimit(`checkout:${userEmail}`, 3, 10 * 60 * 1000)) {
+      return Response.json({ error: 'Trop de tentatives de paiement — réessayez dans 10 minutes' }, { status: 429 });
+    }
+
     // STEP 2: VALIDATION INPUT
     let body;
     try {
@@ -28,6 +48,13 @@ Deno.serve(async (req) => {
     const { successUrl, cancelUrl } = body;
     if (!successUrl || !cancelUrl) {
       return Response.json({ error: 'successUrl et cancelUrl requis' }, { status: 400 });
+    }
+    // Validate URLs are actual URLs (prevent injection)
+    try {
+      new URL(successUrl);
+      new URL(cancelUrl);
+    } catch {
+      return Response.json({ error: 'URLs invalides' }, { status: 400 });
     }
 
     // STEP 3: SECRETS (Deno.env uniquement — jamais client)
@@ -78,12 +105,12 @@ Deno.serve(async (req) => {
       payload_summary: `Checkout session créée: ${session.id}`,
       severity: 'info',
       status: 'success'
-    }).catch(() => {});
+    }).catch((e) => console.error('[stripe_create_checkout_session] AuditLog error:', e));
 
     return Response.json({ sessionId: session.id, url: session.url });
 
   } catch (error) {
-    console.error('[stripe_create_checkout_session] Error:', error);
+    console.error('[stripe_create_checkout_session] Error:', error.message);
     return Response.json({ error: 'Erreur création session', details: error.message }, { status: 500 });
   }
 });

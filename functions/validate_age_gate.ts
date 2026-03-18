@@ -1,9 +1,24 @@
 /**
  * validate_age_gate — Base44 V3
  * Vérification d'âge serveur (RGPD/COPPA). Exige 18+ ans.
+ * Rate limit: 5 tentatives / 15 min par utilisateur.
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
+const _rlStore = new Map();
+function checkRateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const entry = _rlStore.get(key) || { calls: [] };
+  entry.calls = entry.calls.filter(t => now - t < windowMs);
+  if (entry.calls.length >= max) {
+    _rlStore.set(key, entry);
+    return false;
+  }
+  entry.calls.push(now);
+  _rlStore.set(key, entry);
+  return true;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -16,8 +31,12 @@ Deno.serve(async (req) => {
     }
     const userEmail = currentUser.email;
 
+    // STEP 1b: RATE LIMIT — max 5 tentatives / 15 min
+    if (!checkRateLimit(`agegate:${userEmail}`, 5, 15 * 60 * 1000)) {
+      return Response.json({ error: 'Trop de tentatives — réessayez dans 15 minutes' }, { status: 429 });
+    }
+
     // STEP 2: LIRE birth_year/month/day DEPUIS LA DB (jamais faire confiance au client)
-    // SÉCURITÉ: on ne lit PAS ces valeurs depuis le body — elles sont dans UserProfile
     const serviceRole = base44.asServiceRole;
     const profiles = await serviceRole.entities.UserProfile.filter({ user_id: userEmail }, null, 1);
 
@@ -54,7 +73,7 @@ Deno.serve(async (req) => {
         payload_summary: `Tentative accès mineur: âge=${age}`,
         severity: 'warning',
         status: 'failed'
-      }).catch(() => {});
+      }).catch((e) => console.error('[validate_age_gate] AuditLog error:', e));
 
       return Response.json({
         error: 'Âge insuffisant',
@@ -66,7 +85,6 @@ Deno.serve(async (req) => {
 
     // STEP 5: ENREGISTREMENT CONFIRMATION
     const accounts = await serviceRole.entities.AccountPrivate.filter({ user_email: userEmail }, null, 1);
-
     const now = new Date().toISOString();
 
     if (accounts.length === 0) {
@@ -89,11 +107,12 @@ Deno.serve(async (req) => {
       payload_summary: `Âge vérifié: ${age} ans`,
       severity: 'info',
       status: 'success'
-    }).catch(() => {});
+    }).catch((e) => console.error('[validate_age_gate] AuditLog error:', e));
 
     return Response.json({ success: true, age_confirmed: true, calculated_age: age });
 
   } catch (error) {
+    console.error('[validate_age_gate] Error:', error.message);
     return Response.json({ error: 'Erreur vérification âge', details: error.message }, { status: 500 });
   }
 });

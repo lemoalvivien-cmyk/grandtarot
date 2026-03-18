@@ -1,10 +1,34 @@
 /**
  * chat_send_message — Base44 V3
  * Envoie un message sécurisé dans une conversation.
- * Sécurité : auth serveur, vérification participant, rate-limit, idempotence.
+ * Sécurité : auth serveur, vérification participant, rate-limit global, idempotence, sanitization.
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
+// In-memory rate limiter: max 30 messages per user per minute
+const _rlStore = new Map();
+function checkRateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const entry = _rlStore.get(key) || { calls: [] };
+  entry.calls = entry.calls.filter(t => now - t < windowMs);
+  if (entry.calls.length >= max) {
+    _rlStore.set(key, entry);
+    return false;
+  }
+  entry.calls.push(now);
+  _rlStore.set(key, entry);
+  return true;
+}
+
+// Basic XSS/injection sanitizer — strips HTML tags and null bytes
+function sanitizeText(str) {
+  return str
+    .replace(/\0/g, '')                          // null bytes
+    .replace(/<[^>]*>/g, '')                     // HTML tags
+    .replace(/javascript:/gi, '')                // JS protocol
+    .trim();
+}
 
 Deno.serve(async (req) => {
   try {
@@ -17,7 +41,12 @@ Deno.serve(async (req) => {
     }
     const userEmail = currentUser.email;
 
-    // STEP 2: VALIDATION INPUT
+    // STEP 2: RATE LIMIT GLOBAL — max 30 messages/minute par utilisateur
+    if (!checkRateLimit(`msg:${userEmail}`, 30, 60 * 1000)) {
+      return Response.json({ error: 'Trop de messages — attendez 1 minute' }, { status: 429 });
+    }
+
+    // STEP 3: VALIDATION INPUT
     let body;
     try {
       body = await req.json();
@@ -32,7 +61,7 @@ Deno.serve(async (req) => {
     if (!msgBody || typeof msgBody !== 'string') {
       return Response.json({ error: 'body requis' }, { status: 400 });
     }
-    const trimmedBody = msgBody.trim();
+    const trimmedBody = sanitizeText(msgBody);
     if (trimmedBody.length === 0) {
       return Response.json({ error: 'Message vide' }, { status: 400 });
     }
@@ -42,14 +71,14 @@ Deno.serve(async (req) => {
 
     const serviceRole = base44.asServiceRole;
 
-    // STEP 3: CHARGER CONVERSATION
+    // STEP 4: CHARGER CONVERSATION
     const convs = await serviceRole.entities.Conversation.filter({ id: conversationId }, null, 1);
     if (!convs.length) {
       return Response.json({ error: 'Conversation introuvable' }, { status: 404 });
     }
     const conversation = convs[0];
 
-    // STEP 4: VÉRIFIER QUE L'USER EST PARTICIPANT
+    // STEP 5: VÉRIFIER QUE L'USER EST PARTICIPANT (autorisation serveur)
     const isParticipant = conversation.user_a_id === userEmail || conversation.user_b_id === userEmail;
     if (!isParticipant) {
       serviceRole.entities.AuditLog.create({
@@ -60,11 +89,11 @@ Deno.serve(async (req) => {
         payload_summary: `SÉCURITÉ: tentative envoi dans conversation ${conversationId} (non-participant)`,
         severity: 'critical',
         status: 'failed'
-      }).catch(() => {});
+      }).catch((e) => console.error('[chat_send_message] AuditLog error:', e));
       return Response.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    // STEP 5: IDEMPOTENCE via client_msg_id
+    // STEP 6: IDEMPOTENCE via client_msg_id
     if (clientMsgId && typeof clientMsgId === 'string' && clientMsgId.trim().length > 0) {
       const existing = await serviceRole.entities.Message.filter({
         conversation_id: conversationId,
@@ -76,7 +105,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // STEP 6: RATE LIMIT (1 msg/sec)
+    // STEP 7: RATE LIMIT PAR CONVERSATION (1 msg/sec)
     const recent = await serviceRole.entities.Message.filter({
       conversation_id: conversationId,
       from_user_id: userEmail
@@ -88,14 +117,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // STEP 7: DÉTECTER LIENS/TÉLÉPHONES
+    // STEP 8: DÉTECTER LIENS/TÉLÉPHONES
     const containsUrl = /(https?:\/\/|www\.|\.com|\.fr|\.net|\.org)/i.test(trimmedBody);
     const containsPhone = /(\d{10}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\+\d{10,})/.test(trimmedBody);
     const toUserId = conversation.user_a_id === userEmail
       ? conversation.user_b_id
       : conversation.user_a_id;
 
-    // STEP 8: CRÉER MESSAGE
+    // STEP 9: CRÉER MESSAGE
     const message = await serviceRole.entities.Message.create({
       conversation_id: conversationId,
       participant_a_id: conversation.user_a_id,
@@ -109,17 +138,17 @@ Deno.serve(async (req) => {
       moderation_status: 'clean'
     });
 
-    // STEP 9: METTRE À JOUR CONVERSATION (non-bloquant)
+    // STEP 10: METTRE À JOUR CONVERSATION (non-bloquant)
     serviceRole.entities.Conversation.update(conversationId, {
       last_message_at: new Date().toISOString(),
       last_message_preview: trimmedBody.substring(0, 100),
       message_count: (conversation.message_count || 0) + 1
-    }).catch(() => {});
+    }).catch((e) => console.error('[chat_send_message] Conversation update error:', e));
 
     return Response.json({ message, duplicate: false });
 
   } catch (error) {
-    console.error('[chat_send_message] Error:', error);
+    console.error('[chat_send_message] Error:', error.message);
     return Response.json({ error: 'Erreur création message', details: error.message }, { status: 500 });
   }
 });
