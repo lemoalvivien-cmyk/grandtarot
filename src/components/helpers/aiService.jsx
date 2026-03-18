@@ -62,7 +62,6 @@ export const generateInterpretation = async ({ card, mode, lang, userProfile }) 
       throw new Error(`Prompt not found: ${promptKey}`);
     }
 
-    const systemPrompt = lang === 'fr' ? prompt.system_prompt_fr : prompt.system_prompt_en;
     const cardName = lang === 'fr' ? card.name_fr : card.name_en;
     const cardMeaning = lang === 'fr' ? card.meaning_upright_fr : card.meaning_upright_en;
     const keywords = lang === 'fr' ? card.keywords_fr?.join(', ') : card.keywords_en?.join(', ');
@@ -73,8 +72,8 @@ Signification: ${cardMeaning}
 
 Génère une interprétation personnalisée pour ${mode} en suivant le format JSON attendu.`;
 
-    // Add timeout protection (30s max)
-    const response = await Promise.race([
+    // Timeout 25s (hard limit)
+    const response = await withTimeout(
       base44.integrations.Core.InvokeLLM({
         prompt: userPrompt,
         add_context_from_internet: false,
