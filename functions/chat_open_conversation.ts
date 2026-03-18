@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
     return Response.json({ conversationId: conversation.id });
 
   } catch (error) {
+    console.error('[chat_open_conversation] Error:', error);
     return Response.json({ error: 'Erreur serveur', details: error.message }, { status: 500 });
   }
 });

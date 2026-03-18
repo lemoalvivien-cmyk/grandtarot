@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
     return Response.json({ sessionId: session.id, url: session.url });
 
   } catch (error) {
+    console.error('[stripe_create_checkout_session] Error:', error);
     return Response.json({ error: 'Erreur création session', details: error.message }, { status: 500 });
   }
 });

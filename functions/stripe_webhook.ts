@@ -145,6 +145,7 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
+    console.error('[stripe_webhook] Processing error:', error);
     await serviceRole.entities.AuditLog.create({
       actor_user_id: userEmail || 'stripe_webhook',
       actor_role: 'system',
@@ -154,7 +155,7 @@ Deno.serve(async (req) => {
       payload_summary: `Erreur webhook: ${event.type} — ${error.message}`,
       severity: 'critical',
       status: 'failed'
-    }).catch(() => {});
+    }).catch((logErr) => console.error('[stripe_webhook] Audit log failed:', logErr));
 
     return Response.json({ error: 'Erreur traitement webhook', details: error.message }, { status: 500 });
   }
