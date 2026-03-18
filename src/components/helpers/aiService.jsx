@@ -1,9 +1,24 @@
 import { base44 } from '@/api/base44Client';
+import createLogger from './logger';
+
+const logger = createLogger('aiService');
 
 /**
  * AI Service for GRANDTAROT
  * Manages all AI-powered features using AiPrompt entity
  */
+
+// LLM timeout: 25 seconds (hard limit)
+const LLM_TIMEOUT_MS = 25000;
+
+/** Wraps any promise with a 25s timeout + graceful rejection */
+const withTimeout = (promise, ms = LLM_TIMEOUT_MS) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`LLM timeout after ${ms}ms`)), ms)
+    )
+  ]);
 
 // Cache for prompts to avoid repeated DB calls
 let promptCache = {};
