@@ -142,7 +142,7 @@ export const sendMessageSecure = async ({
     return { success: true, message: msg, duplicate: result?.data?.duplicate || false };
     
   } catch (error) {
-    console.error('[sendMessage] Error:', error);
+    logger.error('sendMessageSecure failed', { message: error.message });
     // Essai d'extraire le status HTTP depuis l'erreur axios
     const status = error?.response?.status;
     let errorMsg = lang === 'fr' ? 'Erreur lors de l\'envoi du message.' : 'Error sending message.';
