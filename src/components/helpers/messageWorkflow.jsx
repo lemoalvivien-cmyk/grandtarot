@@ -62,25 +62,23 @@ const applyModerationAction = async (userId, severity, flags) => {
     if (severity === 'critical' || flags.includes('scam')) {
       const banEnd = new Date();
       banEnd.setDate(banEnd.getDate() + 7); // 7 days
-      
       await base44.entities.UserProfile.update(profile.id, {
         cooldown_until: banEnd.toISOString()
       });
-      
-      console.warn('[SECURITY] Auto-report blocked - requires backend function');
+      logger.warn('Auto-ban appliqué (critical violation)', { userId });
     }
     
     // High violations = warning cooldown
     if (severity === 'high' && !flags.includes('scam')) {
       const cooldownEnd = new Date();
       cooldownEnd.setHours(cooldownEnd.getHours() + 24);
-      
       await base44.entities.UserProfile.update(profile.id, {
         cooldown_until: cooldownEnd.toISOString()
       });
+      logger.warn('Cooldown 24h appliqué (high violation)', { userId });
     }
   } catch (error) {
-    console.error('[messageWorkflow] Error applying moderation action:', error);
+    logger.error('applyModerationAction failed', { message: error.message });
     // Non-blocking: don't throw
   }
 };
