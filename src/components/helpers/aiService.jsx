@@ -171,7 +171,7 @@ Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`
 
     return response.icebreakers || [];
   } catch (error) {
-    console.error('[aiService] Error generating icebreakers:', error);
+    logger.error('generateIcebreakers failed', { message: error.message });
     
     // Fallback icebreakers
     if (lang === 'fr') {
