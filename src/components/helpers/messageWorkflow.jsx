@@ -100,7 +100,7 @@ export const openConversationSecure = async (otherUserEmail) => {
     }
     return { success: true, conversationId };
   } catch (error) {
-    console.error('[openConversation] Error:', error);
+    logger.error('openConversationSecure failed', { message: error.message });
     return { success: false, error: error.message || 'Erreur ouverture conversation' };
   }
 };
