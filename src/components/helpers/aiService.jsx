@@ -227,7 +227,7 @@ Détecte: harcèlement, spam, contenu inapproprié, demande d'argent/crypto, lie
         },
         required: ["safe", "flags"]
       }
-    });
+    }));
 
     return {
       safe: response.safe !== false, // Default to safe if unclear
