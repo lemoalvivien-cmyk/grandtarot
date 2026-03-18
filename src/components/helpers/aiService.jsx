@@ -149,8 +149,8 @@ Centres d'intérêt communs: ${sharedInterests?.join(', ') || 'Aucun'}
 
 Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`;
 
-    // Add timeout protection (20s max for icebreakers)
-    const response = await Promise.race([
+    // Timeout 25s
+    const response = await withTimeout(
       base44.integrations.Core.InvokeLLM({
         prompt: userPrompt,
         add_context_from_internet: false,
@@ -166,11 +166,8 @@ Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`
           },
           required: ["icebreakers"]
         }
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Icebreaker timeout')), 20000)
-      )
-    ]);
+      })
+    );
 
     return response.icebreakers || [];
   } catch (error) {
