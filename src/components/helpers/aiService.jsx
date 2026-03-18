@@ -206,7 +206,7 @@ export const moderateMessage = async ({ message, lang }) => {
 
     const systemPrompt = lang === 'fr' ? prompt.system_prompt_fr : prompt.system_prompt_en;
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await withTimeout(base44.integrations.Core.InvokeLLM({
       prompt: `Message à analyser: "${message}"
       
 Détecte: harcèlement, spam, contenu inapproprié, demande d'argent/crypto, liens suspects, numéros de téléphone.`,
