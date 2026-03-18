@@ -102,7 +102,7 @@ Génère une interprétation personnalisée pour ${mode} en suivant le format JS
 
     return response;
   } catch (error) {
-    console.error('[aiService] Error generating interpretation:', error);
+    logger.error('generateInterpretation failed', { message: error.message });
     
     // Fallback interpretation
     return {
