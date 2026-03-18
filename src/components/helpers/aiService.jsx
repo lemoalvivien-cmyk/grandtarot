@@ -90,11 +90,8 @@ Génère une interprétation personnalisée pour ${mode} en suivant le format JS
           },
           required: ["summary", "todayFocus", "do", "avoid", "reflectionQuestion", "themes", "safetyNote"]
         }
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('LLM timeout')), 30000)
-      )
-    ]);
+      })
+    );
 
     // Ensure safety note is always present
     if (!response.safetyNote || response.safetyNote.length < 10) {
