@@ -221,7 +221,7 @@ export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'no
     
     return { success: true };
   } catch (error) {
-    console.error('[messageWorkflow] Error blocking user:', error);
+    logger.error('blockUser failed', { message: error.message });
     return { success: false, error: error.message || 'Block failed' };
   }
 };
