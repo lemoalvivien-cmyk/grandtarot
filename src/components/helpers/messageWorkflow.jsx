@@ -1,5 +1,8 @@
 import { base44 } from '@/api/base44Client';
 import { moderateMessage } from './aiService';
+import createLogger from './logger';
+
+const logger = createLogger('messageWorkflow');
 
 /**
  * SECURE MESSAGE WORKFLOW - NO MERCY MODE

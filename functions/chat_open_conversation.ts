@@ -3,9 +3,24 @@
  * Ouvre/récupère une conversation après acceptation d'Intention.
  * Sécurité : exige qu'une Intention A→B soit accepted (status=accepted),
  * vérifie l'absence de Block, crée la Conversation via serviceRole.
+ * Rate limit: 10 ouvertures / 5 min par utilisateur.
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
+const _rlStore = new Map();
+function checkRateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const entry = _rlStore.get(key) || { calls: [] };
+  entry.calls = entry.calls.filter(t => now - t < windowMs);
+  if (entry.calls.length >= max) {
+    _rlStore.set(key, entry);
+    return false;
+  }
+  entry.calls.push(now);
+  _rlStore.set(key, entry);
+  return true;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -18,6 +33,11 @@ Deno.serve(async (req) => {
     }
     const userEmail = currentUser.email;
 
+    // STEP 1b: RATE LIMIT — max 10 ouvertures/5min
+    if (!checkRateLimit(`openconv:${userEmail}`, 10, 5 * 60 * 1000)) {
+      return Response.json({ error: 'Trop de requêtes — réessayez dans 5 minutes' }, { status: 429 });
+    }
+
     // STEP 2: VALIDATION INPUT
     let body;
     try {
@@ -29,14 +49,17 @@ Deno.serve(async (req) => {
     if (!otherUserEmail || typeof otherUserEmail !== 'string') {
       return Response.json({ error: 'otherUserEmail requis' }, { status: 400 });
     }
+    // Basic email format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(otherUserEmail)) {
+      return Response.json({ error: 'Format email invalide' }, { status: 400 });
+    }
     if (userEmail === otherUserEmail) {
       return Response.json({ error: 'Impossible de créer une conversation avec soi-même' }, { status: 400 });
     }
 
     const serviceRole = base44.asServiceRole;
 
-    // STEP 3: VÉRIFIER QU'UNE INTENTION accepted existe (A→B ou B→A acceptée)
-    // La logique correcte : une intention a été envoyée et acceptée par le destinataire
+    // STEP 3: VÉRIFIER QU'UNE INTENTION accepted existe (A→B ou B→A)
     const [intentionsAtoB, intentionsBtoA] = await Promise.all([
       serviceRole.entities.Intention.filter({
         from_user_id: userEmail,
@@ -114,12 +137,12 @@ Deno.serve(async (req) => {
       entity_id: conversation.id,
       payload_summary: `Conversation ouverte`,
       status: 'success'
-    }).catch(() => {});
+    }).catch((e) => console.error('[chat_open_conversation] AuditLog error:', e));
 
     return Response.json({ conversationId: conversation.id });
 
   } catch (error) {
-    console.error('[chat_open_conversation] Error:', error);
+    console.error('[chat_open_conversation] Error:', error.message);
     return Response.json({ error: 'Erreur serveur', details: error.message }, { status: 500 });
   }
 });
