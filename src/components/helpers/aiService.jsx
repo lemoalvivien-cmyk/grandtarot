@@ -44,7 +44,6 @@ const loadPrompts = async () => {
     return promptCache;
   } catch (error) {
     logger.error('loadPrompts failed', { message: error.message });
-    // Return empty object to trigger fallbacks
     return {};
   }
 };
@@ -72,7 +71,6 @@ Signification: ${cardMeaning}
 
 Génère une interprétation personnalisée pour ${mode} en suivant le format JSON attendu.`;
 
-    // Timeout 25s (hard limit)
     const response = await withTimeout(
       base44.integrations.Core.InvokeLLM({
         prompt: userPrompt,
@@ -93,7 +91,6 @@ Génère une interprétation personnalisée pour ${mode} en suivant le format JS
       })
     );
 
-    // Ensure safety note is always present
     if (!response.safetyNote || response.safetyNote.length < 10) {
       response.safetyNote = lang === 'fr' 
         ? "Le tarot est un outil symbolique de réflexion, pas une prédiction certaine."
@@ -104,7 +101,6 @@ Génère une interprétation personnalisée pour ${mode} en suivant le format JS
   } catch (error) {
     logger.error('generateInterpretation failed', { message: error.message });
     
-    // Fallback interpretation
     return {
       summary: lang === 'fr' 
         ? "Une journée riche en réflexion vous attend."
@@ -142,14 +138,11 @@ export const generateIcebreakers = async ({ targetProfile, mode, lang, sharedInt
       throw new Error('Icebreaker prompt not found');
     }
 
-    const systemPrompt = lang === 'fr' ? prompt.system_prompt_fr : prompt.system_prompt_en;
-    
     const userPrompt = `Mode: ${mode}
 Centres d'intérêt communs: ${sharedInterests?.join(', ') || 'Aucun'}
 
 Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`;
 
-    // Timeout 25s
     const response = await withTimeout(
       base44.integrations.Core.InvokeLLM({
         prompt: userPrompt,
@@ -173,7 +166,6 @@ Génère 3 messages d'accroche authentiques et respectueux (20-80 mots chacun).`
   } catch (error) {
     logger.error('generateIcebreakers failed', { message: error.message });
     
-    // Fallback icebreakers
     if (lang === 'fr') {
       return [
         "Bonjour ! J'ai été intrigué par votre profil. Que diriez-vous d'échanger ?",
@@ -200,37 +192,36 @@ export const moderateMessage = async ({ message, lang }) => {
     const prompt = prompts['moderation_message'];
 
     if (!prompt) {
-      // If no prompt, allow by default
       return { safe: true, flags: [], details: {} };
     }
 
-    const systemPrompt = lang === 'fr' ? prompt.system_prompt_fr : prompt.system_prompt_en;
-
-    const response = await withTimeout(base44.integrations.Core.InvokeLLM({
-      prompt: `Message à analyser: "${message}"
+    const response = await withTimeout(
+      base44.integrations.Core.InvokeLLM({
+        prompt: `Message à analyser: "${message}"
       
 Détecte: harcèlement, spam, contenu inapproprié, demande d'argent/crypto, liens suspects, numéros de téléphone.`,
-      add_context_from_internet: false,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          safe: { type: "boolean" },
-          flags: {
-            type: "array",
-            items: { 
-              type: "string",
-              enum: ["harassment", "spam", "scam", "inappropriate", "external_contact", "other"]
-            }
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            safe: { type: "boolean" },
+            flags: {
+              type: "array",
+              items: { 
+                type: "string",
+                enum: ["harassment", "spam", "scam", "inappropriate", "external_contact", "other"]
+              }
+            },
+            confidence: { type: "number", minimum: 0, maximum: 1 },
+            reasoning: { type: "string" }
           },
-          confidence: { type: "number", minimum: 0, maximum: 1 },
-          reasoning: { type: "string" }
-        },
-        required: ["safe", "flags"]
-      }
-    }));
+          required: ["safe", "flags"]
+        }
+      })
+    );
 
     return {
-      safe: response.safe !== false, // Default to safe if unclear
+      safe: response.safe !== false,
       flags: response.flags || [],
       details: {
         confidence: response.confidence,
@@ -240,21 +231,17 @@ Détecte: harcèlement, spam, contenu inapproprié, demande d'argent/crypto, lie
   } catch (error) {
     logger.error('moderateMessage failed', { message: error.message });
     
-    // Basic regex-based fallback moderation
     const lowerMessage = message.toLowerCase();
     const flags = [];
     
-    // Scam detection
     if (/(crypto|bitcoin|argent|money|paypal|virement|bank|carte bancaire)/i.test(lowerMessage)) {
       flags.push('scam');
     }
     
-    // External contact detection
     if (/(\d{10}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|whatsapp|telegram|insta|snap)/i.test(lowerMessage)) {
       flags.push('external_contact');
     }
     
-    // URL detection
     if (/(https?:\/\/|www\.|\.com|\.fr|\.net)/i.test(lowerMessage)) {
       flags.push('spam');
     }
