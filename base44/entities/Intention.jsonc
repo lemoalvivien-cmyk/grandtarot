@@ -1,0 +1,85 @@
+{
+  "name": "Intention",
+  "type": "object",
+  "properties": {
+    "from_user_id": {
+      "type": "string",
+      "description": "Sender user email (FORCED SERVER-SIDE, NEVER exposed in UI)"
+    },
+    "to_user_id": {
+      "type": "string",
+      "description": "Recipient user email (NEVER exposed in UI)"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "love",
+        "friendship",
+        "professional"
+      ],
+      "description": "Mode of connection"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 500,
+      "description": "Introduction message (20-500 chars)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "refused",
+        "expired",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Intention status"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Expiration timestamp (72h)"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When responded"
+    },
+    "response_message": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Optional response from recipient"
+    },
+    "icebreaker_used": {
+      "type": "string",
+      "description": "AI icebreaker suggestion ID if used"
+    },
+    "is_flagged": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flagged by AI moderation"
+    },
+    "flag_reason": {
+      "type": "string",
+      "description": "Why flagged"
+    },
+    "related_match_id": {
+      "type": "string",
+      "description": "DailyMatch that led to this"
+    }
+  },
+  "required": [
+    "from_user_id",
+    "to_user_id",
+    "mode",
+    "message"
+  ],
+  "accessRules": {
+    "read": "from_user_id == {user.email} || to_user_id == {user.email} || {user.role} == 'admin'",
+    "create": false,
+    "update": false,
+    "delete": false
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * block_user — Backend function pour bloquer un utilisateur
- * Sécurité: résout public_profile_id via serviceRole, crée Block, archive conversations
+ * Sécurité: vérifie les public_profile_id, crée Block, archive Conversations
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    // Rate limit: 10/heure per user
+    // Rate limit: 10 blocks/heure
     if (!checkRateLimit(`block_user:${currentUser.email}`, 10, 60 * 60 * 1000)) {
       return Response.json({ error: 'Trop de requêtes — réessayez dans 1 heure' }, { status: 429 });
     }
@@ -36,64 +36,60 @@ Deno.serve(async (req) => {
     const { blockedUserEmail, reason } = body;
 
     if (!blockedUserEmail || typeof blockedUserEmail !== 'string') {
-      return Response.json({ error: 'Email invalide' }, { status: 400 });
+      return Response.json({ error: 'blockedUserEmail requis' }, { status: 400 });
     }
 
     if (currentUser.email === blockedUserEmail) {
-      return Response.json({ error: 'Cannot block yourself' }, { status: 400 });
+      return Response.json({ error: 'Cannot block self' }, { status: 400 });
     }
 
     const serviceRole = base44.asServiceRole;
 
-    // Load AccountPrivate for both users
-    const [blockerAccts, blockedAccts] = await Promise.all([
+    // Résoudre les public_profile_id via AccountPrivate
+    const [currentAccount, blockedAccount] = await Promise.all([
       serviceRole.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1),
       serviceRole.entities.AccountPrivate.filter({ user_email: blockedUserEmail }, null, 1)
     ]);
 
-    const blockerPublicId = blockerAccts[0]?.public_profile_id;
-    const blockedPublicId = blockedAccts[0]?.public_profile_id;
+    const blockerPublicId = currentAccount[0]?.public_profile_id;
+    const blockedPublicId = blockedAccount[0]?.public_profile_id;
 
-    if (!blockerPublicId) {
-      return Response.json({ error: 'Blocker profile not complete' }, { status: 400 });
+    if (!blockerPublicId || !blockedPublicId) {
+      return Response.json({ error: 'Profil introuvable' }, { status: 404 });
     }
 
-    if (!blockedPublicId) {
-      return Response.json({ error: 'Blocked user profile not complete' }, { status: 400 });
-    }
-
-    // Create Block
+    // Créer le Block via serviceRole
     await serviceRole.entities.Block.create({
       blocker_profile_id: blockerPublicId,
       blocked_profile_id: blockedPublicId,
       reason: reason || 'not_interested',
-      is_mutual: false,
-      is_admin_enforced: false
+      created_at: new Date().toISOString()
     });
 
-    // Archive conversations
-    const [convsA, convsB] = await Promise.all([
-      serviceRole.entities.Conversation.filter({
-        user_a_id: currentUser.email,
-        user_b_id: blockedUserEmail
-      }, null, 5),
-      serviceRole.entities.Conversation.filter({
-        user_a_id: blockedUserEmail,
-        user_b_id: currentUser.email
-      }, null, 5)
-    ]);
+    // Archive les conversations entre les deux utilisateurs
+    const [user_a, user_b] = [currentUser.email, blockedUserEmail].sort();
 
-    const allConvs = [...convsA, ...convsB];
+    const conversations = await serviceRole.entities.Conversation.filter({
+      user_a_id: user_a,
+      user_b_id: user_b
+    });
 
-    await Promise.all(
-      allConvs.map(conv =>
-        serviceRole.entities.Conversation.update(conv.id, {
-          status: 'blocked',
-          blocked_by: currentUser.email,
-          blocked_at: new Date().toISOString()
-        })
-      )
-    );
+    for (const conv of conversations) {
+      await serviceRole.entities.Conversation.update(conv.id, {
+        status: 'blocked'
+      });
+    }
+
+    // Audit log
+    serviceRole.entities.AuditLog.create({
+      actor_user_id: currentUser.email,
+      actor_role: 'user',
+      action: 'block_created',
+      entity_name: 'Block',
+      target_user_id: blockedUserEmail,
+      payload_summary: `Utilisateur bloqué: ${blockedUserEmail}`,
+      status: 'success'
+    }).catch(e => console.error('[block_user] AuditLog error:', e));
 
     return Response.json({ success: true });
 
