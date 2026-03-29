@@ -142,18 +142,27 @@ export default function Chat() {
 
       setConversation(conv);
 
-      // Fetch other user's public profile via AccountPrivate → ProfilePublic
+      // Resolve other user's public profile via backend function
       const otherUserId = conv.user_a_id === userId ? conv.user_b_id : conv.user_a_id;
-      const otherAccts = await base44.entities.AccountPrivate.filter({ user_email: otherUserId }, null, 1);
-      const otherPublicId = otherAccts && otherAccts.length > 0 ? otherAccts[0].public_profile_id : null;
-      if (otherPublicId) {
-        const pubs = await base44.entities.ProfilePublic.filter({ public_id: otherPublicId }, null, 1);
-        if (pubs.length > 0) {
-          // Attach user_id (email) for block/report — never displayed in UI
-          setOtherProfile({ ...pubs[0], user_id: otherUserId });
+      try {
+        const result = await base44.functions.invoke('resolve_public_profile', {
+          emails: [otherUserId]
+        });
+
+        if (result?.data?.profiles?.[otherUserId]) {
+          const profile = result.data.profiles[otherUserId];
+          setOtherProfile({
+            display_name: profile.displayName,
+            photo_url: profile.photoUrl,
+            public_id: profile.publicId,
+            user_id: otherUserId // for block/report only
+          });
+        } else {
+          // Fallback: minimal display object
+          setOtherProfile({ display_name: 'Utilisateur', user_id: otherUserId });
         }
-      } else {
-        // Fallback: minimal display object so chat still opens
+      } catch (err) {
+        console.error('[Chat] Error resolving other profile:', err);
         setOtherProfile({ display_name: 'Utilisateur', user_id: otherUserId });
       }
 
@@ -328,17 +337,25 @@ export default function Chat() {
 
     setReporting(true);
     try {
-      // Lookup public_ids via AccountPrivate (source of vérité, ProfilePublic n'a pas user_id)
-      const [myAcct, otherAcct] = await Promise.all([
-        base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1).catch(() => []),
-        base44.entities.AccountPrivate.filter({ user_email: otherProfile.user_id }, null, 1).catch(() => [])
-      ]);
-      
-      const myPublicId = myAcct && myAcct.length > 0 ? myAcct[0].public_profile_id : null;
-      const otherPublicId = otherAcct && otherAcct.length > 0 ? otherAcct[0].public_profile_id : null;
-      
-      if (!myPublicId || !otherPublicId) {
-        alert('Erreur: Profils publics introuvables');
+      // Get my own AccountPrivate (already have public_id from onboarding)
+      const myAccts = await base44.entities.AccountPrivate.filter({ user_email: user.email }, null, 1).catch(() => []);
+      const myPublicId = myAccts?.[0]?.public_profile_id;
+
+      if (!myPublicId) {
+        alert('Erreur: Profil incomplet');
+        setReporting(false);
+        return;
+      }
+
+      // Get other user's public_id via backend function
+      const result = await base44.functions.invoke('resolve_public_profile', {
+        emails: [otherProfile.user_id]
+      });
+
+      const otherPublicId = result?.data?.profiles?.[otherProfile.user_id]?.publicId;
+
+      if (!otherPublicId) {
+        alert('Erreur: Profil cible introuvable');
         setReporting(false);
         return;
       }

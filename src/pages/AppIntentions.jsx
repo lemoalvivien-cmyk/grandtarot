@@ -63,21 +63,28 @@ export default function AppIntentions() {
       ];
       const uniqueEmails = [...new Set(allUserEmails)];
       
-      const profileMap = {};
-      await Promise.all(
-        uniqueEmails.map(async (email) => {
-          try {
-            const accts = await base44.entities.AccountPrivate.filter({ user_email: email }, null, 1);
-            const publicId = accts && accts.length > 0 ? accts[0].public_profile_id : null;
-            if (!publicId) return;
-            const pubs = await base44.entities.ProfilePublic.filter({ public_id: publicId }, null, 1);
-            if (pubs && pubs.length > 0) profileMap[email] = pubs[0];
-          } catch (err) {
-            console.error('[AppIntentions] Error loading profile for email:', email, err);
-          }
-        })
-      );
-      setProfiles(profileMap);
+      // Use backend function to resolve profiles (no cross-user AccountPrivate access)
+      try {
+        const result = await base44.functions.invoke('resolve_public_profile', {
+          emails: uniqueEmails
+        });
+
+        if (result?.data?.profiles) {
+          // Convert { email: { publicId, displayName, photoUrl } } to { email: ProfilePublic-like }
+          const profileMap = Object.entries(result.data.profiles).reduce((acc, [email, profile]) => {
+            acc[email] = {
+              public_id: profile.publicId,
+              display_name: profile.displayName,
+              photo_url: profile.photoUrl
+            };
+            return acc;
+          }, {});
+          setProfiles(profileMap);
+        }
+      } catch (err) {
+        console.error('[AppIntentions] Error resolving profiles:', err);
+        // Non-blocking: empty profiles is fine
+      }
     } catch (error) {
       console.error('[AppIntentions] Error loading intentions:', error);
       // Non-blocking: empty arrays will display empty state

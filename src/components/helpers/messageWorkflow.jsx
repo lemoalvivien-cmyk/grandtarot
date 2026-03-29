@@ -172,51 +172,14 @@ export const blockUser = async (blockerUserEmail, blockedUserEmail, reason = 'no
       return { success: false, error: 'Cannot block self' };
     }
     
-    // STEP 1: Fetch public_id via AccountPrivate (user_id n'existe pas dans ProfilePublic)
-    const [blockerAccts, blockedAccts] = await Promise.all([
-      base44.entities.AccountPrivate.filter({ user_email: blockerUserEmail }, null, 1),
-      base44.entities.AccountPrivate.filter({ user_email: blockedUserEmail }, null, 1)
-    ]);
-    
-    const blockerPublicId = blockerAccts[0]?.public_profile_id;
-    const blockedPublicId = blockedAccts[0]?.public_profile_id;
-    
-    if (!blockerPublicId) {
-      return { success: false, error: 'Blocker onboarding incomplete (public_profile_id missing)' };
-    }
-    
-    if (!blockedPublicId) {
-      return { success: false, error: 'Blocked user onboarding incomplete (public_profile_id missing)' };
-    }
-    
-    // STEP 3: Create Block with STRICT public_id fields (NEVER email)
-    await base44.entities.Block.create({
-      blocker_profile_id: blockerPublicId,
-      blocked_profile_id: blockedPublicId,
-      reason,
-      is_mutual: false,
-      is_admin_enforced: false
+    // Delegate to backend function (no cross-user AccountPrivate access)
+    const result = await base44.functions.invoke('block_user', {
+      blockedUserEmail,
+      reason
     });
     
-    // STEP 4: Archive related conversations
-    const convsA = await base44.entities.Conversation.filter({ 
-      user_a_id: blockerUserEmail, 
-      user_b_id: blockedUserEmail 
-    }, null, 5);
-    
-    const convsB = await base44.entities.Conversation.filter({ 
-      user_a_id: blockedUserEmail, 
-      user_b_id: blockerUserEmail 
-    }, null, 5);
-    
-    const userConversations = [...convsA, ...convsB];
-    
-    for (const conv of userConversations) {
-      await base44.entities.Conversation.update(conv.id, {
-        status: 'blocked',
-        blocked_by: blockerUserEmail,
-        blocked_at: new Date().toISOString()
-      });
+    if (!result?.data?.success) {
+      return { success: false, error: result?.data?.error || 'Block failed' };
     }
     
     return { success: true };
