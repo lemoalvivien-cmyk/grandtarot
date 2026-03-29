@@ -193,34 +193,23 @@ export default function AppSynchros() {
 
     setSending(true);
     try {
-      // Create intention — to_user_id est l'email, récupéré via AccountPrivate
-      const targetAcct = await base44.entities.AccountPrivate.filter({
-        public_profile_id: selectedMatch.matched_profile_id
-      }, null, 1).catch(() => []);
-      const targetEmail = targetAcct && targetAcct.length > 0 ? targetAcct[0].user_email : null;
-      if (!targetEmail) {
-        alert(lang === 'fr' ? 'Profil cible introuvable' : 'Target profile not found');
+      // Appel sécurisé à la backend function
+      const result = await base44.functions.invoke('create_intention', {
+        targetPublicProfileId: selectedMatch.matched_profile_id,
+        message: trimmed,
+        mode: profile.mode_active
+      });
+
+      if (!result?.data?.success) {
+        const errorMsg = result?.data?.error || (lang === 'fr' ? 'Erreur lors de l\'envoi' : 'Send error');
+        alert(errorMsg);
         setSending(false);
         return;
       }
 
-      await base44.entities.Intention.create({
-        from_user_id: user.email,
-        to_user_id: targetEmail,
-        mode: profile.mode_active,
-        message: trimmed,
-        status: 'pending',
-        expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() // 72h
-      });
-
-      // Mark match as intention sent
+      // Mark match as intention sent (local state)
       await base44.entities.DailyMatch.update(selectedMatch.id, {
         intention_sent: true
-      });
-
-      // Increment user's intention counter
-      await base44.entities.UserProfile.update(profile.id, {
-        intentions_sent_today: (profile.intentions_sent_today || 0) + 1
       });
 
       // Update local state
