@@ -197,30 +197,31 @@ export default function AppRitual() {
       // Animation delay while generating interpretation
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Generate AI interpretation with timeout
-      const { generateInterpretation } = await import('@/components/helpers/aiService');
-      const interpretation = await Promise.race([
-        generateInterpretation({
-          card: randomCard,
-          mode: profile.mode_active,
-          lang: lang,
-          userProfile: profile
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Interpretation timeout')), 35000)
-        )
-      ]);
-      
-      // Create daily draw using profile_id (correct field per schema)
+      // First create DailyDraw without interpretation
       const newDraw = await base44.entities.DailyDraw.create({
         profile_id: profileId,
         draw_date: today,
         mode: profile.mode_active,
         tarot_card_id: randomCard.id,
         spread_type: 'single',
-        interpretation_json: interpretation,
-        themes: interpretation.themes
+        interpretation_json: null,
+        themes: []
       });
+
+      // Then call backend function for interpretation
+      const result = await base44.functions.invoke('generate_interpretation', {
+        cardId: randomCard.id,
+        mode: profile.mode_active,
+        lang: lang
+      });
+
+      if (result?.data?.success) {
+        // Update with interpretation
+        await base44.entities.DailyDraw.update(newDraw.id, {
+          interpretation_json: result.data.interpretation,
+          themes: result.data.interpretation.themes || []
+        });
+      }
 
       setDailyDraw(newDraw);
       setCard(randomCard);

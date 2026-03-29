@@ -5,7 +5,6 @@ import { Heart, Users, Briefcase, Sparkles, Send, Loader2, CheckCircle, AlertCir
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
-import { canRequestGuidance } from '@/components/helpers/guidanceQuotaManager';
 
 export default function AppGuidance() {
   const [loading, setLoading] = useState(true);
@@ -153,14 +152,7 @@ export default function AppGuidance() {
     setGenerating(true);
 
     try {
-      // Check plan status via account (already in state — plan_status is source of truth)
-      if (account?.plan_status !== 'active' && user?.role !== 'admin') {
-        window.location.href = createPageUrl('Billing');
-        return;
-      }
-
-      // Load today's card (if exists, zero extra cost)
-      // DailyDraw uses profile_id (public_id), not user.email
+      // Load today's card (if exists, optional)
       let cardContext = null;
       try {
         const today = new Date().toISOString().split('T')[0];
@@ -184,66 +176,19 @@ export default function AppGuidance() {
         // Card context is optional, continue without it
       }
 
-      // Build AI prompt
-      const modeLabels = {
-        amour: { fr: 'amour/rencontres', en: 'love/dating' },
-        amitie: { fr: 'amitié', en: 'friendship' },
-        pro: { fr: 'professionnel/carrière', en: 'professional/career' }
-      };
-
-      const cardInfo = cardContext 
-        ? lang === 'fr' ? `Carte du jour: ${cardContext.name_fr}. ` : `Today's card: ${cardContext.name_en}. `
-        : '';
-
-      const prompt = lang === 'fr' ? `Tu es un guide bienveillant spécialisé en ${modeLabels[activeMode].fr}. ${cardInfo}Question: "${question}"
-
-Réponds en 6-10 lignes max, structure:
-1) Lecture rapide (2 lignes)
-2) Conseils d'action aujourd'hui (3 bullets)
-3) À éviter (2 bullets)
-4) Question de recentrage (1 ligne)
-
-Ton: clair, concret, bienveillant. PAS de santé/juridique/diagnostic. Suggérer, ne pas affirmer "certitudes".` : 
-`You are a caring guide specialized in ${modeLabels[activeMode].en}. ${cardInfo}Question: "${question}"
-
-Answer in 6-10 lines max, structure:
-1) Quick reading (2 lines)
-2) Action tips for today (3 bullets)
-3) Things to avoid (2 bullets)
-4) Centering question (1 line)
-
-Tone: clear, concrete, caring. NO health/legal/diagnosis. Suggest, don't claim "certainties".`;
-
-      // Call AI with timeout protection
-      const aiResponse = await Promise.race([
-        base44.integrations.Core.InvokeLLM({
-          prompt,
-          add_context_from_internet: false
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('AI timeout')), 30000)
-        )
-      ]);
-
-      const answer = typeof aiResponse === 'string' ? aiResponse : aiResponse.response || aiResponse.text || '';
-
-      if (!answer || answer.length < 50) {
-        throw new Error('AI response too short or empty');
-      }
-
-      // Save to database
-      const today = new Date().toISOString().split('T')[0];
-      const newGuidance = await base44.entities.GuidanceAnswer.create({
-        user_id: user.email,
+      // Call backend function for guidance generation
+      const result = await base44.functions.invoke('generate_guidance', {
+        question: trimmed,
         mode: activeMode,
-        day_key: today,
-        question: trimmed.substring(0, 240),
-        answer: answer.substring(0, 1600),
-        language: lang,
-        card_context: cardContext
+        lang: lang,
+        cardContext: cardContext || null
       });
 
-      setTodayGuidance(newGuidance);
+      if (!result?.data?.success) {
+        throw new Error(result?.data?.error || 'Erreur serveur');
+      }
+
+      setTodayGuidance(result.data.guidance);
       setError(null);
     } catch (error) {
       console.error('Error generating guidance:', error);
