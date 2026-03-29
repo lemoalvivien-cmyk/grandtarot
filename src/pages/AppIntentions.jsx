@@ -5,7 +5,6 @@ import { MessageCircle, Inbox, Send as SendIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReceivedIntentionCard from '@/components/intentions/ReceivedIntentionCard';
 import SentIntentionCard from '@/components/intentions/SentIntentionCard';
-import { trackIntentionRefusal } from '@/components/helpers/quotaManager';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
 
 export default function AppIntentions() {
@@ -100,18 +99,16 @@ export default function AppIntentions() {
     setAcceptingId(intention.id);
     setActionError('');
     try {
-      await base44.entities.Intention.update(intention.id, {
-        status: 'accepted',
-        responded_at: new Date().toISOString()
+      // Call backend function to accept intention and create conversation
+      const result = await base44.functions.invoke('respond_intention', {
+        intentionId: intention.id,
+        action: 'accept'
       });
 
-      const { openConversationSecure } = await import('@/components/helpers/messageWorkflow');
-      const result = await openConversationSecure(intention.from_user_id);
-      
-      if (!result.success) {
+      if (!result?.data?.success) {
         setActionError(lang === 'fr'
-          ? 'Impossible d\'ouvrir la conversation : ' + result.error
-          : 'Could not open conversation: ' + result.error);
+          ? 'Impossible d\'ouvrir la conversation : ' + (result?.data?.error || 'Erreur serveur')
+          : 'Could not open conversation: ' + (result?.data?.error || 'Server error'));
         return;
       }
 
@@ -120,7 +117,7 @@ export default function AppIntentions() {
       );
 
       setTimeout(() => {
-        window.location.href = createPageUrl('Chat') + `?conversation=${result.conversationId}`;
+        window.location.href = createPageUrl('Chat') + `?conversation=${result.data.conversationId}`;
       }, 800);
     } catch (err) {
       setActionError(lang === 'fr'
@@ -136,12 +133,16 @@ export default function AppIntentions() {
     setRefusingId(intention.id);
     setActionError('');
     try {
-      await base44.entities.Intention.update(intention.id, {
-        status: 'refused',
-        responded_at: new Date().toISOString()
+      // Call backend function to refuse intention (with cooldown logic)
+      const result = await base44.functions.invoke('respond_intention', {
+        intentionId: intention.id,
+        action: 'refuse'
       });
 
-      await trackIntentionRefusal(intention.from_user_id);
+      if (!result?.data?.success) {
+        setActionError(lang === 'fr' ? 'Une erreur s\'est produite.' : 'An error occurred.');
+        return;
+      }
 
       setReceivedIntentions(prev => 
         prev.map(i => i.id === intention.id ? { ...i, status: 'refused' } : i)
