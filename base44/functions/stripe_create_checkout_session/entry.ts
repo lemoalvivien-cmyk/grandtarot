@@ -111,6 +111,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[stripe_create_checkout_session] Error:', error.message);
-    return Response.json({ error: 'Erreur création session', details: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur création session' }, { status: 500 });
   }
 });

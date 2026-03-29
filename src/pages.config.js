@@ -92,40 +92,7 @@ import AdminSubscriptionSync from './pages/AdminSubscriptionSync';
 import AdminTarotImport from './pages/AdminTarotImport';
 import AdminUiSmoke from './pages/AdminUiSmoke';
 import AdminUsers from './pages/AdminUsers';
-import Affinities from './pages/Affinities';
 import App from './pages/App';
-import AppAstrology from './pages/AppAstrology';
-import AppGuidance from './pages/AppGuidance';
-import AppHome from './pages/AppHome';
-import AppIntentions from './pages/AppIntentions';
-import AppNumerology from './pages/AppNumerology';
-import AppOnboarding from './pages/AppOnboarding';
-import AppRitual from './pages/AppRitual';
-import AppSettings from './pages/AppSettings';
-import AppSynchros from './pages/AppSynchros';
-import Billing from './pages/Billing';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import CardDetail from './pages/CardDetail';
-import CardOfDay from './pages/CardOfDay';
-import Cards from './pages/Cards';
-import Chat from './pages/Chat';
-import ChatDisabled from './pages/ChatDisabled';
-import Cookies from './pages/Cookies';
-import CreateReport from './pages/CreateReport';
-import DailyReading from './pages/DailyReading';
-import Dashboard from './pages/Dashboard';
-import DataRights from './pages/DataRights';
-import Demo from './pages/Demo';
-import DemoStart from './pages/DemoStart';
-import Encyclopedia from './pages/Encyclopedia';
-import Health from './pages/Health';
-import Landing from './pages/Landing';
-import Legal from './pages/Legal';
-import LegalNotice from './pages/LegalNotice';
-import ManageSubscription from './pages/ManageSubscription';
-import Messages from './pages/Messages';
-import Offline from './pages/Offline';
 import Onboarding from './pages/Onboarding';
 import Paywall from './pages/Paywall';
 import Pricing from './pages/Pricing';
@@ -184,40 +151,7 @@ export const PAGES = {
     "AdminTarotImport": AdminTarotImport,
     "AdminUiSmoke": AdminUiSmoke,
     "AdminUsers": AdminUsers,
-    "Affinities": Affinities,
     "App": App,
-    "AppAstrology": AppAstrology,
-    "AppGuidance": AppGuidance,
-    "AppHome": AppHome,
-    "AppIntentions": AppIntentions,
-    "AppNumerology": AppNumerology,
-    "AppOnboarding": AppOnboarding,
-    "AppRitual": AppRitual,
-    "AppSettings": AppSettings,
-    "AppSynchros": AppSynchros,
-    "Billing": Billing,
-    "Blog": Blog,
-    "BlogPost": BlogPost,
-    "CardDetail": CardDetail,
-    "CardOfDay": CardOfDay,
-    "Cards": Cards,
-    "Chat": Chat,
-    "ChatDisabled": ChatDisabled,
-    "Cookies": Cookies,
-    "CreateReport": CreateReport,
-    "DailyReading": DailyReading,
-    "Dashboard": Dashboard,
-    "DataRights": DataRights,
-    "Demo": Demo,
-    "DemoStart": DemoStart,
-    "Encyclopedia": Encyclopedia,
-    "Health": Health,
-    "Landing": Landing,
-    "Legal": Legal,
-    "LegalNotice": LegalNotice,
-    "ManageSubscription": ManageSubscription,
-    "Messages": Messages,
-    "Offline": Offline,
     "Onboarding": Onboarding,
     "Paywall": Paywall,
     "Pricing": Pricing,

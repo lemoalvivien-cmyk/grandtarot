@@ -68,6 +68,6 @@ Deno.serve(async (req) => {
     return Response.json({ url: portalSession.url });
 
   } catch (error) {
-    return Response.json({ error: 'Erreur création session portal', details: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur création session portal' }, { status: 500 });
   }
 });

@@ -113,6 +113,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[validate_age_gate] Error:', error.message);
-    return Response.json({ error: 'Erreur vérification âge', details: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur vérification âge' }, { status: 500 });
   }
 });

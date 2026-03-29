@@ -176,6 +176,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[generate_dsar_export] Error:', error.message);
-    return Response.json({ error: 'Erreur génération export', details: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur génération export' }, { status: 500 });
   }
 });

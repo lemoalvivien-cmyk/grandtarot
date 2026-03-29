@@ -149,6 +149,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[chat_send_message] Error:', error.message);
-    return Response.json({ error: 'Erreur création message', details: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur création message' }, { status: 500 });
   }
 });

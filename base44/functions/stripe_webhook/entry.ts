@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       status: 'failed'
     }).catch((logErr) => console.error('[stripe_webhook] Audit log failed:', logErr));
 
-    return Response.json({ error: 'Erreur traitement webhook', details: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur traitement webhook' }, { status: 500 });
   }
 
   // STEP 7: MARQUER COMME TRAITÉ (via AuditLog — pas d'enum contraignant)
