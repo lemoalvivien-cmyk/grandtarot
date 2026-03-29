@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     const conversations = await serviceRole.entities.Conversation.filter({
       user_a_id: user_a,
       user_b_id: user_b
-    });
+    }, null, 100);
 
     for (const conv of conversations) {
       await serviceRole.entities.Conversation.update(conv.id, {

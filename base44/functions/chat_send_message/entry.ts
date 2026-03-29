@@ -4,7 +4,7 @@
  * Sécurité : auth serveur, vérification participant, rate-limit global, idempotence, sanitization.
  */
 
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // In-memory rate limiter: max 30 messages per user per minute
 const _rlStore = new Map();
@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     });
 
     // STEP 10: METTRE À JOUR CONVERSATION (non-bloquant)
-    serviceRole.entities.Conversation.update(conversationId, {
+    await serviceRole.entities.Conversation.update(conversationId, {
       last_message_at: new Date().toISOString(),
       last_message_preview: trimmedBody.substring(0, 100),
       message_count: (conversation.message_count || 0) + 1

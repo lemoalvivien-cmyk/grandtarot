@@ -4,7 +4,7 @@
  * Sécurité : auth serveur, rate limit, clé Stripe via Deno.env, jamais exposée client.
  */
 
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import Stripe from 'npm:stripe@17';
 
 // In-memory rate limiter: max 3 checkout attempts per user per 10 minutes
