@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import ProfileCard from '@/components/synchros/ProfileCard';
-import { generateDailyMatches } from '@/components/helpers/matchingEngine';
 import { canSendIntention, checkCooldown } from '@/components/helpers/quotaManager';
 import { canSendIntention as rateLimitCheck, logRateLimitViolation } from '@/components/helpers/rateLimiter';
 import SubscriptionGuard from '@/components/auth/SubscriptionGuard';
@@ -49,12 +48,12 @@ export default function AppSynchros() {
       setProfile(profiles[0]);
       setLang(profiles[0].language_pref || 'fr');
       
-      // Check if user is in personal_use_only mode
+      // Check if user is in personal_use_only mode (serveur le gère maintenant)
       const accounts = await base44.entities.AccountPrivate.filter({ user_email: currentUser.email }, null, 1);
       if (accounts.length > 0 && accounts[0].personal_use_only) {
         setPersonalModeOnly(true);
         setLoading(false);
-        return; // Don't load matches for personal_use_only users
+        return;
       }
       
       await loadMatches(profiles[0]);
@@ -71,40 +70,41 @@ export default function AppSynchros() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // SCALABLE: Load ONLY DailyMatch records (max 20), never list all profiles
+      // Essayer de charger les matches existants d'abord
       let dailyMatches = await base44.entities.DailyMatch.filter({
         profile_id: userProfile.public_id,
         match_date: today,
         mode: userProfile.mode_active
-      }, '-compatibility_score', 20); // Sorted by score desc, limit 20
+      }, '-compatibility_score', 20);
 
-      // If no matches exist, generate them (lazy loading)
+      // Si aucun match, demander au serveur de les générer via backend function
       if (dailyMatches.length === 0) {
         setGenerating(true);
-        dailyMatches = await generateDailyMatches(userProfile, 20);
+        const result = await base44.functions.invoke('generate_matches', {});
+        if (result?.data?.success && result?.data?.matches) {
+          dailyMatches = result.data.matches;
+        }
         setGenerating(false);
       }
 
       setMatches(dailyMatches);
 
-      // SCALABLE: Load matched ProfilePublic via matched_profile_id (DailyMatch.matched_profile_id = ProfilePublic.public_id)
+      // Charger les ProfilePublic pour affichage (données publiques uniquement)
       if (dailyMatches && dailyMatches.length > 0) {
-      const profileMap = {};
-
-      await Promise.all(
-        dailyMatches.map(async (match) => {
-          try {
-            const profiles = await base44.entities.ProfilePublic.filter({ public_id: match.matched_profile_id }, null, 1);
-            if (profiles && profiles.length > 0) {
-              profileMap[match.matched_profile_id] = profiles[0];
+        const profileMap = {};
+        await Promise.all(
+          dailyMatches.map(async (match) => {
+            try {
+              const profiles = await base44.entities.ProfilePublic.filter({ public_id: match.matched_profile_id }, null, 1);
+              if (profiles && profiles.length > 0) {
+                profileMap[match.matched_profile_id] = profiles[0];
+              }
+            } catch (err) {
+              console.error('[AppSynchros] Error loading match profile:', match.matched_profile_id, err);
             }
-          } catch (err) {
-            console.error('[AppSynchros] Error loading match profile:', match.matched_profile_id, err);
-          }
-        })
-      );
-
-      setMatchProfiles(profileMap);
+          })
+        );
+        setMatchProfiles(profileMap);
       }
     } catch (error) {
       console.error('[AppSynchros] Error loading matches:', error);
@@ -112,6 +112,8 @@ export default function AppSynchros() {
       alert(lang === 'fr' 
         ? 'Erreur lors du chargement des synchros. Réessayez.' 
         : 'Error loading synchros. Try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
