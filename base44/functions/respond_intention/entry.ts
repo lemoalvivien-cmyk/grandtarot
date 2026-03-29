@@ -158,13 +158,12 @@ Deno.serve(async (req) => {
           const cooldownUntil = new Date();
           cooldownUntil.setHours(cooldownUntil.getHours() + 24);
 
-          await serviceRole.entities.AccountPrivate.filter({ user_email: intention.from_user_id }, null, 1).then(accts => {
-            if (accts.length > 0) {
-              serviceRole.entities.AccountPrivate.update(accts[0].id, {
-                cooldown_until: cooldownUntil.toISOString()
-              });
-            }
-          });
+          const accts = await serviceRole.entities.AccountPrivate.filter({ user_email: intention.from_user_id }, null, 1);
+          if (accts.length > 0) {
+            await serviceRole.entities.AccountPrivate.update(accts[0].id, {
+              cooldown_until: cooldownUntil.toISOString()
+            });
+          }
         }
       } catch (e) {
         console.error('[respond_intention] Cooldown error:', e);
