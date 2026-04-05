@@ -46,7 +46,7 @@ export default function Paywall() {
 
   const handleSubscribe = () => {
     // Redirect to Stripe Payment Link
-    window.location.href = 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800';
+    window.location.href = 'https://buy.stripe.com/eVq00jfe2gx84ktd1XcIE03';
   };
 
   const content = {

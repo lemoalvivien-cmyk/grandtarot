@@ -29,7 +29,7 @@ export default function AdminSettings() {
     
     // Pricing
     subscription_price: { value: '6.90', category: 'pricing', description: 'Prix abonnement mensuel (€)' },
-    stripe_link: { value: 'https://buy.stripe.com/28E3cv4bZfue4Sh6YR28800', category: 'pricing', description: 'Lien Stripe Payment' },
+    stripe_link: { value: 'https://buy.stripe.com/eVq00jfe2gx84ktd1XcIE03', category: 'pricing', description: 'Lien Stripe Payment' },
     
     // Prompts
     reading_prompt_fr: { value: '', category: 'prompts', description: 'Prompt tirage IA (FR)', value_fr: '' },

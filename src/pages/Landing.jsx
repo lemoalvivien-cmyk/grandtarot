@@ -166,7 +166,7 @@ export default function Landing() {
       loadFallbackCard();
       clearTimeout(timeoutId);
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error('Error loading daily card:', error);
       }
       setCardError(true);
