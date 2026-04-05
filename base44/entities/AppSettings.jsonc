@@ -1,0 +1,110 @@
+{
+  "name": "AppSettings",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string",
+      "enum": [
+        "stripe_mode",
+        "stripe_payment_link_url",
+        "stripe_price_id",
+        "stripe_price_essentiel_monthly",
+        "stripe_price_essentiel_yearly",
+        "stripe_price_premium_monthly",
+        "stripe_price_premium_yearly",
+        "paywall_enabled",
+        "trial_days",
+        "brevo_api_key",
+        "max_intentions_per_day",
+        "cooldown_after_refusals",
+        "cooldown_hours",
+        "matches_per_day",
+        "match_refresh_hour",
+        "banned_words_list",
+        "link_block_regex",
+        "phone_block_regex",
+        "min_profile_completion",
+        "photo_required",
+        "verification_required_for_messaging",
+        "max_message_length",
+        "message_rate_limit_per_minute",
+        "report_auto_review_threshold",
+        "trust_score_min_for_messaging",
+        "ai_moderation_enabled",
+        "maintenance_mode",
+        "signup_enabled",
+        "feature_numerology",
+        "feature_astrology"
+      ],
+      "description": "Setting key (unique)"
+    },
+    "value_string": {
+      "type": "string",
+      "description": "String value"
+    },
+    "value_number": {
+      "type": "number",
+      "description": "Numeric value"
+    },
+    "value_boolean": {
+      "type": "boolean",
+      "description": "Boolean value"
+    },
+    "value_json": {
+      "type": "object",
+      "description": "JSON value for complex settings"
+    },
+    "value_array": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array value (e.g. banned words)"
+    },
+    "description_fr": {
+      "type": "string",
+      "description": "Setting description in French"
+    },
+    "description_en": {
+      "type": "string",
+      "description": "Setting description in English"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "payment",
+        "limits",
+        "matching",
+        "safety",
+        "moderation",
+        "features",
+        "system"
+      ],
+      "description": "Setting category"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Visible to non-admin users"
+    },
+    "last_updated_by": {
+      "type": "string",
+      "description": "Admin who last updated"
+    },
+    "requires_restart": {
+      "type": "boolean",
+      "default": false,
+      "description": "Requires app restart to take effect"
+    }
+  },
+  "required": [
+    "setting_key",
+    "category"
+  ],
+  "accessRules": {
+    "read": "{user.role} == 'admin'",
+    "create": "{user.role} == 'admin'",
+    "update": "{user.role} == 'admin'",
+    "delete": "{user.role} == 'admin'"
+  }
+}

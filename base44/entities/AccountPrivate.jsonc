@@ -1,0 +1,276 @@
+{
+  "name": "AccountPrivate",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email (OWNER ONLY)"
+    },
+    "public_profile_id": {
+      "type": "string",
+      "description": "Link to ProfilePublic.public_id"
+    },
+    "plan_status": {
+      "type": "string",
+      "enum": [
+        "free",
+        "active",
+        "trialing",
+        "past_due"
+      ],
+      "default": "free",
+      "description": "Current plan status (primary field)"
+    },
+    "plan_tier": {
+      "type": "string",
+      "enum": [
+        "essentiel",
+        "premium"
+      ],
+      "description": "Plan tier (optional)"
+    },
+    "plan_activated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When plan was activated"
+    },
+    "has_used_trial": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has already used a trial"
+    },
+    "payment_failed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of consecutive failed payments"
+    },
+    "payment_failed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last payment failure"
+    },
+    "grace_period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End of grace period after payment failure"
+    },
+    "cancel_at_period_end": {
+      "type": "boolean",
+      "default": false,
+      "description": "Subscription scheduled to cancel at period end"
+    },
+    "referral_code": {
+      "type": "string",
+      "description": "User's referral code (optional)"
+    },
+    "referral_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of successful referrals"
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "active",
+        "past_due",
+        "canceled",
+        "trialing"
+      ],
+      "default": "none",
+      "description": "Subscription status (legacy)"
+    },
+    "subscription_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription start date"
+    },
+    "subscription_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription end date"
+    },
+    "trial_ending_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When trial period ends (from Stripe trial_will_end event)"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe customer ID (NEVER exposed)"
+    },
+    "stripe_subscription_id": {
+      "type": "string",
+      "description": "Stripe subscription ID (NEVER exposed)"
+    },
+    "cooldown_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Cooldown until this date/time"
+    },
+    "intentions_sent_today": {
+      "type": "number",
+      "default": 0,
+      "description": "Counter for today's intentions"
+    },
+    "last_intention_reset": {
+      "type": "string",
+      "format": "date",
+      "description": "Last daily reset date"
+    },
+    "is_banned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Account banned"
+    },
+    "ban_reason": {
+      "type": "string",
+      "description": "Reason for ban"
+    },
+    "ban_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Temporary ban expiration"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Onboarding finished"
+    },
+    "language_pref": {
+      "type": "string",
+      "enum": [
+        "fr",
+        "en"
+      ],
+      "default": "fr",
+      "description": "Preferred language"
+    },
+    "radius_km": {
+      "type": "number",
+      "minimum": 5,
+      "maximum": 500,
+      "default": 50,
+      "description": "Search radius in kilometers"
+    },
+    "email_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email notifications enabled"
+    },
+    "marketing_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marketing emails consent"
+    },
+    "data_processing_consent": {
+      "type": "boolean",
+      "default": true,
+      "description": "Data processing consent (required)"
+    },
+    "consent_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When user consented to terms"
+    },
+    "age_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When user confirmed 18+ age"
+    },
+    "cookie_consent_status": {
+      "type": "string",
+      "enum": [
+        "unset",
+        "accepted",
+        "rejected",
+        "custom"
+      ],
+      "default": "unset",
+      "description": "Cookie consent status (CNIL compliance)"
+    },
+    "cookie_consent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When cookie consent was given"
+    },
+    "cookie_consent_version": {
+      "type": "string",
+      "description": "Cookie consent policy version (e.g. 1.0)"
+    },
+    "cookie_consent_categories": {
+      "type": "object",
+      "description": "Cookie consent categories (JSON): {preferences: bool, analytics: bool, marketing: bool}"
+    },
+    "preferred_mode": {
+      "type": "string",
+      "enum": [
+        "love",
+        "friendship",
+        "professional"
+      ],
+      "description": "User's preferred mode from demo or onboarding"
+    },
+    "numerology_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Numerology feature enabled for user"
+    },
+    "numerology_scope": {
+      "type": "string",
+      "enum": [
+        "personal_only",
+        "personal_and_matching"
+      ],
+      "default": "personal_only",
+      "description": "Numerology usage scope"
+    },
+    "numerology_name": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Full name for numerology calculations (optional)"
+    },
+    "astrology_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Astrology feature enabled for user"
+    },
+    "astrology_scope": {
+      "type": "string",
+      "enum": [
+        "personal_only",
+        "personal_and_matching"
+      ],
+      "default": "personal_only",
+      "description": "Astrology usage scope"
+    },
+    "birth_time": {
+      "type": "string",
+      "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+      "description": "Birth time in HH:mm format (optional, for rising sign)"
+    },
+    "birth_place": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Birth place as free text (optional)"
+    },
+    "birth_place_meta": {
+      "type": "object",
+      "description": "Birth place metadata (JSON): {country, city, lat, lon}"
+    },
+    "personal_use_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Personal guidance mode only (no matching/encounters)"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "accessRules": {
+    "read": "user_email == {user.email} || {user.role} == 'admin'",
+    "create": "user_email == {user.email}",
+    "update": "user_email == {user.email} || {user.role} == 'admin'",
+    "delete": "{user.role} == 'admin'"
+  }
+}
