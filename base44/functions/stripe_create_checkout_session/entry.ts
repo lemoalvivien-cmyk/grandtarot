@@ -60,7 +60,14 @@ Deno.serve(async (req) => {
     // STEP 3: SECRETS (Deno.env uniquement — jamais client)
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeSecretKey) {
-      return Response.json({ error: 'STRIPE_SECRET_KEY non configuré' }, { status: 500 });
+      // Fallback: redirect to Stripe Payment Link from AppSettings
+      const serviceRoleEarly = base44.asServiceRole;
+      const linkSettings = await serviceRoleEarly.entities.AppSettings.filter(
+        { setting_key: 'stripe_payment_link_url' }, null, 1
+      );
+      const paymentLinkUrl = linkSettings[0]?.value_string
+        || 'https://buy.stripe.com/eVq00jfe2gx84ktd1XcIE03';
+      return Response.json({ url: paymentLinkUrl });
     }
 
     // STEP 4: PRICE ID depuis AppSettings
