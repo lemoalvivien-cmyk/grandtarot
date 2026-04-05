@@ -51,6 +51,7 @@ export default function Subscribe() {
         window.location.href = createPageUrl('App');
         return;
       }
+      setLoading(false); // ← FIX: spinner infini
     } catch (error) {
       console.error('Error loading subscription data:', error);
       setLoading(false);

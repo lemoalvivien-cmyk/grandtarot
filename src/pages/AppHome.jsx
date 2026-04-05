@@ -121,7 +121,7 @@ export default function AppHome() {
           },
           {
             q: 'Qui vérifie les demandes de paiement manuel?',
-            a: 'Notre équipe admin examine chaque demande sous ${slaHours} heures. Vous recevrez un email de confirmation.'
+            a: `Notre équipe admin examine chaque demande sous ${slaHours} heures. Vous recevrez un email de confirmation.`
           },
           {
             q: 'Mes données sont-elles sécurisées?',

@@ -26,7 +26,7 @@ export default function Landing() {
     // OpenGraph meta tags
     const ogTags = [
       { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: 'https://grandtarot.com' },
+      { property: 'og:url', content: 'https://grandtarot.fr' },
       { property: 'og:title', content: 'GRANDTAROT - Connexions Guidées par les Astres' },
       { property: 'og:description', content: 'Rencontres basées sur le tarot et l\'astrologie. Tirage quotidien IA personnalisé, 20 affinités cosmiques par jour. 3 modes : Amour, Amitié, Pro.' },
       { property: 'og:image', content: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=1200&h=630&fit=crop' },
@@ -90,17 +90,17 @@ export default function Landing() {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "GRANDTAROT",
-      "url": "https://grandtarot.com",
+      "url": "https://grandtarot.fr",
       "logo": "https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=512&h=512&fit=crop",
       "description": "Application de rencontres basée sur le tarot et l'astrologie",
       "sameAs": [
-        "https://www.instagram.com/grandtarot",
-        "https://www.facebook.com/grandtarot"
+      "https://www.instagram.com/grandtarot",
+      "https://www.facebook.com/grandtarot"
       ],
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer support",
-        "email": "support@grandtarot.com"
+        "email": "support@grandtarot.fr"
       }
     };
 
